@@ -2,11 +2,11 @@
 // Runs after `vite build`. Data comes from Firestore public-read REST (config/categories/zones) when
 // VITE_FIREBASE_PROJECT_ID is set, otherwise from the seed file. Set SITE_URL to your real domain.
 // Zone pages are `noindex` until INDEX_ZONE_PAGES=true (turn on only once pages carry real local content).
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { categories as seedCats, zones as seedZones } from '../firebase/seed/data.mjs'
 
 const SITE = (process.env.SITE_URL || 'https://example.pages.dev').replace(/\/$/, '')
-const BRAND = process.env.BRAND_NAME || 'Helpnear'
+const BRAND = process.env.BRAND_NAME || JSON.parse(await readFile(new URL('../src/config/brand.json', import.meta.url), 'utf8')).name
 const PROJECT = process.env.VITE_FIREBASE_PROJECT_ID
 const INDEX_ZONES = process.env.INDEX_ZONE_PAGES === 'true'
 const OUT = 'dist'

@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+const BRAND = JSON.parse(readFileSync(new URL('../../src/config/brand.json', import.meta.url), 'utf8')).name
+
 // Seed data. Zones have NO ZIP lists on purpose: ZIP-to-zone data must come from a verified source (see docs/open-questions.md).
 const cat = (id, name, enabled, riskLevel, allowedServices, notes = '', blockedKeywords = [], requiresLicenseCheck = false) => ({
   id, name, enabled, riskLevel, requiresLicenseCheck, allowedServices, blockedKeywords, notes,
@@ -5,7 +8,7 @@ const cat = (id, name, enabled, riskLevel, allowedServices, notes = '', blockedK
 
 const HANDYMAN_BLOCKED = ['wiring', 'breaker', 'panel', 'circuit', 'outlet', 'plumbing', 'pipe', 'water heater', 'gas line', 'ac', 'hvac', 'furnace', 'refrigerant', 'irrigation', 'sprinkler']
 const GENERAL_BLOCKED = ['wiring', 'breaker', 'gas line', 'refrigerant', 'hvac']
-const NOTE_PERMITS = 'Local permits may apply. Not verified by Helpnear.'
+const NOTE_PERMITS = `Local permits may apply. Not verified by ${BRAND}.`
 
 export const categories = [
   cat('house-cleaning', 'House cleaning', true, 'low', ['Regular cleaning', 'Deep cleaning', 'Move-in/move-out cleaning', 'Airbnb turnover cleaning']),
@@ -78,23 +81,23 @@ export const legal = [
   {
     id: 'terms', title: 'Terms of Service', version: '0.1-draft', isDraft: true,
     body: DRAFT +
-`1. What Helpnear is. Helpnear is a platform that connects people. We are not a contractor, employer or agent of any user. We do not set prices, supervise work or guarantee any outcome.
+`1. What ${BRAND} is. ${BRAND} is a platform that connects people. We are not a contractor, employer or agent of any user. We do not set prices, supervise work or guarantee any outcome.
 
 2. Eligibility. You must be at least 18 years old.
 
-3. Your responsibility. Workers are solely responsible for their own licenses, permits, insurance, taxes and the quality and legality of their work. Clients are responsible for choosing whom to hire. Any license or insurance information on a profile is self-reported and is not verified by Helpnear.
+3. Your responsibility. Workers are solely responsible for their own licenses, permits, insurance, taxes and the quality and legality of their work. Clients are responsible for choosing whom to hire. Any license or insurance information on a profile is self-reported and is not verified by ${BRAND}.
 
-4. Payments. Clients and workers agree on and settle payment directly. Helpnear does not handle job payments.
+4. Payments. Clients and workers agree on and settle payment directly. ${BRAND} does not handle job payments.
 
-5. Prohibited services and content. You may not request or offer services that require a license you do not hold, illegal services, or services listed as unavailable on Helpnear. No harassment, fraud or misleading content.
+5. Prohibited services and content. You may not request or offer services that require a license you do not hold, illegal services, or services listed as unavailable on ${BRAND}. No harassment, fraud or misleading content.
 
 6. Contact details. Contact details are shared only with workers who claim a request. Do not misuse them.
 
 7. Moderation and termination. We may remove content and suspend accounts that violate these terms or the Community Guidelines.
 
-8. Future fees. Helpnear is free at launch. We may introduce optional fees later with advance notice.
+8. Future fees. ${BRAND} is free at launch. We may introduce optional fees later with advance notice.
 
-9. Disclaimers and liability. The service is provided "as is". To the extent allowed by law, Helpnear is not liable for disputes, damages or losses between users. [ATTORNEY: limitation of liability wording]
+9. Disclaimers and liability. The service is provided "as is". To the extent allowed by law, ${BRAND} is not liable for disputes, damages or losses between users. [ATTORNEY: limitation of liability wording]
 
 10. Disputes. Governing law: [TO BE COMPLETED BY ATTORNEY]. Venue: [TO BE COMPLETED BY ATTORNEY].
 
@@ -120,11 +123,11 @@ Contact: [SUPPORT EMAIL], [MAILING ADDRESS]`,
   {
     id: 'guidelines', title: 'Community Guidelines', version: '0.1-draft', isDraft: true,
     body: DRAFT +
-`Be honest and respectful. Describe jobs accurately. Only offer services you are qualified and legally allowed to perform. Do not request or offer regulated work (for example electrical, plumbing or HVAC) through Helpnear. Do not share other people's contact information. Report anything unsafe or misleading using the Report button. We may remove content or suspend accounts that break these guidelines.`,
+`Be honest and respectful. Describe jobs accurately. Only offer services you are qualified and legally allowed to perform. Do not request or offer regulated work (for example electrical, plumbing or HVAC) through ${BRAND}. Do not share other people's contact information. Report anything unsafe or misleading using the Report button. We may remove content or suspend accounts that break these guidelines.`,
   },
   {
     id: 'disclaimer', title: 'Disclaimer', version: '0.1-draft', isDraft: true,
     body: DRAFT +
-`Helpnear is a platform that connects people. We are not a contractor or an employer. We do not verify licenses, insurance, identity, skills or background of any user, and we do not guarantee any work or result. You are responsible for deciding whether to hire or work with anyone. Always confirm required licenses, permits and insurance yourself.`,
+`${BRAND} is a platform that connects people. We are not a contractor or an employer. We do not verify licenses, insurance, identity, skills or background of any user, and we do not guarantee any work or result. You are responsible for deciding whether to hire or work with anyone. Always confirm required licenses, permits and insurance yourself.`,
   },
 ]

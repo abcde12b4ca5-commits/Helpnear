@@ -1,8 +1,9 @@
-// Single source of truth for the brand. Working name; never hard-code it elsewhere.
+// Brand data lives in brand.json (single source of truth). Change the name there, nowhere else.
+import data from './brand.json'
+
 export const brand = {
-  name: 'Helpnear',
-  tagline: 'Find trusted local help for your home.',
-  disclaimer:
-    'Helpnear is a platform that connects people. We are not a contractor or an employer.',
-  supportEmail: 'TODO_SUPPORT_EMAIL',
+  name: data.name,
+  tagline: data.tagline,
+  disclaimer: `${data.name} is a platform that connects people. We are not a contractor or an employer.`,
+  supportEmail: data.supportEmail,
 } as const
