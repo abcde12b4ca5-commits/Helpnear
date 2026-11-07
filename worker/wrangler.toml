@@ -1,0 +1,13 @@
+name = "helpnear-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+FIREBASE_PROJECT_ID = "REPLACE_WITH_FIREBASE_PROJECT_ID"
+# Web app id from Firebase console > Project settings > Your apps (looks like 1:1234567890:web:abcdef)
+FIREBASE_APP_ID = "REPLACE_WITH_FIREBASE_WEB_APP_ID"
+# Comma separated browser origins allowed to call this worker
+ALLOWED_ORIGINS = "http://localhost:5173,https://REPLACE.pages.dev"
+SITE_URL = "https://REPLACE.pages.dev"
+
+# Secrets (never commit): wrangler secret put FIREBASE_SA_JSON ; wrangler secret put TURNSTILE_SECRET

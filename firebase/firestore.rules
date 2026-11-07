@@ -1,0 +1,342 @@
+rules_version = '2';
+// Helpnear security rules. These are the only backend: treat as production code.
+// Default deny. Reads of get()/exists()/getAfter() are billed and capped per request (10 single, 20 batch/transaction).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function verified() { return signedIn() && request.auth.token.email_verified == true; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    function allKeys(keys) {
+      return request.resource.data.keys().hasAll(keys) && request.resource.data.keys().hasOnly(keys);
+    }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // ---------- public config (no secrets inside) ----------
+    match /config/{docId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    match /categories/{docId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    match /zones/{docId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    match /legal/{docId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------- admins (created manually in the console only) ----------
+    match /admins/{adminId} {
+      allow get: if signedIn() && uid() == adminId;
+      allow list, write: if false;
+    }
+    match /adminLog/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.adminId == uid()
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // ---------- users ----------
+    match /users/{userId} {
+      allow get: if signedIn() && (uid() == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if signedIn() && uid() == userId
+        && allKeys(['role','displayName','email','termsVersion','privacyVersion','termsAcceptedAt','over18','status','createdAt'])
+        && request.resource.data.role in ['client', 'worker']
+        && str(request.resource.data.displayName, 1, 60)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.termsVersion == get(/databases/$(database)/documents/legal/terms).data.version
+        && str(request.resource.data.privacyVersion, 1, 40)
+        && request.resource.data.over18 == true
+        && request.resource.data.termsAcceptedAt == request.time
+        && request.resource.data.status == 'active'
+        && request.resource.data.createdAt == request.time
+        && get(/databases/$(database)/documents/config/app).data.signupOpen == true;
+      allow update: if signedIn() && uid() == userId
+        && changed().hasOnly(['displayName', 'termsVersion', 'privacyVersion', 'termsAcceptedAt'])
+        && str(request.resource.data.displayName, 1, 60)
+        && (request.resource.data.termsVersion == resource.data.termsVersion
+            || (request.resource.data.termsVersion == get(/databases/$(database)/documents/legal/terms).data.version
+                && request.resource.data.termsAcceptedAt == request.time));
+      allow update: if isAdmin()
+        && changed().hasOnly(['status'])
+        && request.resource.data.status in ['active', 'suspended'];
+      allow delete: if false;
+    }
+
+    // ---------- push tokens (FCM). Read by the owner; the edge worker reads them with its service account ----------
+    match /users/{userId}/tokens/{tokenId} {
+      allow get, list: if signedIn() && uid() == userId;
+      allow create: if verified() && uid() == userId
+        && allKeys(['token', 'createdAt'])
+        && str(request.resource.data.token, 20, 500)
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && uid() == userId;
+      allow update: if false;
+    }
+
+    // ---------- worker profiles ----------
+    function validWorker(d) {
+      return str(d.displayName, 1, 60)
+        && str(d.bio, 0, 500)
+        && d.categories is list && d.categories.size() >= 1 && d.categories.size() <= 5
+        && d.zones is list && d.zones.size() >= 1 && d.zones.size() <= 6
+        && d.confirmedCategories is list && d.confirmedCategories.hasAll(d.categories)
+        && str(d.licenseNote, 0, 200)
+        && str(d.insuranceNote, 0, 200);
+    }
+    match /workers/{workerId} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow create: if signedIn() && uid() == workerId
+        && userDoc().role == 'worker'
+        && allKeys(['displayName','bio','categories','zones','confirmedCategories','licenseNote','insuranceNote','ratingCount','ratingAverage','isListed','createdAt'])
+        && validWorker(request.resource.data)
+        && request.resource.data.ratingCount == 0
+        && request.resource.data.ratingAverage == 0
+        && request.resource.data.isListed == true
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && uid() == workerId
+        && changed().hasOnly(['displayName','bio','categories','zones','confirmedCategories','licenseNote','insuranceNote'])
+        && validWorker(request.resource.data);
+      allow update: if isAdmin() && changed().hasOnly(['isListed']);
+      allow delete: if false;
+    }
+
+    // ---------- per-user post cooldown (written in the same batch as a request) ----------
+    match /rate/{userId} {
+      allow get: if signedIn() && uid() == userId;
+      allow create: if signedIn() && uid() == userId
+        && allKeys(['lastPostAt'])
+        && request.resource.data.lastPostAt == request.time;
+      allow update: if signedIn() && uid() == userId
+        && allKeys(['lastPostAt'])
+        && request.resource.data.lastPostAt == request.time
+        && resource.data.lastPostAt < request.time - duration.value(60, 's');
+      allow delete: if false;
+    }
+
+    // ---------- requests ----------
+    match /requests/{requestId} {
+      allow get: if signedIn() && (
+        resource.data.clientId == uid()
+        || (verified() && resource.data.status == 'open' && exists(/databases/$(database)/documents/workers/$(request.auth.uid)))
+        || exists(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid))
+        || isAdmin());
+      allow list: if signedIn() && (
+        resource.data.clientId == uid()
+        || (verified() && resource.data.status == 'open' && exists(/databases/$(database)/documents/workers/$(request.auth.uid)))
+        || isAdmin());
+
+      allow create: if verified()
+        && request.resource.data.clientId == uid()
+        && userDoc().role == 'client' && userDoc().status == 'active'
+        && allKeys(['clientId','categoryId','categoryName','zoneId','zoneName','zip','title','description','urgency','budgetRange','status','claimsCount','matchKey','createdAt','expiresAt','promoted'])
+        && str(request.resource.data.categoryId, 1, 60) && str(request.resource.data.zoneId, 1, 60)
+        && str(request.resource.data.categoryName, 1, 80) && str(request.resource.data.zoneName, 1, 80)
+        && str(request.resource.data.title, 5, 100)
+        && str(request.resource.data.description, 10, 2000)
+        && request.resource.data.urgency in ['asap', 'this_week', 'flexible']
+        && str(request.resource.data.budgetRange, 0, 40)
+        && str(request.resource.data.zip, 0, 5)
+        && (request.resource.data.zip == '' || request.resource.data.zip.matches('^[0-9]{5}$'))
+        && request.resource.data.status == 'open'
+        && request.resource.data.claimsCount == 0
+        && request.resource.data.promoted == false
+        && request.resource.data.matchKey == request.resource.data.categoryId + '|' + request.resource.data.zoneId
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt <= request.time + duration.value(7, 'd')
+        && get(/databases/$(database)/documents/categories/$(request.resource.data.categoryId)).data.enabled == true
+        && get(/databases/$(database)/documents/zones/$(request.resource.data.zoneId)).data.enabled == true
+        && getAfter(/databases/$(database)/documents/rate/$(request.auth.uid)).data.lastPostAt == request.time
+        && existsAfter(/databases/$(database)/documents/requests/$(requestId)/private/contact);
+
+      // owner may close an open request
+      allow update: if signedIn() && resource.data.clientId == uid()
+        && resource.data.status == 'open'
+        && changed().hasOnly(['status'])
+        && request.resource.data.status == 'closed';
+
+      // admin moderation
+      allow update: if isAdmin()
+        && changed().hasOnly(['status'])
+        && request.resource.data.status in ['open', 'closed', 'expired', 'removed'];
+
+      // claim counter: +1 only, within the cap, together with a new claim doc (same transaction)
+      allow update: if verified()
+        && changed().hasOnly(['claimsCount'])
+        && request.resource.data.claimsCount == resource.data.claimsCount + 1
+        && resource.data.status == 'open'
+        && resource.data.expiresAt > request.time
+        && request.resource.data.claimsCount <= get(/databases/$(database)/documents/config/app).data.maxClaimsPerRequest
+        && !exists(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid));
+
+      allow delete: if false;
+
+      match /private/{docId} {
+        function validContact(d) {
+          return str(d.phone, 0, 30) && str(d.email, 0, 120)
+            && (d.phone.size() > 0 || d.email.size() > 0)
+            && d.preferredContactMethod in ['phone', 'email', 'text'];
+        }
+        allow create: if signedIn() && docId == 'contact'
+          && getAfter(/databases/$(database)/documents/requests/$(requestId)).data.clientId == uid()
+          && allKeys(['phone', 'email', 'preferredContactMethod'])
+          && validContact(request.resource.data);
+        allow update: if signedIn() && docId == 'contact'
+          && get(/databases/$(database)/documents/requests/$(requestId)).data.clientId == uid()
+          && allKeys(['phone', 'email', 'preferredContactMethod'])
+          && validContact(request.resource.data);
+        allow get: if signedIn() && docId == 'contact' && (
+          get(/databases/$(database)/documents/requests/$(requestId)).data.clientId == uid()
+          || (exists(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid))
+              && get(/databases/$(database)/documents/config/app).data.revealContactOnClaim == true)
+          || isAdmin());
+        allow list, delete: if false;
+      }
+
+      match /claims/{workerId} {
+        allow create: if verified() && uid() == workerId
+          && allKeys(['workerId', 'requestId', 'workerName', 'createdAt'])
+          && request.resource.data.workerId == workerId
+          && request.resource.data.requestId == requestId
+          && str(request.resource.data.workerName, 1, 60)
+          && request.resource.data.createdAt == request.time
+          && get(/databases/$(database)/documents/requests/$(requestId)).data.status == 'open'
+          && get(/databases/$(database)/documents/requests/$(requestId)).data.expiresAt > request.time
+          && getAfter(/databases/$(database)/documents/requests/$(requestId)).data.claimsCount
+             == get(/databases/$(database)/documents/requests/$(requestId)).data.claimsCount + 1
+          && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.isListed == true
+          && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.categories
+               .hasAny([get(/databases/$(database)/documents/requests/$(requestId)).data.categoryId])
+          && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.zones
+               .hasAny([get(/databases/$(database)/documents/requests/$(requestId)).data.zoneId]);
+        allow get, list: if signedIn() && (
+          uid() == workerId
+          || get(/databases/$(database)/documents/requests/$(requestId)).data.clientId == uid()
+          || isAdmin());
+        allow update, delete: if false;
+      }
+    }
+
+    // "my claims" collection-group query for workers
+    match /{path=**}/claims/{claimId} {
+      allow read: if signedIn() && resource.data.workerId == uid();
+    }
+
+    // ---------- reports ----------
+    match /reports/{reportId} {
+      allow create: if verified()
+        && allKeys(['reporterId', 'targetType', 'targetId', 'reason', 'status', 'createdAt'])
+        && request.resource.data.reporterId == uid()
+        && request.resource.data.targetType in ['request', 'worker', 'message']
+        && str(request.resource.data.targetId, 1, 100)
+        && str(request.resource.data.reason, 3, 500)
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt == request.time;
+      allow read: if isAdmin();
+      allow update: if isAdmin() && changed().hasOnly(['status']);
+      allow delete: if false;
+    }
+
+
+    // ---------- reviews: aggregates are computed on read, so they cannot be forged ----------
+    match /reviews/{reviewId} {
+      allow get, list: if signedIn();
+      allow create: if verified()
+        && allKeys(['requestId', 'workerId', 'clientId', 'rating', 'text', 'createdAt'])
+        && reviewId == request.resource.data.requestId + '_' + request.resource.data.workerId
+        && request.resource.data.clientId == uid()
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && str(request.resource.data.text, 0, 500)
+        && request.resource.data.createdAt == request.time
+        && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.clientId == uid()
+        && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.resource.data.workerId));
+      allow update, delete: if false;
+    }
+
+    // ---------- in-app notifications (written by the claiming worker inside the claim transaction) ----------
+    match /notifications/{userId}/items/{notifId} {
+      allow get, list: if signedIn() && uid() == userId;
+      allow create: if verified()
+        && allKeys(['type', 'requestId', 'workerId', 'message', 'read', 'createdAt'])
+        && request.resource.data.type == 'claim'
+        && request.resource.data.workerId == uid()
+        && request.resource.data.read == false
+        && str(request.resource.data.message, 1, 140)
+        && request.resource.data.createdAt == request.time
+        && notifId == request.resource.data.requestId + '_' + uid()
+        && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.clientId == userId
+        && existsAfter(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.auth.uid));
+      allow update: if signedIn() && uid() == userId
+        && changed().hasOnly(['read']) && request.resource.data.read == true;
+      allow delete: if false;
+    }
+
+    // ---------- chat (Stage 2, gated by config/app.chatEnabled) ----------
+    match /threads/{threadId} {
+      allow get: if signedIn()
+        && get(/databases/$(database)/documents/config/app).data.chatEnabled == true
+        && (resource == null
+            || resource.data.clientId == uid()
+            || resource.data.workerId == uid()
+            || (isAdmin() && resource.data.reported == true));
+      allow list: if false;
+      allow create: if verified()
+        && get(/databases/$(database)/documents/config/app).data.chatEnabled == true
+        && allKeys(['requestId', 'workerId', 'clientId', 'blockedBy', 'reported', 'createdAt'])
+        && threadId == request.resource.data.requestId + '_' + request.resource.data.workerId
+        && (uid() == request.resource.data.clientId || uid() == request.resource.data.workerId)
+        && request.resource.data.blockedBy == ''
+        && request.resource.data.reported == false
+        && request.resource.data.createdAt == request.time
+        && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.clientId == request.resource.data.clientId
+        && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.resource.data.workerId));
+      // block / unblock (only the blocker can unblock)
+      allow update: if signedIn()
+        && get(/databases/$(database)/documents/config/app).data.chatEnabled == true
+        && (resource.data.clientId == uid() || resource.data.workerId == uid())
+        && changed().hasOnly(['blockedBy'])
+        && request.resource.data.blockedBy in ['', uid()]
+        && (resource.data.blockedBy == '' || resource.data.blockedBy == uid());
+      // flag a thread as reported so an admin may read it
+      allow update: if signedIn()
+        && (resource.data.clientId == uid() || resource.data.workerId == uid())
+        && changed().hasOnly(['reported'])
+        && request.resource.data.reported == true;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow get, list: if signedIn()
+          && get(/databases/$(database)/documents/config/app).data.chatEnabled == true
+          && (get(/databases/$(database)/documents/threads/$(threadId)).data.clientId == uid()
+              || get(/databases/$(database)/documents/threads/$(threadId)).data.workerId == uid()
+              || (isAdmin() && get(/databases/$(database)/documents/threads/$(threadId)).data.reported == true));
+        allow create: if verified()
+          && get(/databases/$(database)/documents/config/app).data.chatEnabled == true
+          && allKeys(['senderId', 'text', 'createdAt'])
+          && request.resource.data.senderId == uid()
+          && str(request.resource.data.text, 1, 1000)
+          && request.resource.data.createdAt == request.time
+          && (get(/databases/$(database)/documents/threads/$(threadId)).data.clientId == uid()
+              || get(/databases/$(database)/documents/threads/$(threadId)).data.workerId == uid())
+          && get(/databases/$(database)/documents/threads/$(threadId)).data.blockedBy == '';
+        allow update, delete: if false;
+      }
+    }
+  }
+}
