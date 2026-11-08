@@ -1,9 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   createUserWithEmailAndPassword,
+  getAdditionalUserInfo,
+  GoogleAuthProvider,
   onAuthStateChanged,
   sendEmailVerification,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as fbSignOut,
   type User,
 } from 'firebase/auth'
@@ -21,6 +24,10 @@ interface AuthState {
   isAdmin: boolean
   signUp: (args: { email: string; password: string; displayName: string; role: Role }) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
+  /** Google sign-up: role and consent come from the signup form. Signs in instead if a profile already exists. */
+  signUpWithGoogle: (args: { role: Role; displayName: string }) => Promise<Role>
+  /** Google sign-in for existing accounts only. */
+  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   resendVerification: () => Promise<void>
   refresh: () => Promise<void>
@@ -74,6 +81,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await load(cred.user)
     },
     async signIn(email, password) { await signInWithEmailAndPassword(auth, email, password) },
+    async signUpWithGoogle({ role, displayName }) {
+      const config = await getAppConfig()
+      if (!config.signupOpen) throw new Error('Sign-ups are currently closed.')
+      const terms = await getLegal('terms')
+      const privacy = await getLegal('privacy')
+      if (!terms || !privacy) throw new Error('Legal documents are not available yet. Please try again later.')
+      const cred = await signInWithPopup(auth, new GoogleAuthProvider())
+      const existing = await getDoc(doc(db, `users/${cred.user.uid}`))
+      if (existing.exists()) { // already registered: just sign in
+        await load(cred.user)
+        return (existing.data() as UserDoc).role
+      }
+      const isNew = getAdditionalUserInfo(cred)?.isNewUser ?? false
+      const email = cred.user.email
+      const name = (displayName || cred.user.displayName || email?.split('@')[0] || 'User').slice(0, 60)
+      try {
+        await setDoc(doc(db, `users/${cred.user.uid}`), {
+          role, displayName: name, email, termsVersion: terms.version, privacyVersion: privacy.version,
+          termsAcceptedAt: serverTimestamp(), over18: true, status: 'active', createdAt: serverTimestamp(),
+        })
+      } catch (e) {
+        if (isNew) await cred.user.delete().catch(() => undefined) // avoid an orphan account without a profile
+        else await fbSignOut(auth).catch(() => undefined)
+        throw e
+      }
+      await load(cred.user)
+      return role
+    },
+    async signInWithGoogle() {
+      const cred = await signInWithPopup(auth, new GoogleAuthProvider())
+      const existing = await getDoc(doc(db, `users/${cred.user.uid}`))
+      if (existing.exists()) { await load(cred.user); return }
+      // No Helpnear profile: do not leave a half-created account behind.
+      if (getAdditionalUserInfo(cred)?.isNewUser) await cred.user.delete().catch(() => undefined)
+      else await fbSignOut(auth).catch(() => undefined)
+      throw new Error('No Helpnear account found for this Google account. Please create an account first.')
+    },
     async signOut() { await fbSignOut(auth) },
     async resendVerification() { if (auth.currentUser) await sendEmailVerification(auth.currentUser) },
     async refresh() {
