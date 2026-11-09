@@ -54,7 +54,7 @@ export default function Moderation() {
         <ul className="space-y-2">
           {reqs.map((r) => (
             <li key={r.id} className={`${card} flex flex-wrap items-center justify-between gap-2 text-sm`}>
-              <span><strong>{r.title}</strong> ({r.categoryName}, {r.zoneName}) <em>{r.status}</em></span>
+              <span><strong>{r.title}</strong> ({r.categoryName}, {r.city}, {r.state}) <em>{r.status}</em></span>
               {r.status === 'removed' ? <button className={btnGhost} onClick={() => setRequest(r.id, 'open')}>Restore</button> : <button className={btnGhost} onClick={() => setRequest(r.id, 'removed')}>Remove</button>}
             </li>
           ))}

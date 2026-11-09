@@ -25,10 +25,6 @@ service cloud.firestore {
       allow get, list: if true;
       allow write: if isAdmin();
     }
-    match /zones/{docId} {
-      allow get, list: if true;
-      allow write: if isAdmin();
-    }
     match /legal/{docId} {
       allow get, list: if true;
       allow write: if isAdmin();
@@ -91,7 +87,12 @@ service cloud.firestore {
       return str(d.displayName, 1, 60)
         && str(d.bio, 0, 500)
         && d.categories is list && d.categories.size() >= 1 && d.categories.size() <= 5
-        && d.zones is list && d.zones.size() >= 1 && d.zones.size() <= 6
+        && str(d.baseZip, 5, 5) && d.baseZip.matches('^[0-9]{5}$')
+        && str(d.city, 1, 80) && str(d.state, 2, 2)
+        && d.lat is number && d.lat >= -90 && d.lat <= 90
+        && d.lng is number && d.lng >= -180 && d.lng <= 180
+        && d.radiusMiles in [10, 25, 50]
+        && d.matchKeys is list && d.matchKeys.size() >= 1 && d.matchKeys.size() <= 500
         && d.confirmedCategories is list && d.confirmedCategories.hasAll(d.categories)
         && str(d.licenseNote, 0, 200)
         && str(d.insuranceNote, 0, 200);
@@ -101,27 +102,38 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if signedIn() && uid() == workerId
         && userDoc().role == 'worker'
-        && allKeys(['displayName','bio','categories','zones','confirmedCategories','licenseNote','insuranceNote','ratingCount','ratingAverage','isListed','createdAt'])
+        && allKeys(['displayName','bio','categories','baseZip','city','state','lat','lng','radiusMiles','matchKeys','confirmedCategories','licenseNote','insuranceNote','ratingCount','ratingAverage','isListed','createdAt'])
         && validWorker(request.resource.data)
         && request.resource.data.ratingCount == 0
         && request.resource.data.ratingAverage == 0
         && request.resource.data.isListed == true
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && uid() == workerId
-        && changed().hasOnly(['displayName','bio','categories','zones','confirmedCategories','licenseNote','insuranceNote'])
+        && changed().hasOnly(['displayName','bio','categories','baseZip','city','state','lat','lng','radiusMiles','matchKeys','confirmedCategories','licenseNote','insuranceNote'])
         && validWorker(request.resource.data);
       allow update: if isAdmin() && changed().hasOnly(['isListed']);
       allow delete: if false;
+
+      // ids of requests this worker declined (hidden from their feed). One small doc, owner only.
+      match /private/{docId} {
+        allow get: if signedIn() && uid() == workerId && docId == 'declined';
+        allow create, update: if signedIn() && uid() == workerId && docId == 'declined'
+          && allKeys(['ids'])
+          && request.resource.data.ids is list && request.resource.data.ids.size() <= 300;
+        allow list, delete: if false;
+      }
     }
 
     // ---------- per-user post cooldown (written in the same batch as a request) ----------
     match /rate/{userId} {
       allow get: if signedIn() && uid() == userId;
       allow create: if signedIn() && uid() == userId
-        && allKeys(['lastPostAt'])
+        && allKeys(['lastPostAt', 'groupId'])
+        && request.resource.data.groupId is string && request.resource.data.groupId.matches('^[A-Za-z0-9]{20}$')
         && request.resource.data.lastPostAt == request.time;
       allow update: if signedIn() && uid() == userId
-        && allKeys(['lastPostAt'])
+        && allKeys(['lastPostAt', 'groupId'])
+        && request.resource.data.groupId is string && request.resource.data.groupId.matches('^[A-Za-z0-9]{20}$')
         && request.resource.data.lastPostAt == request.time
         && resource.data.lastPostAt < request.time - duration.value(60, 's');
       allow delete: if false;
@@ -142,47 +154,70 @@ service cloud.firestore {
       allow create: if verified()
         && request.resource.data.clientId == uid()
         && userDoc().role == 'client' && userDoc().status == 'active'
-        && allKeys(['clientId','categoryId','categoryName','zoneId','zoneName','zip','title','description','urgency','budgetRange','status','claimsCount','matchKey','createdAt','expiresAt','promoted'])
-        && str(request.resource.data.categoryId, 1, 60) && str(request.resource.data.zoneId, 1, 60)
-        && str(request.resource.data.categoryName, 1, 80) && str(request.resource.data.zoneName, 1, 80)
+        && allKeys(['clientId','categoryId','categoryName','zip','city','state','lat','lng','cell','workersNeeded','groupId','groupSize','title','description','urgency','budgetRange','status','claimsCount','matchKey','createdAt','expiresAt','promoted'])
+        && str(request.resource.data.categoryId, 1, 60)
+        && str(request.resource.data.categoryName, 1, 80)
         && str(request.resource.data.title, 5, 100)
         && str(request.resource.data.description, 10, 2000)
         && request.resource.data.urgency in ['asap', 'this_week', 'flexible']
         && str(request.resource.data.budgetRange, 0, 40)
-        && str(request.resource.data.zip, 0, 5)
-        && (request.resource.data.zip == '' || request.resource.data.zip.matches('^[0-9]{5}$'))
+        && str(request.resource.data.zip, 5, 5) && request.resource.data.zip.matches('^[0-9]{5}$')
+        && str(request.resource.data.city, 1, 80) && str(request.resource.data.state, 2, 2)
+        && request.resource.data.lat is number && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+        && request.resource.data.lng is number && request.resource.data.lng >= -180 && request.resource.data.lng <= 180
+        && str(request.resource.data.cell, 4, 4) && request.resource.data.cell.matches('^[0-9a-z]{4}$')
+        && request.resource.data.workersNeeded is int
+        && request.resource.data.workersNeeded >= 1 && request.resource.data.workersNeeded <= 10
+        && request.resource.data.workersNeeded <= get(/databases/$(database)/documents/config/app).data.get('maxWorkersPerRequest', 10)
+        // a post is a group of 1 to 5 positions (one request doc each, id = groupId-0 .. groupId-4), all written in one batch
+        && request.resource.data.groupId is string && request.resource.data.groupId.matches('^[A-Za-z0-9]{20}$')
+        && request.resource.data.groupId == getAfter(/databases/$(database)/documents/rate/$(request.auth.uid)).data.groupId
+        && requestId.matches('^' + request.resource.data.groupId + '-[0-4]$')
+        && request.resource.data.groupSize is int && request.resource.data.groupSize >= 1 && request.resource.data.groupSize <= 5
         && request.resource.data.status == 'open'
         && request.resource.data.claimsCount == 0
         && request.resource.data.promoted == false
-        && request.resource.data.matchKey == request.resource.data.categoryId + '|' + request.resource.data.zoneId
+        && request.resource.data.matchKey == request.resource.data.categoryId + '|' + request.resource.data.cell
         && request.resource.data.createdAt == request.time
         && request.resource.data.expiresAt > request.time
         && request.resource.data.expiresAt <= request.time + duration.value(7, 'd')
         && get(/databases/$(database)/documents/categories/$(request.resource.data.categoryId)).data.enabled == true
-        && get(/databases/$(database)/documents/zones/$(request.resource.data.zoneId)).data.enabled == true
+        && !get(/databases/$(database)/documents/categories/$(request.resource.data.categoryId)).data.get('disabledStates', []).hasAny([request.resource.data.state])
         && getAfter(/databases/$(database)/documents/rate/$(request.auth.uid)).data.lastPostAt == request.time
         && existsAfter(/databases/$(database)/documents/requests/$(requestId)/private/contact);
 
-      // owner may close an open request
+      // owner may stop taking new workers (accepted workers can still finish)
       allow update: if signedIn() && resource.data.clientId == uid()
-        && resource.data.status == 'open'
+        && resource.data.status in ['open', 'filled']
         && changed().hasOnly(['status'])
         && request.resource.data.status == 'closed';
 
       // admin moderation
       allow update: if isAdmin()
         && changed().hasOnly(['status'])
-        && request.resource.data.status in ['open', 'closed', 'expired', 'removed'];
+        && request.resource.data.status in ['open', 'filled', 'closed', 'expired', 'removed'];
 
-      // claim counter: +1 only, within the cap, together with a new claim doc (same transaction)
+      // a worker accepts: counter +1 within the client's worker count, together with the new claim doc (same transaction)
       allow update: if verified()
-        && changed().hasOnly(['claimsCount'])
+        && changed().hasOnly(['claimsCount', 'status'])
         && request.resource.data.claimsCount == resource.data.claimsCount + 1
+        && request.resource.data.claimsCount <= resource.data.workersNeeded
+        && request.resource.data.status == (request.resource.data.claimsCount >= resource.data.workersNeeded ? 'filled' : 'open')
         && resource.data.status == 'open'
         && resource.data.expiresAt > request.time
-        && request.resource.data.claimsCount <= get(/databases/$(database)/documents/config/app).data.maxClaimsPerRequest
         && !exists(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid))
         && existsAfter(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid));
+
+      // a worker is released (cancelled by the worker or the client): counter -1 in the same transaction as the claim's cancellation
+      allow update: if verified()
+        && changed().hasOnly(['claimsCount', 'status', 'lastWorkerId'])
+        && request.resource.data.lastWorkerId is string
+        && request.resource.data.claimsCount == resource.data.claimsCount - 1
+        && request.resource.data.status == (resource.data.status == 'filled' ? 'open' : resource.data.status)
+        && (uid() == resource.data.clientId || uid() == request.resource.data.lastWorkerId)
+        && exists(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.resource.data.lastWorkerId))
+        && get(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.resource.data.lastWorkerId)).data.status == 'accepted'
+        && getAfter(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.resource.data.lastWorkerId)).data.status == 'cancelled';
 
       allow delete: if false;
 
@@ -203,38 +238,95 @@ service cloud.firestore {
         allow get: if signedIn() && docId == 'contact' && (
           get(/databases/$(database)/documents/requests/$(requestId)).data.clientId == uid()
           || (exists(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid))
+              && get(/databases/$(database)/documents/requests/$(requestId)/claims/$(request.auth.uid)).data.status in ['accepted', 'done', 'confirmed']
               && get(/databases/$(database)/documents/config/app).data.revealContactOnClaim == true)
           || isAdmin());
         allow list, delete: if false;
       }
 
       match /claims/{workerId} {
+        function parentReq() { return get(/databases/$(database)/documents/requests/$(requestId)).data; }
+        function validCents(v) { return v is int && v >= 0 && v <= 1000000; }
+
+        // accept: price + scope note, one claim per worker per request
         allow create: if verified() && uid() == workerId
-          && allKeys(['workerId', 'requestId', 'workerName', 'createdAt'])
+          && allKeys(['workerId', 'requestId', 'clientId', 'categoryId', 'categoryName', 'title', 'workerName', 'status', 'clientAgreed', 'quotedCents', 'note', 'createdAt'])
           && request.resource.data.workerId == workerId
           && request.resource.data.requestId == requestId
+          && request.resource.data.clientId == parentReq().clientId
+          && request.resource.data.categoryId == parentReq().categoryId
+          && request.resource.data.categoryName == parentReq().categoryName
+          && request.resource.data.title == parentReq().title
           && str(request.resource.data.workerName, 1, 60)
+          && request.resource.data.status == 'accepted'
+          && request.resource.data.clientAgreed == false
+          && validCents(request.resource.data.quotedCents) && request.resource.data.quotedCents > 0
+          && str(request.resource.data.note, 0, 500)
           && request.resource.data.createdAt == request.time
-          && get(/databases/$(database)/documents/requests/$(requestId)).data.status == 'open'
-          && get(/databases/$(database)/documents/requests/$(requestId)).data.expiresAt > request.time
-          && getAfter(/databases/$(database)/documents/requests/$(requestId)).data.claimsCount
-             == get(/databases/$(database)/documents/requests/$(requestId)).data.claimsCount + 1
+          && parentReq().status == 'open'
+          && parentReq().expiresAt > request.time
+          && getAfter(/databases/$(database)/documents/requests/$(requestId)).data.claimsCount == parentReq().claimsCount + 1
           && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.isListed == true
-          && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.categories
-               .hasAny([get(/databases/$(database)/documents/requests/$(requestId)).data.categoryId])
-          && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.zones
-               .hasAny([get(/databases/$(database)/documents/requests/$(requestId)).data.zoneId]);
+          && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.categories.hasAny([parentReq().categoryId])
+          && get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.matchKeys.hasAny([parentReq().matchKey]);
+
         allow get, list: if signedIn() && (
           uid() == workerId
-          || get(/databases/$(database)/documents/requests/$(requestId)).data.clientId == uid()
+          || parentReq().clientId == uid()
           || isAdmin());
-        allow update, delete: if false;
+
+        // worker edits price / scope while still being agreed (resets the client's agreement)
+        allow update: if verified() && uid() == resource.data.workerId
+          && resource.data.status == 'accepted' && resource.data.clientAgreed == false
+          && changed().hasOnly(['quotedCents', 'note'])
+          && validCents(request.resource.data.quotedCents) && request.resource.data.quotedCents > 0
+          && str(request.resource.data.note, 0, 500);
+        // worker changes a quote that was already agreed: allowed only together with resetting the agreement
+        allow update: if verified() && uid() == resource.data.workerId
+          && resource.data.status == 'accepted' && resource.data.clientAgreed == true
+          && changed().hasOnly(['quotedCents', 'note', 'clientAgreed'])
+          && request.resource.data.clientAgreed == false
+          && validCents(request.resource.data.quotedCents) && request.resource.data.quotedCents > 0
+          && str(request.resource.data.note, 0, 500);
+        // the client agrees to the price and the work
+        allow update: if verified() && uid() == resource.data.clientId
+          && resource.data.status == 'accepted' && resource.data.clientAgreed == false
+          && changed().hasOnly(['clientAgreed'])
+          && request.resource.data.clientAgreed == true;
+        // the worker says the service was done (only after the client agreed), with the final amount
+        allow update: if verified() && uid() == resource.data.workerId
+          && resource.data.status == 'accepted' && resource.data.clientAgreed == true
+          && changed().hasOnly(['status', 'finalCents', 'doneAt'])
+          && request.resource.data.status == 'done'
+          && validCents(request.resource.data.finalCents)
+          && request.resource.data.doneAt == request.time;
+        // the client confirms the service was done
+        allow update: if verified() && uid() == resource.data.clientId
+          && resource.data.status == 'done'
+          && changed().hasOnly(['status', 'confirmedAt'])
+          && request.resource.data.status == 'confirmed'
+          && request.resource.data.confirmedAt == request.time;
+        // the client says it is not done yet (or the amount is wrong): back to accepted
+        allow update: if verified() && uid() == resource.data.clientId
+          && resource.data.status == 'done'
+          && changed().hasOnly(['status'])
+          && request.resource.data.status == 'accepted';
+        // either side cancels before it is done; the request counter must drop by one in the same transaction
+        allow update: if verified() && (uid() == resource.data.workerId || uid() == resource.data.clientId)
+          && resource.data.status == 'accepted'
+          && changed().hasOnly(['status', 'cancelledBy', 'cancelReason', 'cancelledAt'])
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.cancelledBy == (uid() == resource.data.workerId ? 'worker' : 'client')
+          && str(request.resource.data.cancelReason, 3, 200)
+          && request.resource.data.cancelledAt == request.time
+          && getAfter(/databases/$(database)/documents/requests/$(requestId)).data.claimsCount == parentReq().claimsCount - 1;
+        allow delete: if false;
       }
     }
 
-    // "my claims" collection-group query for workers
+    // "my jobs" collection-group queries (worker: workerId == me, client: clientId == me)
     match /{path=**}/claims/{claimId} {
-      allow read: if signedIn() && resource.data.workerId == uid();
+      allow read: if signedIn() && (resource.data.workerId == uid() || resource.data.clientId == uid());
     }
 
     // ---------- reports ----------
@@ -265,23 +357,32 @@ service cloud.firestore {
         && str(request.resource.data.text, 0, 500)
         && request.resource.data.createdAt == request.time
         && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.clientId == uid()
-        && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.resource.data.workerId));
+        && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.resource.data.workerId))
+        && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.resource.data.workerId)).data.status == 'confirmed';
       allow update, delete: if false;
     }
 
-    // ---------- in-app notifications (written by the claiming worker inside the claim transaction) ----------
+    // ---------- in-app notifications (written best-effort by the other side right after a change to a claim) ----------
     match /notifications/{userId}/items/{notifId} {
       allow get, list: if signedIn() && uid() == userId;
       allow create: if verified()
-        && allKeys(['type', 'requestId', 'workerId', 'message', 'read', 'createdAt'])
-        && request.resource.data.type == 'claim'
-        && request.resource.data.workerId == uid()
+        && allKeys(['type', 'requestId', 'fromId', 'message', 'read', 'createdAt'])
+        && request.resource.data.type in ['claim', 'done', 'cancelled_by_worker', 'agreed', 'confirmed', 'reopened', 'cancelled_by_client']
+        && request.resource.data.fromId == uid()
         && request.resource.data.read == false
         && str(request.resource.data.message, 1, 140)
         && request.resource.data.createdAt == request.time
-        && notifId == request.resource.data.requestId + '_' + uid()
-        && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.clientId == userId
-        && existsAfter(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.auth.uid));
+        && notifId.matches(request.resource.data.requestId + '_.*')
+        && (
+          // worker -> client
+          (request.resource.data.type in ['claim', 'done', 'cancelled_by_worker']
+            && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.clientId == userId
+            && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(request.auth.uid)))
+          // client -> worker
+          || (request.resource.data.type in ['agreed', 'confirmed', 'reopened', 'cancelled_by_client']
+            && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.clientId == uid()
+            && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId)/claims/$(userId)))
+        );
       allow update: if signedIn() && uid() == userId
         && changed().hasOnly(['read']) && request.resource.data.read == true;
       allow delete: if false;

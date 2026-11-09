@@ -32,11 +32,22 @@ export async function enablePush(uid: string): Promise<'enabled' | 'denied'> {
   return 'enabled'
 }
 
-/** Fire-and-forget: asks the worker to push the request owner. Failures never block the claim. */
-export async function notifyClaim(requestId: string): Promise<void> {
+export type PushEvent = 'accepted' | 'agreed' | 'done' | 'confirmed' | 'reopened' | 'cancelled_by_worker' | 'cancelled_by_client'
+
+async function callWorker(path: string, body: Record<string, string>): Promise<void> {
   if (!WORKER_URL || !auth.currentUser) return
   try {
     const idToken = await auth.currentUser.getIdToken()
-    await fetch(`${WORKER_URL}/push`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${idToken}` }, body: JSON.stringify({ requestId }) })
-  } catch { /* push is best-effort */ }
+    await fetch(`${WORKER_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${idToken}` }, body: JSON.stringify(body) })
+  } catch { /* push is best-effort and never blocks the action */ }
+}
+
+/** Fire-and-forget: asks the edge worker to push the other side of a claim. Client-side events must name the worker. */
+export function notifyEvent(event: PushEvent, requestId: string, workerId?: string): Promise<void> {
+  return callWorker('/push', { requestId, event, ...(workerId ? { workerId } : {}) })
+}
+
+/** Fire-and-forget: asks the edge worker to push the workers whose area and service match a new request. */
+export function notifyNewRequest(requestId: string): Promise<void> {
+  return callWorker('/push-new', { requestId })
 }

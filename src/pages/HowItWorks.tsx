@@ -5,9 +5,10 @@ export default function HowItWorks() {
     <article className="max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold">How {brand.name} works</h1>
       <ol className="list-decimal space-y-3 pl-5 text-gray-800">
-        <li><strong>Clients</strong> post a request: the service, details, area and how urgent it is.</li>
-        <li><strong>Workers</strong> who offer that service in that area see the request. The first few workers can claim it.</li>
-        <li>After a worker claims it, they can see your contact details and reach out. You agree on the job and the price directly.</li>
+        <li><strong>Clients</strong> post a request: the service, the ZIP code, details, how urgent it is and how many workers they need.</li>
+        <li><strong>Workers</strong> who offer that service within their travel distance of that ZIP see the request and can accept it with a price, or decline it.</li>
+        <li>When a worker accepts, they can see your contact details and reach out. You agree on the price and the work, then confirm the agreement in the app.</li>
+        <li>After the work, the worker marks the service as done and you confirm it. Confirmed jobs appear in both dashboards, and you can rate the worker.</li>
         <li>Payment is handled directly between you and the worker. {brand.name} never handles job payments.</li>
       </ol>
       <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">

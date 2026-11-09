@@ -10,12 +10,12 @@ import { ErrorBox, Field, btn, input } from '../../components/ui'
 import type { AppConfig } from '../../lib/types'
 
 const BOOLS: [keyof AppConfig, string][] = [
-  ['signupOpen', 'Sign-ups open'], ['maintenanceMode', 'Maintenance mode (banner for all users)'], ['revealContactOnClaim', 'Reveal contact on claim'],
+  ['signupOpen', 'Sign-ups open'], ['maintenanceMode', 'Maintenance mode (banner for all users)'], ['revealContactOnClaim', 'Reveal contact when a worker accepts'],
   ['chatEnabled', 'In-app chat enabled'], ['feesEnabled', 'Fees enabled (reserved, no payments are built)'],
 ]
 const NUMS: [keyof AppConfig, string, number, number][] = [
-  ['maxClaimsPerRequest', 'Max workers per request', 1, 10], ['requestExpiryHours', 'Request expiry (hours, max 160)', 1, 160],
-  ['maxCategoriesPerWorker', 'Max services per worker (rules cap: 5)', 1, 5], ['maxZonesPerWorker', 'Max areas per worker (rules cap: 6)', 1, 6],
+  ['maxWorkersPerRequest', 'Max workers a client can ask for (rules cap: 10)', 1, 10], ['requestExpiryHours', 'Request expiry (hours, max 160)', 1, 160],
+  ['maxCategoriesPerWorker', 'Max services per worker (rules cap: 5)', 1, 5],
   ['freeRequestsPerClient', 'Free requests per client (reserved)', 0, 1000],
 ]
 

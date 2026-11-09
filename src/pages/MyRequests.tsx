@@ -3,68 +3,113 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { getAppConfig } from '../lib/catalog'
 import { ensureThread } from '../lib/chat'
-import { closeRequest, getClaimers, getMyRequests, type Cursor } from '../lib/requests'
+import { agreeClaim, cancelClaim, closeRequest, confirmDone, getClientStats, getMyRequests, getRequestClaims, reopenClaim, type Cursor, type Stats } from '../lib/requests'
+import { formatCents } from '../lib/money'
+import { claimLabel } from '../lib/labels'
 import { friendlyError } from '../lib/errors'
 import RequestCard from '../components/RequestCard'
+import { CancelForm, StatsGrid } from '../components/ClaimBits'
 import { Empty, ErrorBox, Spinner, btn, btnGhost } from '../components/ui'
 import type { ClaimDoc, RequestDoc } from '../lib/types'
 
 export default function MyRequests() {
   const { user } = useAuth()
+  const nav = useNavigate()
   const [items, setItems] = useState<RequestDoc[]>([])
+  const [claims, setClaims] = useState<Record<string, ClaimDoc[]>>({})
   const [cursor, setCursor] = useState<Cursor>(null)
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<Stats | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [claimers, setClaimers] = useState<Record<string, ClaimDoc[]>>({})
   const [chatEnabled, setChatEnabled] = useState(false)
-  const nav = useNavigate()
+  const [cancelling, setCancelling] = useState<string | null>(null)
   useEffect(() => { getAppConfig().then((c) => setChatEnabled(c.chatEnabled)).catch(() => undefined) }, [])
 
-  const load = useCallback(async (after: Cursor, reset: boolean) => {
-    if (!user) return
-    try {
-      const page = await getMyRequests(user.uid, after)
-      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-      setCursor(page.cursor); setDone(page.done)
-    } catch (e) { setError(friendlyError(e)) } finally { setLoading(false) }
+  const apply = useCallback((page: { items: RequestDoc[]; cursor: Cursor; done: boolean }, lists: Record<string, ClaimDoc[]>, reset: boolean) => {
+    setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+    setClaims((prev) => ({ ...prev, ...lists }))
+    setCursor(page.cursor); setDone(page.done)
+  }, [])
+  const fetchPage = useCallback(async (after: Cursor) => {
+    if (!user) return null
+    const page = await getMyRequests(user.uid, after)
+    const withClaims = page.items.filter((r) => r.claimsCount > 0)
+    const lists = await Promise.all(withClaims.map((r) => getRequestClaims(r.id)))
+    return { page, lists: Object.fromEntries(withClaims.map((r, i) => [r.id, lists[i]])) as Record<string, ClaimDoc[]> }
   }, [user])
+  const run = useCallback((after: Cursor, reset: boolean) =>
+    fetchPage(after).then((r) => { if (r) apply(r.page, r.lists, reset) }).catch((e) => setError(friendlyError(e))).finally(() => setLoading(false)), [fetchPage, apply])
+  const load = (after: Cursor, reset: boolean) => { setLoading(true); setError(null); return run(after, reset) }
 
-  const go = (after: Cursor, reset: boolean) => { setLoading(true); setError(null); void load(after, reset) }
-  useEffect(() => {
-    if (!user) return
-    let active = true
-    getMyRequests(user.uid, null)
-      .then((page) => { if (active) { setItems(page.items); setCursor(page.cursor); setDone(page.done) } })
-      .catch((e) => { if (active) setError(friendlyError(e)) })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [user])
+  const reloadStats = useCallback(() => { if (user) getClientStats(user.uid).then(setStats).catch((e) => setError(friendlyError(e))) }, [user])
+  useEffect(() => { void run(null, true) }, [run])
+  useEffect(() => { reloadStats() }, [reloadStats])
+
+  async function act(fn: () => Promise<void>) {
+    setError(null)
+    try { await fn(); setCancelling(null); await load(null, true); reloadStats() } catch (e) { setError(friendlyError(e)) }
+  }
+
+  // requests posted together (several kinds of workers) are shown as one job
+  const groups: { id: string; reqs: RequestDoc[] }[] = []
+  for (const r of items) {
+    const id = r.groupId ?? r.id
+    const g = groups.find((x) => x.id === id)
+    if (g) g.reqs.push(r); else groups.push({ id, reqs: [r] })
+  }
+  for (const g of groups) g.reqs.sort((a, b) => a.id.localeCompare(b.id))
+
+  const renderRequest = (r: RequestDoc) => (
+          <RequestCard key={r.id} r={r}>
+            {(r.status === 'open' || r.status === 'filled') && <button className={btnGhost} onClick={() => act(() => closeRequest(r.id))}>Stop taking workers</button>}
+            {claims[r.id]?.map((c) => {
+              const k = `${r.id}_${c.workerId}`
+              return (
+                <div key={k} className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm">
+                  <p><Link className="font-semibold underline" to={`/worker/${c.workerId}?request=${r.id}`}>{c.workerName}</Link> &middot; Price: <strong>{formatCents(c.quotedCents)}</strong>{(c.status === 'done' || c.status === 'confirmed') && <> &middot; Final: <strong>{formatCents(c.finalCents)}</strong></>}</p>
+                  <p className="text-gray-700">{c.note}</p>
+                  <p className="mt-1 font-medium text-emerald-900">{claimLabel(c, 'client')}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {c.status === 'accepted' && !c.clientAgreed && <button className={btn} onClick={() => act(() => agreeClaim(c))}>Agree to price and work</button>}
+                    {c.status === 'done' && <button className={btn} onClick={() => act(() => confirmDone(c))}>Confirm service was done</button>}
+                    {c.status === 'done' && <button className={btnGhost} onClick={() => act(() => reopenClaim(c))}>Not done yet</button>}
+                    {c.status === 'confirmed' && <Link className={btnGhost} to={`/worker/${c.workerId}?request=${r.id}`}>Rate this worker</Link>}
+                    {c.status === 'accepted' && <button className={btnGhost} onClick={() => setCancelling(k)}>Cancel this worker</button>}
+                    {chatEnabled && c.status !== 'cancelled' && user && <button className={btnGhost} onClick={async () => { try { nav(`/chat/${await ensureThread({ requestId: r.id, workerId: c.workerId, clientId: user.uid })}`) } catch (e) { setError(friendlyError(e)) } }}>Message</button>}
+                  </div>
+                  {cancelling === k && <CancelForm onCancel={(reason) => act(() => cancelClaim(c, 'client', reason))} onClose={() => setCancelling(null)} />}
+                </div>
+              )
+            })}
+          </RequestCard>
+  )
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">My requests</h1>
-        <div className="flex gap-2"><button className={btnGhost} onClick={() => go(null, true)}>Refresh</button><Link to="/post" className={btn}>New request</Link></div>
+        <div className="flex gap-2"><button className={btnGhost} onClick={() => { void load(null, true); reloadStats() }}>Refresh</button><Link to="/post" className={btn}>New request</Link></div>
       </div>
+      <StatsGrid items={[
+        ['Requests posted', stats?.requests ?? '...'], ['Work in progress', (stats?.active ?? 0) + (stats?.waitingConfirmation ?? 0) || (stats ? 0 : '...')],
+        ['Services completed', stats?.completed ?? '...'], ['Total confirmed', stats ? formatCents(stats.totalCents) : '...'],
+      ]} />
       <ErrorBox message={error} />
       {items.length === 0 && !loading && <Empty>You have not posted a request yet.</Empty>}
       <ul className="space-y-3">
-        {items.map((r) => (
-          <RequestCard key={r.id} r={r}>
-            {r.claimsCount > 0 && <button className={btnGhost} onClick={async () => { try { setClaimers({ ...claimers, [r.id]: await getClaimers(r.id) }) } catch (e) { setError(friendlyError(e)) } }}>Who claimed?</button>}
-            {r.status === 'open' && <button className={btnGhost} onClick={async () => { try { await closeRequest(r.id); setItems(items.map((x) => (x.id === r.id ? { ...x, status: 'closed' } : x))) } catch (e) { setError(friendlyError(e)) } }}>Close request</button>}
-            {claimers[r.id]?.map((c) => (
-              <span key={c.workerId} className="flex items-center gap-2 text-sm">
-                <Link className="underline" to={`/worker/${c.workerId}?request=${r.id}`}>{c.workerName}</Link>
-                {chatEnabled && user && <button className="underline" onClick={async () => { try { nav(`/chat/${await ensureThread({ requestId: r.id, workerId: c.workerId, clientId: user.uid })}`) } catch (e) { setError(friendlyError(e)) } }}>Message</button>}
-              </span>
-            ))}
-          </RequestCard>
-        ))}
+        {groups.map((g) => (g.reqs.length > 1 || (g.reqs[0].groupSize ?? 1) > 1) ? (
+          <li key={g.id} className="space-y-2">
+            <p className="text-sm font-semibold">
+              Job with {g.reqs.reduce((n, r) => n + r.workersNeeded, 0)} workers in {g.reqs.length} groups
+              {' '}&middot; price agreed with {g.reqs.reduce((n, r) => n + (claims[r.id]?.filter((c) => c.clientAgreed && c.status !== 'cancelled').length ?? 0), 0)} of {g.reqs.reduce((n, r) => n + r.workersNeeded, 0)}
+            </p>
+            <ul className="space-y-3 border-l-2 border-emerald-200 pl-3">{g.reqs.map(renderRequest)}</ul>
+          </li>
+        ) : renderRequest(g.reqs[0]))}
       </ul>
       {loading && <Spinner />}
-      {!loading && !done && <button className={btnGhost} onClick={() => go(cursor, false)}>Load more</button>}
+      {!loading && !done && <button className={btnGhost} onClick={() => void load(cursor, false)}>Load more</button>}
     </div>
   )
 }

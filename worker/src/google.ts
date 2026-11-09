@@ -8,6 +8,8 @@ export interface Env {
   FIREBASE_APP_ID: string
   ALLOWED_ORIGINS: string
   SITE_URL: string
+  /** Max workers pushed per new request. Keep it small on the Cloudflare free plan (50 subrequests per call). Default 10. */
+  MAX_NEW_PUSH?: string
 }
 
 const SCOPES = 'https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/datastore'
@@ -68,5 +70,6 @@ export async function fsFetch(sa: ServiceAccount, url: string, init: RequestInit
   return fetch(url, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}`, 'content-type': 'application/json' } })
 }
 
-export type FsFields = Record<string, { stringValue?: string }>
+export type FsFields = Record<string, { stringValue?: string; booleanValue?: boolean }>
 export const fsString = (f: FsFields | undefined, key: string): string => f?.[key]?.stringValue ?? ''
+export const fsBool = (f: FsFields | undefined, key: string): boolean => f?.[key]?.booleanValue === true

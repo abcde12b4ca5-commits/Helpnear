@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prerender.mjs",
+    "dev": "node scripts/build-zips.mjs && vite",
+    "build": "node scripts/build-zips.mjs && tsc -b && vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
@@ -14,7 +14,8 @@
     "seed": "node scripts/seed.mjs",
     "test:worker": "vitest run tests/worker.test.ts",
     "worker:deploy": "cd worker && wrangler deploy",
-    "worker:dev": "cd worker && wrangler dev"
+    "worker:dev": "cd worker && wrangler dev",
+    "zips": "FORCE_ZIPS=1 node scripts/build-zips.mjs"
   },
   "dependencies": {
     "firebase": "^13.2.0",
@@ -41,6 +42,7 @@
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.6",
     "vitest": "^5.1.0",
-    "wrangler": "^4.158.0"
+    "wrangler": "^4.158.0",
+    "zipcodes": "^8.0.0"
   }
 }

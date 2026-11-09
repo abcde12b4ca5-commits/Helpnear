@@ -152,3 +152,95 @@ describe('POST /push', () => {
     expect((await worker.fetch(post('/push', { requestId: '../x' }, await authed()), env())).status).toBe(400)
   })
 })
+
+describe('POST /push (client-side events) and /push-new', () => {
+  const REQ = 'abcdefghij1234567890'
+  const authed = async (claims: Record<string, unknown> = {}) => ({ authorization: `Bearer ${await idToken(claims)}` })
+  const doc = (path: string, fields: Record<string, unknown>) => ({ name: `projects/proj/databases/(default)/documents/${path}`, fields })
+  const mock = (opts: { claimStatus?: string; owner?: string; log?: number } = {}) => {
+    const sent: { token: string; title: string }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'DELETE') return new Response('{}')
+      if (url.includes('securetoken@system')) return Response.json({ keys: [publicJwk] })
+      if (url.includes('oauth2.googleapis.com')) return Response.json({ access_token: 'at', expires_in: 3600 })
+      if (url.includes(`/requests/${REQ}/claims/worker9`)) return Response.json({ fields: { status: { stringValue: opts.claimStatus ?? 'confirmed' } } })
+      if (url.includes('/pushLog?')) return new Response('{}', { status: opts.log ?? 200 })
+      if (url.endsWith(`/requests/${REQ}`)) return Response.json({ fields: { clientId: { stringValue: opts.owner ?? 'user1' }, title: { stringValue: 'Clean my house' }, categoryName: { stringValue: 'Cleaning' }, status: { stringValue: 'open' }, matchKey: { stringValue: 'cleaning|9vk1' } } })
+      if (url.endsWith(':runQuery')) {
+        const body = JSON.parse(String(init?.body)) as { structuredQuery: { where: { fieldFilter: { op: string; value: { stringValue: string } } } } }
+        expect(body.structuredQuery.where.fieldFilter.op).toBe('ARRAY_CONTAINS')
+        expect(body.structuredQuery.where.fieldFilter.value.stringValue).toBe('cleaning|9vk1')
+        return Response.json([
+          { document: doc('workers/w1', { isListed: { booleanValue: true } }) },
+          { document: doc('workers/w2', { isListed: { booleanValue: false } }) },
+          { readTime: 'x' },
+        ])
+      }
+      if (url.includes('/users/') && url.includes('/tokens')) {
+        const who = url.split('/users/')[1].split('/')[0]
+        return Response.json({ documents: [doc(`users/${who}/tokens/t1`, { token: { stringValue: `tok-${who}` } })] })
+      }
+      if (url.includes('messages:send')) {
+        const m = (JSON.parse(String(init?.body)) as { message: { token: string; notification: { title: string } } }).message
+        sent.push({ token: m.token, title: m.notification.title })
+        return new Response('{}')
+      }
+      throw new Error(`unexpected fetch ${url}`)
+    }))
+    return sent
+  }
+
+  it('pushes the worker when the request owner confirms a service', async () => {
+    const sent = mock()
+    const res = await worker.fetch(post('/push', { requestId: REQ, event: 'confirmed', workerId: 'worker9' }, await authed()), env())
+    expect(res.status).toBe(200)
+    expect(sent).toEqual([{ token: 'tok-worker9', title: 'The client confirmed your service' }])
+  })
+  it('refuses a client event from someone who does not own the request', async () => {
+    mock({ owner: 'someoneelse' })
+    expect((await worker.fetch(post('/push', { requestId: REQ, event: 'confirmed', workerId: 'worker9' }, await authed()), env())).status).toBe(403)
+  })
+  it('refuses an event that does not match the stored claim status', async () => {
+    mock({ claimStatus: 'accepted' })
+    expect((await worker.fetch(post('/push', { requestId: REQ, event: 'confirmed', workerId: 'worker9' }, await authed()), env())).status).toBe(409)
+  })
+  it('rejects unknown events and missing worker ids', async () => {
+    mock()
+    expect((await worker.fetch(post('/push', { requestId: REQ, event: 'hack' }, await authed()), env())).status).toBe(400)
+    expect((await worker.fetch(post('/push', { requestId: REQ, event: 'agreed' }, await authed()), env())).status).toBe(400)
+  })
+
+  it('/push-new pushes only listed workers matching the request, never the owner', async () => {
+    const sent = mock()
+    const res = await worker.fetch(post('/push-new', { requestId: REQ }, await authed()), env())
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ sent: 1, workers: 1 })
+    expect(sent).toEqual([{ token: 'tok-w1', title: 'New request near you' }])
+  })
+  it('/push-new is owner-only and sends once per request', async () => {
+    mock({ owner: 'someoneelse' })
+    expect((await worker.fetch(post('/push-new', { requestId: REQ }, await authed()), env())).status).toBe(403)
+    const sent = mock({ log: 409 })
+    const res = await worker.fetch(post('/push-new', { requestId: REQ }, await authed()), env())
+    expect(await res.json()).toEqual({ sent: 0, reason: 'already sent' })
+    expect(sent).toEqual([])
+  })
+  it('accepts the ids of grouped requests (groupId-0) for /push-new', async () => {
+    const grouped = 'abcdefghij1234567890-1'
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes('securetoken@system')) return Response.json({ keys: [publicJwk] })
+      if (url.includes('oauth2.googleapis.com')) return Response.json({ access_token: 'at', expires_in: 3600 })
+      if (url.endsWith(`/requests/${grouped}`)) return Response.json({ fields: { clientId: { stringValue: 'user1' }, status: { stringValue: 'open' }, matchKey: { stringValue: 'cleaning|9vk1' }, title: { stringValue: 'T' }, categoryName: { stringValue: 'C' } } })
+      if (url.includes('/pushLog?')) return new Response('{}', { status: 409 })
+      throw new Error(`unexpected fetch ${url} ${init?.method}`)
+    }))
+    const res = await worker.fetch(post('/push-new', { requestId: grouped }, await authed()), env())
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ sent: 0, reason: 'already sent' })
+  })
+  it('/push-new requires a verified token', async () => {
+    mock()
+    expect((await worker.fetch(post('/push-new', { requestId: REQ }), env())).status).toBe(401)
+    expect((await worker.fetch(post('/push-new', { requestId: REQ }, await authed({ email_verified: false })), env())).status).toBe(403)
+  })
+})
