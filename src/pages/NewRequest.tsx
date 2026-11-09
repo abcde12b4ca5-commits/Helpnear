@@ -5,10 +5,13 @@ import { useAuth } from '../lib/auth'
 import { findBlockedKeyword, getAppConfig, getCategories } from '../lib/catalog'
 import { CELL_PRECISION, encodeGeohash } from '../lib/geo'
 import { useZipLookup } from '../lib/useZip'
-import { createRequests } from '../lib/requests'
+import { createRequests, getPostCooldownSeconds } from '../lib/requests'
 import { friendlyError } from '../lib/errors'
+import { auth } from '../lib/firebase'
 import { ErrorBox, Field, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { Category, ContactMethod, Urgency } from '../lib/types'
+
+const isPermissionDenied = (e: unknown) => typeof e === 'object' && e !== null && (e as { code?: string }).code === 'permission-denied'
 
 const MAX_POSITIONS = 5 // keep in sync with firestore.rules (request ids groupId-0 .. groupId-4)
 const MAX_TOTAL_WORKERS = 10
@@ -17,7 +20,7 @@ interface Position { key: number; categoryId: string; workersNeeded: number; tit
 const blankPosition = (key: number): Position => ({ key, categoryId: '', workersNeeded: 1, title: '', description: '' })
 
 export default function NewRequest() {
-  const { user, verified } = useAuth()
+  const { user, refresh } = useAuth()
   const nav = useNavigate()
   const [cats, setCats] = useState<Category[] | null>(null)
   const [maxWorkers, setMaxWorkers] = useState(5)
@@ -49,7 +52,6 @@ export default function NewRequest() {
     e.preventDefault()
     if (!user) return
     if (!zipInfo) { setError('Enter a valid US ZIP code for where the work is.'); return }
-    if (!verified) { setError('Please verify your email first (see the banner at the top).'); return }
     if (!phone.trim() && !contactEmail.trim()) { setError('Add a phone number or an email so workers can reach you.'); return }
     if (total > MAX_TOTAL_WORKERS) { setError(`You can ask for at most ${MAX_TOTAL_WORKERS} workers in one post.`); return }
     for (const [i, p] of positions.entries()) {
@@ -62,6 +64,11 @@ export default function NewRequest() {
     }
     setBusy(true); setError(null)
     try {
+      // Refresh the sign-in token first: verifying the email in another tab does not reach this page until the token is renewed.
+      await refresh().catch(() => undefined)
+      if (!auth.currentUser?.emailVerified) { setError('Please verify your email first. Open the link we sent you, then press "I have verified" in the yellow banner at the top.'); return }
+      const wait = await getPostCooldownSeconds(user.uid)
+      if (wait > 0) { setError(`Please wait ${wait} more second${wait === 1 ? '' : 's'} before posting again.`); return }
       await createRequests({
         clientId: user.uid, zip: zipInfo.zip, city: zipInfo.city, state: zipInfo.state, lat: zipInfo.lat, lng: zipInfo.lng,
         cell: encodeGeohash(zipInfo.lat, zipInfo.lng, CELL_PRECISION), urgency, budgetRange: budget.trim(),
@@ -69,7 +76,10 @@ export default function NewRequest() {
         positions: positions.map((p) => ({ categoryId: p.categoryId, categoryName: catOf(p.categoryId)?.name ?? '', workersNeeded: p.workersNeeded, title: p.title.trim(), description: p.description.trim() })),
       })
       nav('/my-requests')
-    } catch (err) { setError(friendlyError(err)) } finally { setBusy(false) }
+    } catch (err) {
+      console.error('post failed', err)
+      setError(isPermissionDenied(err) ? 'We could not post your request right now. Please try again in a minute. If it keeps happening, contact support.' : friendlyError(err))
+    } finally { setBusy(false) }
   }
 
   if (!cats) return error ? <ErrorBox message={error} /> : <Spinner />

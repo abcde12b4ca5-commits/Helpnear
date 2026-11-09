@@ -59,6 +59,15 @@ export interface NewRequestInput {
   positions: PositionInput[]
 }
 
+/** Seconds the client still has to wait before the next post (the rules allow one post per 60 seconds). 0 = can post now. */
+export async function getPostCooldownSeconds(clientId: string): Promise<number> {
+  try {
+    const snap = await getDoc(doc(db, `rate/${clientId}`))
+    const last = snap.exists() ? (snap.data().lastPostAt as Timestamp | undefined) : undefined
+    return last ? Math.max(0, Math.ceil(60 - (Date.now() - last.toMillis()) / 1000)) : 0
+  } catch { return 0 }
+}
+
 /** Posts all positions together (one request doc each, ids `${groupId}-${index}`). Returns the request ids. */
 export async function createRequests(input: NewRequestInput): Promise<string[]> {
   const config = await getAppConfig()
