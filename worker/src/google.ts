@@ -10,6 +10,10 @@ export interface Env {
   SITE_URL: string
   /** Max workers pushed per new request. Keep it small on the Cloudflare free plan (50 subrequests per call). Default 10. */
   MAX_NEW_PUSH?: string
+  /** Scheduled fair-use run: subrequest budget (free plan allows 50 per invocation). Default 40. */
+  CRON_SUBREQUEST_LIMIT?: string
+  /** Scheduled fair-use run: items handled per task per run. Default 5. */
+  CRON_MAX_ITEMS?: string
 }
 
 const SCOPES = 'https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/datastore'
@@ -70,6 +74,17 @@ export async function fsFetch(sa: ServiceAccount, url: string, init: RequestInit
   return fetch(url, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}`, 'content-type': 'application/json' } })
 }
 
-export type FsFields = Record<string, { stringValue?: string; booleanValue?: boolean }>
+export type FsFields = Record<string, { stringValue?: string; booleanValue?: boolean; integerValue?: string; doubleValue?: number; timestampValue?: string }>
 export const fsString = (f: FsFields | undefined, key: string): string => f?.[key]?.stringValue ?? ''
 export const fsBool = (f: FsFields | undefined, key: string): boolean => f?.[key]?.booleanValue === true
+export const fsNum = (f: FsFields | undefined, key: string, fallback = 0): number => {
+  const v = f?.[key]
+  if (!v) return fallback
+  if (v.integerValue !== undefined) return Number(v.integerValue)
+  return v.doubleValue ?? fallback
+}
+/** Timestamp field as epoch milliseconds (0 when missing). */
+export const fsTime = (f: FsFields | undefined, key: string): number => {
+  const t = f?.[key]?.timestampValue
+  return t ? Date.parse(t) || 0 : 0
+}

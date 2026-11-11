@@ -10,7 +10,9 @@ import {
 import {
   Timestamp,
   type DocumentData,
+  collection,
   collectionGroup,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -52,7 +54,7 @@ async function seed() {
   await env.withSecurityRulesDisabled(async (c) => {
     const db = c.firestore()
     await setDoc(doc(db, 'legal/terms'), { version: 'v1' })
-    await setDoc(doc(db, 'config/app'), { signupOpen: true, maxWorkersPerRequest: 5, revealContactOnClaim: true, chatEnabled: false })
+    await setDoc(doc(db, 'config/app'), { signupOpen: true, maxWorkersPerRequest: 5, revealContactOnClaim: true, chatEnabled: false, disputeAfterReopens: 2 })
     await setDoc(doc(db, 'categories/cleaning'), { enabled: true, disabledStates: ['NY'] })
     await setDoc(doc(db, 'categories/painting'), { enabled: true, disabledStates: [] })
     await setDoc(doc(db, 'users/client1'), { role: 'client', status: 'active' })
@@ -82,7 +84,12 @@ async function seed() {
     // r5: confirmed job
     await setDoc(doc(db, 'requests/r5'), requestDoc('r5', { claimsCount: 1, workersNeeded: 1, status: 'filled' }))
     await setDoc(doc(db, 'requests/r5/claims/w1'), claimDoc('r5', 'w1', { clientAgreed: true, status: 'confirmed', finalCents: 13000, doneAt: Timestamp.now(), confirmedAt: Timestamp.now() }))
-    for (const r of ['r2', 'r3', 'r4', 'r5']) await setDoc(doc(db, `requests/${r}/private/contact`), { phone: '555', email: '', preferredContactMethod: 'phone' })
+    // r6: done after the client already sent it back once. r7: disputed, waiting for an admin
+    await setDoc(doc(db, 'requests/r6'), requestDoc('r6', { claimsCount: 1, workersNeeded: 1, status: 'filled' }))
+    await setDoc(doc(db, 'requests/r6/claims/w1'), claimDoc('r6', 'w1', { clientAgreed: true, status: 'done', finalCents: 13000, doneAt: Timestamp.now(), reopenCount: 1 }))
+    await setDoc(doc(db, 'requests/r7'), requestDoc('r7', { claimsCount: 1, workersNeeded: 1, status: 'filled' }))
+    await setDoc(doc(db, 'requests/r7/claims/w1'), claimDoc('r7', 'w1', { clientAgreed: true, status: 'disputed', finalCents: 13000, doneAt: Timestamp.now(), disputeBy: 'client', disputeReason: 'Not finished', disputedAt: Timestamp.now() }))
+    for (const r of ['r2', 'r3', 'r4', 'r5', 'r6', 'r7']) await setDoc(doc(db, `requests/${r}/private/contact`), { phone: '555', email: '', preferredContactMethod: 'phone' })
   })
 }
 
@@ -138,8 +145,9 @@ async function cancel(uid: string, requestId: string, workerId: string) {
   return runTransaction(db, async (tx) => {
     const rref = doc(db, `requests/${requestId}`)
     const r = (await tx.get(rref)).data() as { claimsCount: number; status: string }
+    const agreed = ((await tx.get(doc(db, `requests/${requestId}/claims/${workerId}`))).data() as { clientAgreed: boolean }).clientAgreed === true
     tx.update(doc(db, `requests/${requestId}/claims/${workerId}`), {
-      status: 'cancelled', cancelledBy: uid === workerId ? 'worker' : 'client', cancelReason: 'Plans changed', cancelledAt: serverTimestamp(),
+      status: 'cancelled', cancelledBy: uid === workerId ? 'worker' : 'client', cancelReason: 'Plans changed', cancelledAt: serverTimestamp(), cancelWasLate: agreed,
     })
     tx.update(rref, { claimsCount: r.claimsCount - 1, status: r.status === 'filled' ? 'open' : r.status, lastWorkerId: workerId })
   })
@@ -313,15 +321,17 @@ describe('job lifecycle (agree, done, confirm, cancel)', () => {
   it('lets only the owner confirm a done job, or send it back', async () => {
     await assertFails(updateDoc(claimRef('client2', 'r4', 'w1'), { status: 'confirmed', confirmedAt: serverTimestamp() }))
     await assertSucceeds(updateDoc(claimRef('client1', 'r4', 'w1'), { status: 'confirmed', confirmedAt: serverTimestamp() }))
-    await assertFails(updateDoc(claimRef('client1', 'r4', 'w1'), { status: 'accepted' })) // confirmed jobs are final
+    await assertFails(updateDoc(claimRef('client1', 'r4', 'w1'), { status: 'accepted', reopenCount: 1 })) // confirmed jobs are final
   })
   it('does not let a confirmed job be reopened, re-marked or cancelled', async () => {
-    await assertFails(updateDoc(claimRef('client1', 'r5', 'w1'), { status: 'accepted' }))
+    await assertFails(updateDoc(claimRef('client1', 'r5', 'w1'), { status: 'accepted', reopenCount: 1 }))
     await assertFails(updateDoc(claimRef('w1', 'r5', 'w1'), { status: 'done', finalCents: 1, doneAt: serverTimestamp() }))
     await assertFails(cancel('w1', 'r5', 'w1'))
   })
-  it('lets the client send a done job back to accepted', async () => {
-    await assertSucceeds(updateDoc(claimRef('client1', 'r4', 'w1'), { status: 'accepted' }))
+  it('lets the client send a done job back to accepted, counting it', async () => {
+    await assertSucceeds(updateDoc(claimRef('client1', 'r4', 'w1'), { status: 'accepted', reopenCount: 1 }))
+    await assertFails(updateDoc(claimRef('client1', 'r4', 'w1'), { status: 'accepted' })) // the counter must go up
+    await assertFails(updateDoc(claimRef('w1', 'r4', 'w1'), { status: 'accepted', reopenCount: 1 })) // only the client
   })
   it('lets either side cancel an accepted job and frees the worker slot', async () => {
     await assertSucceeds(cancel('w1', 'r3', 'w1'))
@@ -331,12 +341,105 @@ describe('job lifecycle (agree, done, confirm, cancel)', () => {
   })
   it('blocks cancelling without freeing the slot, or by a stranger', async () => {
     const db = ctx('w1').firestore()
-    await assertFails(updateDoc(doc(db, 'requests/r2/claims/w1'), { status: 'cancelled', cancelledBy: 'worker', cancelReason: 'Plans changed', cancelledAt: serverTimestamp() }))
+    await assertFails(updateDoc(doc(db, 'requests/r2/claims/w1'), { status: 'cancelled', cancelledBy: 'worker', cancelReason: 'Plans changed', cancelledAt: serverTimestamp(), cancelWasLate: false }))
     await assertFails(cancel('client2', 'r2', 'w1'))
     await assertFails(cancel('w2', 'r2', 'w1'))
   })
   it('blocks forging the counter for a worker whose claim is not cancelled', async () => {
     await assertFails(updateDoc(doc(ctx('client1').firestore(), 'requests/r2'), { claimsCount: 0, status: 'open', lastWorkerId: 'w1' }))
+  })
+})
+
+describe('fair use: late cancellations, disputes, freezes, strikes', () => {
+  const lateCancel = (uid: string, requestId: string, flag: boolean) => {
+    const db = ctx(uid).firestore()
+    return runTransaction(db, async (tx) => {
+      const rref = doc(db, `requests/${requestId}`)
+      const r = (await tx.get(rref)).data() as { claimsCount: number; status: string }
+      tx.update(doc(db, `requests/${requestId}/claims/w1`), { status: 'cancelled', cancelledBy: uid === 'w1' ? 'worker' : 'client', cancelReason: 'Plans changed', cancelledAt: serverTimestamp(), cancelWasLate: flag })
+      tx.update(rref, { claimsCount: r.claimsCount - 1, status: r.status === 'filled' ? 'open' : r.status, lastWorkerId: 'w1' })
+    })
+  }
+  it('records honestly whether a cancellation came after the price was agreed', async () => {
+    await assertFails(lateCancel('w1', 'r3', false)) // r3 is agreed, so it must be flagged late
+    await assertSucceeds(lateCancel('w1', 'r3', true))
+    await assertFails(lateCancel('client1', 'r2', true)) // r2 is not agreed yet, so it cannot be flagged late
+    await assertSucceeds(lateCancel('client1', 'r2', false))
+  })
+
+  it('turns the second "not done yet" into a dispute (threshold from config)', async () => {
+    const dispute = { status: 'disputed', reopenCount: 2, disputeBy: 'client', disputeReason: 'Said not done twice', disputedAt: serverTimestamp() }
+    await assertFails(updateDoc(claimRef('client1', 'r6', 'w1'), { status: 'accepted', reopenCount: 2 })) // at the limit it must be a dispute
+    await assertFails(updateDoc(claimRef('client1', 'r4', 'w1'), dispute)) // first time on r4: too early to dispute this way
+    await assertSucceeds(updateDoc(claimRef('client1', 'r6', 'w1'), dispute))
+  })
+  it('lets either side raise a dispute once the price is agreed, but nobody else', async () => {
+    const d = (by: string) => ({ status: 'disputed', disputeBy: by, disputeReason: 'Client stopped answering', disputedAt: serverTimestamp() })
+    await assertFails(updateDoc(claimRef('w1', 'r2', 'w1'), d('worker'))) // not agreed yet: cancel instead
+    await assertSucceeds(updateDoc(claimRef('w1', 'r3', 'w1'), d('worker')))
+    await assertSucceeds(updateDoc(claimRef('client1', 'r4', 'w1'), d('client')))
+    await assertFails(updateDoc(claimRef('client2', 'r3', 'w1'), d('client')))
+    await assertFails(updateDoc(claimRef('w1', 'r3', 'w1'), d('client'))) // cannot pretend to be the other side
+  })
+
+  it('blocks a frozen client from posting and a frozen worker from accepting; lifts when the time passes', async () => {
+    await env.withSecurityRulesDisabled(async (c) => {
+      await updateDoc(doc(c.firestore(), 'users/client1'), { frozenUntil: hours(24) })
+      await updateDoc(doc(c.firestore(), 'users/w1'), { frozenUntil: hours(24) })
+    })
+    await assertFails(post('client1'))
+    await assertFails(accept('w1'))
+    await assertSucceeds(accept('w2')) // others are not affected
+    await env.withSecurityRulesDisabled(async (c) => { await updateDoc(doc(c.firestore(), 'users/client1'), { frozenUntil: Timestamp.fromMillis(Date.now() - 1000) }) })
+    await assertSucceeds(post('client1'))
+  })
+  it('blocks a suspended worker from accepting', async () => {
+    await env.withSecurityRulesDisabled(async (c) => { await updateDoc(doc(c.firestore(), 'users/w1'), { status: 'suspended' }) })
+    await assertFails(accept('w1'))
+  })
+  it('lets only an admin freeze or flag a user; users cannot lift it themselves', async () => {
+    const freeze = { frozenUntil: hours(48), frozenReason: 'Too many late cancellations' }
+    await assertSucceeds(updateDoc(doc(ctx('admin1').firestore(), 'users/client1'), freeze))
+    await assertFails(updateDoc(doc(ctx('client2').firestore(), 'users/client1'), freeze))
+    await assertFails(updateDoc(doc(ctx('client1').firestore(), 'users/client1'), { frozenUntil: Timestamp.fromMillis(Date.now() - 1000) }))
+    await assertSucceeds(updateDoc(doc(ctx('admin1').firestore(), 'users/client1'), { needsReview: true, reviewReason: 'x' }))
+  })
+
+  it('lets an admin write strikes and remove them; users only read their own', async () => {
+    const strike = (userId: string, by = 'admin') => ({ userId, role: 'worker', type: 'warning', requestId: '', note: 'Rude message', createdAt: serverTimestamp(), by })
+    await assertSucceeds(setDoc(doc(ctx('admin1').firestore(), 'strikes/s1'), strike('w1')))
+    await assertFails(setDoc(doc(ctx('w1').firestore(), 'strikes/s2'), strike('w1'))) // not even about themselves
+    await assertFails(setDoc(doc(ctx('admin1').firestore(), 'strikes/s3'), strike('w1', 'system'))) // only the worker service account is 'system'
+    await assertSucceeds(getDocs(query(collection(ctx('w1').firestore(), 'strikes'), where('userId', '==', 'w1'))))
+    await assertFails(getDocs(query(collection(ctx('w2').firestore(), 'strikes'), where('userId', '==', 'w1'))))
+    await assertSucceeds(deleteDoc(doc(ctx('admin1').firestore(), 'strikes/s1')))
+    await assertFails(deleteDoc(doc(ctx('w1').firestore(), 'strikes/s1')))
+  })
+
+  it('lets an admin decide a dispute (confirm, send back, cancel and free the slot) and nobody else', async () => {
+    await assertSucceeds(updateDoc(claimRef('admin1', 'r7', 'w1'), { status: 'confirmed', finalCents: 12000, confirmedAt: serverTimestamp(), resolution: 'Photos show it was done' }))
+    await assertFails(updateDoc(claimRef('admin1', 'r7', 'w1'), { status: 'accepted', resolution: 'Work resumes' })) // a confirmed job cannot be resolved again
+    await seed()
+    await assertSucceeds(updateDoc(claimRef('admin1', 'r7', 'w1'), { status: 'accepted', resolution: 'Work resumes' }))
+    await seed()
+    const db = ctx('admin1').firestore()
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      const rref = doc(db, 'requests/r7')
+      const r = (await tx.get(rref)).data() as { claimsCount: number; status: string }
+      tx.update(doc(db, 'requests/r7/claims/w1'), { status: 'cancelled', cancelledBy: 'admin', cancelReason: 'Cancelled by an admin', cancelledAt: serverTimestamp(), resolution: 'Neither side answered' })
+      tx.update(rref, { claimsCount: r.claimsCount - 1, status: r.status === 'filled' ? 'open' : r.status, lastWorkerId: 'w1' })
+    }))
+    await seed()
+    await assertFails(updateDoc(claimRef('client1', 'r7', 'w1'), { status: 'confirmed', finalCents: 1, confirmedAt: serverTimestamp(), resolution: 'x' }))
+    await assertFails(updateDoc(claimRef('w1', 'r7', 'w1'), { status: 'accepted', resolution: 'x' }))
+  })
+  it('lets an admin remove a confirmed job from earnings (fraud), and nobody else', async () => {
+    await assertFails(updateDoc(claimRef('w1', 'r5', 'w1'), { status: 'voided', resolution: 'x' }))
+    await assertSucceeds(updateDoc(claimRef('admin1', 'r5', 'w1'), { status: 'voided', resolution: 'Removed by an admin (fraud)' }))
+  })
+  it('lets an admin list disputes across all requests', async () => {
+    await assertSucceeds(getDocs(query(collectionGroup(ctx('admin1').firestore(), 'claims'), where('status', '==', 'disputed'))))
+    await assertFails(getDocs(query(collectionGroup(ctx('w2').firestore(), 'claims'), where('status', '==', 'disputed'))))
   })
 })
 

@@ -43,3 +43,9 @@
 - ZIP data comes from an npm package and is not verified against USPS or Census. ZIP codes change; refresh it periodically.
 - Licensing: the platform only introduces people, but regulated trades (electrical, plumbing, HVAC and similar) are still locked off in the admin as in the original project. I am not a lawyer; have an attorney confirm before you enable anything regulated or launch in a new state.
 - Not built: payments, disputes handled by admins (use reports), email notifications, request photos.
+
+## Update: cancelling and fair use
+- Clients can **cancel a whole request** (all workers who have not finished are released and told) or just stop taking more workers.
+- Strikes, freezes, automatic release / confirmation and disputes: see `docs/discipline.md`. All numbers are in Admin > Settings.
+- Extra indexes (collection group `claims`): `status, createdAt asc` / `status, doneAt asc` / `status, cancelledAt asc`. Full list of indexes: `firebase/firestore.indexes.json` (`firebase deploy --only firestore:indexes`).
+- Redeploy the edge worker (it now has a cron trigger and `/run-policy`).

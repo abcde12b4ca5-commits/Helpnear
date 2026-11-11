@@ -16,6 +16,17 @@ export const DEFAULT_CONFIG: AppConfig = {
   freeRequestsPerClient: 0,
   feesEnabled: false,
   promotionFeeUsd: null,
+  autoRulesEnabled: true,
+  penaltyWindowDays: 30,
+  clientFreezeAt: 3,
+  clientReviewAt: 5,
+  workerFreezeAt: 2,
+  workerReviewAt: 4,
+  freezeDays: 7,
+  noResponseHours: 48,
+  noResponseStrikes: true,
+  autoConfirmDays: 7,
+  disputeAfterReopens: 2,
 }
 
 export function getAppConfig(): Promise<AppConfig> {

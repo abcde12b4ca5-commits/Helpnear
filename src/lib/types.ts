@@ -15,6 +15,18 @@ export interface AppConfig {
   freeRequestsPerClient: number
   feesEnabled: boolean
   promotionFeeUsd: number | null
+  /** Fair-use rules. All editable in Admin > Settings. The scheduled edge worker applies them (see docs/discipline.md). */
+  autoRulesEnabled: boolean
+  penaltyWindowDays: number
+  clientFreezeAt: number
+  clientReviewAt: number
+  workerFreezeAt: number
+  workerReviewAt: number
+  freezeDays: number
+  noResponseHours: number
+  noResponseStrikes: boolean
+  autoConfirmDays: number
+  disputeAfterReopens: number
 }
 
 export interface Category {
@@ -44,6 +56,12 @@ export interface UserDoc {
   email: string
   termsVersion: string
   status: 'active' | 'suspended'
+  /** Set by an admin or the scheduled worker: cannot post (client) or accept (worker) until this moment. */
+  frozenUntil?: Timestamp | null
+  frozenReason?: string
+  /** Set by the scheduled worker when strikes reach the review threshold. An admin clears it. */
+  needsReview?: boolean
+  reviewReason?: string
 }
 
 export interface WorkerDoc {
@@ -101,7 +119,7 @@ export interface ContactDoc {
   preferredContactMethod: ContactMethod
 }
 
-export type ClaimStatus = 'accepted' | 'done' | 'confirmed' | 'cancelled'
+export type ClaimStatus = 'accepted' | 'done' | 'confirmed' | 'cancelled' | 'disputed' | 'voided'
 
 export interface ClaimDoc {
   workerId: string
@@ -120,9 +138,17 @@ export interface ClaimDoc {
   finalCents?: number
   doneAt?: Timestamp | null
   confirmedAt?: Timestamp | null
-  cancelledBy?: 'worker' | 'client'
+  cancelledBy?: 'worker' | 'client' | 'admin' | 'system'
   cancelReason?: string
   cancelledAt?: Timestamp | null
+  /** True when the job was cancelled after the client had agreed to the price (counts as a strike). */
+  cancelWasLate?: boolean
+  reopenCount?: number
+  autoConfirmed?: boolean
+  disputeBy?: 'worker' | 'client'
+  disputeReason?: string
+  disputedAt?: Timestamp | null
+  resolution?: string
 }
 
 export interface ReviewDoc {
@@ -135,7 +161,7 @@ export interface ReviewDoc {
   createdAt: Timestamp | null
 }
 
-export type NotificationType = 'claim' | 'agreed' | 'done' | 'confirmed' | 'reopened' | 'cancelled_by_worker' | 'cancelled_by_client'
+export type NotificationType = 'system' | 'claim' | 'agreed' | 'done' | 'confirmed' | 'reopened' | 'cancelled_by_worker' | 'cancelled_by_client'
 
 export interface NotificationDoc {
   id: string
@@ -160,4 +186,17 @@ export interface ThreadDoc {
   clientId: string
   blockedBy: string
   reported: boolean
+}
+
+export type StrikeType = 'late_cancel' | 'no_response' | 'conduct' | 'warning' | 'dispute'
+
+export interface StrikeDoc {
+  id: string
+  userId: string
+  role: Role
+  type: StrikeType
+  requestId: string
+  note: string
+  createdAt: Timestamp | null
+  by: 'admin' | 'system'
 }

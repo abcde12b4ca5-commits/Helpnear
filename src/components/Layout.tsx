@@ -31,6 +31,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user && profile) getUnreadCount(user.uid).then(setUnread).catch(() => undefined)
   }, [user, profile])
+  const [mountedAt] = useState(() => Date.now())
   useEffect(() => { getAppConfig().then((c) => setMaintenance(c.maintenanceMode)).catch(() => undefined) }, [])
   const link = ({ isActive }: { isActive: boolean }) => `px-2 py-1 text-sm ${isActive ? 'font-semibold text-emerald-800' : 'text-gray-700 hover:text-emerald-800'}`
 
@@ -59,6 +60,11 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
       </header>
       <VerifyBanner />
+      {profile?.frozenUntil && profile.frozenUntil.toMillis() > mountedAt && (
+        <div className="bg-red-50 px-4 py-2 text-center text-sm text-red-900" role="alert">
+          Your account is limited until {profile.frozenUntil.toDate().toLocaleDateString('en-US')}{profile.frozenReason ? `: ${profile.frozenReason}` : '.'} You cannot {profile.role === 'worker' ? 'accept new requests' : 'post new requests'} until then. Contact support if you think this is a mistake.
+        </div>
+      )}
       {maintenance && <div className="bg-red-50 px-4 py-2 text-center text-sm text-red-900" role="alert">{brand.name} is in maintenance mode. Some actions may be unavailable.</div>}
       <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">{children}</main>
       <footer className="border-t bg-white px-4 py-6 text-center text-xs text-gray-600">

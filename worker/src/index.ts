@@ -4,6 +4,7 @@
 //  POST /push-new  : after a client posts a request, push the workers whose service and area match it.
 // Secrets: FIREBASE_SA_JSON, TURNSTILE_SECRET. See worker/README.md.
 import { signJwt } from './jwt'
+import { runPolicy } from './policy'
 import { docsUrl, fsBool, fsFetch, fsString, getAccessToken, parseServiceAccount, verifyIdToken, type Env, type FsFields, type ServiceAccount } from './google'
 
 const APPCHECK_AUDIENCE = 'https://firebaseappcheck.googleapis.com/google.firebase.appcheck.v1.TokenExchangeService'
@@ -181,7 +182,22 @@ async function handlePushNew(req: Request, env: Env, cors: Record<string, string
   return json({ sent, workers }, 200, cors)
 }
 
+/** Admin-only: runs the fair-use rules now (the same code the schedule runs), so an admin can check it works. */
+async function handleRunPolicy(req: Request, env: Env, cors: Record<string, string>): Promise<Response> {
+  const auth = req.headers.get('authorization') ?? ''
+  if (!auth.startsWith('Bearer ')) return json({ error: 'unauthorized' }, 401, cors)
+  let user
+  try { user = await verifyIdToken(auth.slice(7), env.FIREBASE_PROJECT_ID) } catch { return json({ error: 'unauthorized' }, 401, cors) }
+  const sa = parseServiceAccount(env)
+  const admin = await fsFetch(sa, `${docsUrl(env.FIREBASE_PROJECT_ID)}/admins/${user.uid}`)
+  if (!admin.ok) return json({ error: 'admins only' }, 403, cors)
+  return json(await runPolicy(env), 200, cors)
+}
+
 export default {
+  async scheduled(_event: unknown, env: Env, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<void> {
+    ctx.waitUntil(runPolicy(env).then((r) => console.log('fair-use run', JSON.stringify(r))).catch((e) => console.error('fair-use run failed', e instanceof Error ? e.message : e)))
+  },
   async fetch(req: Request, env: Env): Promise<Response> {
     const cors = corsHeaders(req.headers.get('origin'), env)
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
@@ -191,6 +207,7 @@ export default {
       if (path === '/appcheck') return await handleAppCheck(req, env, cors)
       if (path === '/push') return await handlePush(req, env, cors)
       if (path === '/push-new') return await handlePushNew(req, env, cors)
+      if (path === '/run-policy') return await handleRunPolicy(req, env, cors)
       return json({ error: 'not found' }, 404, cors)
     } catch (e) {
       console.error('worker error', e instanceof Error ? e.message : e)

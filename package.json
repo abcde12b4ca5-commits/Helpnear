@@ -12,7 +12,7 @@
     "emulators": "firebase emulators:start --only auth,firestore",
     "test:rules": "firebase emulators:exec --only firestore --project demo-helpnear \"vitest run\"",
     "seed": "node scripts/seed.mjs",
-    "test:worker": "vitest run tests/worker.test.ts",
+    "test:worker": "vitest run tests/worker.test.ts tests/policy.test.ts",
     "worker:deploy": "cd worker && wrangler deploy",
     "worker:dev": "cd worker && wrangler dev",
     "zips": "FORCE_ZIPS=1 node scripts/build-zips.mjs"

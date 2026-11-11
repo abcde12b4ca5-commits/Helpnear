@@ -17,6 +17,7 @@ export function friendlyError(e: unknown): string {
       case 'auth/account-exists-with-different-credential': return 'An account with this email already exists. Sign in with your email and password.'
       case 'auth/network-request-failed': return 'Network error. Check your connection and try again.'
       case 'permission-denied': return 'Not allowed. Check that your email is verified, wait a minute between posts, and try again.'
+      case 'failed-precondition': return 'This part of the site is still being set up. Please try again in a few minutes.'
       case 'resource-exhausted': return 'The service is busy right now. Please try again later.'
       case 'unavailable': return 'Service temporarily unavailable. Please try again.'
       default: return 'Something went wrong. Please try again.'

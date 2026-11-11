@@ -3,12 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { getAppConfig } from '../lib/catalog'
 import { ensureThread } from '../lib/chat'
-import { agreeClaim, cancelClaim, closeRequest, confirmDone, getClientStats, getMyRequests, getRequestClaims, reopenClaim, type Cursor, type Stats } from '../lib/requests'
+import { agreeClaim, cancelClaim, cancelRequest, closeRequest, confirmDone, getClientStats, getMyRequests, getRequestClaims, openDispute, reopenClaim, type Cursor, type Stats } from '../lib/requests'
 import { formatCents } from '../lib/money'
 import { claimLabel } from '../lib/labels'
 import { friendlyError } from '../lib/errors'
 import RequestCard from '../components/RequestCard'
-import { CancelForm, StatsGrid } from '../components/ClaimBits'
+import { CancelForm, DisputeForm, StatsGrid, StrikeNotice } from '../components/ClaimBits'
 import { Empty, ErrorBox, Spinner, btn, btnGhost } from '../components/ui'
 import type { ClaimDoc, RequestDoc } from '../lib/types'
 
@@ -21,9 +21,11 @@ export default function MyRequests() {
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<Stats | null>(null)
+  const [statsFailed, setStatsFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [chatEnabled, setChatEnabled] = useState(false)
   const [cancelling, setCancelling] = useState<string | null>(null)
+  const [disputing, setDisputing] = useState<string | null>(null)
   useEffect(() => { getAppConfig().then((c) => setChatEnabled(c.chatEnabled)).catch(() => undefined) }, [])
 
   const apply = useCallback((page: { items: RequestDoc[]; cursor: Cursor; done: boolean }, lists: Record<string, ClaimDoc[]>, reset: boolean) => {
@@ -42,7 +44,7 @@ export default function MyRequests() {
     fetchPage(after).then((r) => { if (r) apply(r.page, r.lists, reset) }).catch((e) => setError(friendlyError(e))).finally(() => setLoading(false)), [fetchPage, apply])
   const load = (after: Cursor, reset: boolean) => { setLoading(true); setError(null); return run(after, reset) }
 
-  const reloadStats = useCallback(() => { if (user) getClientStats(user.uid).then(setStats).catch((e) => setError(friendlyError(e))) }, [user])
+  const reloadStats = useCallback(() => { if (user) getClientStats(user.uid).then(setStats).catch((e) => { console.error('stats failed', e); setStatsFailed(true) }) }, [user])
   useEffect(() => { void run(null, true) }, [run])
   useEffect(() => { reloadStats() }, [reloadStats])
 
@@ -51,6 +53,7 @@ export default function MyRequests() {
     try { await fn(); setCancelling(null); await load(null, true); reloadStats() } catch (e) { setError(friendlyError(e)) }
   }
 
+  const dots = statsFailed ? '-' : '...'
   // requests posted together (several kinds of workers) are shown as one job
   const groups: { id: string; reqs: RequestDoc[] }[] = []
   for (const r of items) {
@@ -62,7 +65,14 @@ export default function MyRequests() {
 
   const renderRequest = (r: RequestDoc) => (
           <RequestCard key={r.id} r={r}>
-            {(r.status === 'open' || r.status === 'filled') && <button className={btnGhost} onClick={() => act(() => closeRequest(r.id))}>Stop taking workers</button>}
+            {(r.status === 'open' || r.status === 'filled') && <button className={btnGhost} onClick={() => act(() => closeRequest(r.id))}>Stop taking more workers</button>}
+            {(r.status === 'open' || r.status === 'filled') && <button className={btnGhost} onClick={() => setCancelling(`req:${r.id}`)}>Cancel request</button>}
+            {cancelling === `req:${r.id}` && (
+              <div className="w-full">
+                <p className="text-xs text-gray-700">This cancels the request and every worker who has not finished yet. Workers are told. Please cancel only when you really do not need the work: repeated late cancellations can limit your account.</p>
+                <CancelForm onCancel={(reason) => act(() => cancelRequest(r.id, claims[r.id] ?? [], reason))} onClose={() => setCancelling(null)} />
+              </div>
+            )}
             {claims[r.id]?.map((c) => {
               const k = `${r.id}_${c.workerId}`
               return (
@@ -73,11 +83,13 @@ export default function MyRequests() {
                   <div className="mt-2 flex flex-wrap gap-2">
                     {c.status === 'accepted' && !c.clientAgreed && <button className={btn} onClick={() => act(() => agreeClaim(c))}>Agree to price and work</button>}
                     {c.status === 'done' && <button className={btn} onClick={() => act(() => confirmDone(c))}>Confirm service was done</button>}
-                    {c.status === 'done' && <button className={btnGhost} onClick={() => act(() => reopenClaim(c))}>Not done yet</button>}
+                    {c.status === 'done' && <button className={btnGhost} onClick={() => act(async () => { await reopenClaim(c) })}>Not done yet</button>}
                     {c.status === 'confirmed' && <Link className={btnGhost} to={`/worker/${c.workerId}?request=${r.id}`}>Rate this worker</Link>}
                     {c.status === 'accepted' && <button className={btnGhost} onClick={() => setCancelling(k)}>Cancel this worker</button>}
+                    {((c.status === 'accepted' && c.clientAgreed) || c.status === 'done') && <button className={btnGhost} onClick={() => setDisputing(k)}>Report a problem</button>}
                     {chatEnabled && c.status !== 'cancelled' && user && <button className={btnGhost} onClick={async () => { try { nav(`/chat/${await ensureThread({ requestId: r.id, workerId: c.workerId, clientId: user.uid })}`) } catch (e) { setError(friendlyError(e)) } }}>Message</button>}
                   </div>
+                  {disputing === k && user && <DisputeForm onSubmit={(reason) => act(async () => { await openDispute(c, 'client', reason); setDisputing(null) })} onClose={() => setDisputing(null)} />}
                   {cancelling === k && <CancelForm onCancel={(reason) => act(() => cancelClaim(c, 'client', reason))} onClose={() => setCancelling(null)} />}
                 </div>
               )
@@ -92,9 +104,10 @@ export default function MyRequests() {
         <div className="flex gap-2"><button className={btnGhost} onClick={() => { void load(null, true); reloadStats() }}>Refresh</button><Link to="/post" className={btn}>New request</Link></div>
       </div>
       <StatsGrid items={[
-        ['Requests posted', stats?.requests ?? '...'], ['Work in progress', (stats?.active ?? 0) + (stats?.waitingConfirmation ?? 0) || (stats ? 0 : '...')],
-        ['Services completed', stats?.completed ?? '...'], ['Total confirmed', stats ? formatCents(stats.totalCents) : '...'],
+        ['Requests posted', stats?.requests ?? dots], ['Work in progress', stats ? stats.active + stats.waitingConfirmation : dots],
+        ['Services completed', stats?.completed ?? dots], ['Total confirmed', stats ? formatCents(stats.totalCents) : dots],
       ]} />
+      {user && <StrikeNotice uid={user.uid} role="client" />}
       <ErrorBox message={error} />
       {items.length === 0 && !loading && <Empty>You have not posted a request yet.</Empty>}
       <ul className="space-y-3">

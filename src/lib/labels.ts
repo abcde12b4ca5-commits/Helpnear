@@ -8,6 +8,8 @@ export function claimLabel(c: ClaimDoc, viewer: 'worker' | 'client'): string {
       return viewer === 'client' ? 'Price agreed. Work in progress.' : 'Price agreed. Do the work, then mark it done.'
     case 'done': return viewer === 'client' ? 'Worker says the service is done. Please confirm.' : 'Marked done. Waiting for the client to confirm.'
     case 'confirmed': return 'Service done and confirmed.'
-    case 'cancelled': return `Cancelled by the ${c.cancelledBy ?? 'other side'}${c.cancelReason ? `: ${c.cancelReason}` : ''}`
+    case 'cancelled': return `Cancelled by ${c.cancelledBy === 'system' ? 'the system' : `the ${c.cancelledBy ?? 'other side'}`}${c.cancelReason ? `: ${c.cancelReason}` : ''}`
+    case 'disputed': return 'Under admin review. An admin will decide and both sides are told.'
+    case 'voided': return 'Removed by an admin.'
   }
 }

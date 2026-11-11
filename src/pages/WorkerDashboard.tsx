@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { getAppConfig } from '../lib/catalog'
 import { ensureThread } from '../lib/chat'
-import { cancelClaim, editQuote, getContact, getWorkerClaims, getWorkerStats, markDone, type Cursor, type Stats } from '../lib/requests'
+import { cancelClaim, editQuote, getContact, getWorkerClaims, getWorkerStats, markDone, openDispute, type Cursor, type Stats } from '../lib/requests'
 import { dollarsToCents, formatCents } from '../lib/money'
 import { claimLabel } from '../lib/labels'
 import { friendlyError } from '../lib/errors'
 import ReportButton from '../components/ReportButton'
-import { CancelForm, StatsGrid } from '../components/ClaimBits'
+import { CancelForm, DisputeForm, StatsGrid, StrikeNotice } from '../components/ClaimBits'
 import { Empty, ErrorBox, Field, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { ClaimDoc, ClaimStatus, ContactDoc } from '../lib/types'
 
-const TABS: [string, ClaimStatus | null][] = [['All', null], ['In progress', 'accepted'], ['Waiting for client', 'done'], ['Completed', 'confirmed'], ['Cancelled', 'cancelled']]
+const TABS: [string, ClaimStatus | null][] = [['All', null], ['In progress', 'accepted'], ['Waiting for client', 'done'], ['Completed', 'confirmed'], ['Disputed', 'disputed'], ['Cancelled', 'cancelled']]
 
 export default function WorkerDashboard() {
   const { user } = useAuth()
@@ -23,10 +23,11 @@ export default function WorkerDashboard() {
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<Stats | null>(null)
+  const [statsFailed, setStatsFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [contacts, setContacts] = useState<Record<string, ContactDoc>>({})
   const [chatEnabled, setChatEnabled] = useState(false)
-  const [panel, setPanel] = useState<{ key: string; kind: 'quote' | 'done' | 'cancel' } | null>(null)
+  const [panel, setPanel] = useState<{ key: string; kind: 'quote' | 'done' | 'cancel' | 'dispute' } | null>(null)
   const [price, setPrice] = useState('')
   const [note, setNote] = useState('')
 
@@ -42,15 +43,16 @@ export default function WorkerDashboard() {
   }, [user, apply])
   const load = (status: ClaimStatus | null, after: Cursor, reset: boolean) => { setLoading(true); setError(null); void run(status, after, reset) }
 
-  const reloadStats = useCallback(() => { if (user) getWorkerStats(user.uid).then(setStats).catch((e) => setError(friendlyError(e))) }, [user])
+  const reloadStats = useCallback(() => { if (user) getWorkerStats(user.uid).then(setStats).catch((e) => { console.error('stats failed', e); setStatsFailed(true) }) }, [user])
   useEffect(() => { void run(tab, null, true) }, [run, tab])
   useEffect(() => { reloadStats() }, [reloadStats])
 
+  const dots = statsFailed ? '-' : '...'
   const key = (c: ClaimDoc) => c.requestId
   const refresh = () => { setPanel(null); void load(tab, null, true); reloadStats() }
   async function act(fn: () => Promise<void>) { setError(null); try { await fn(); refresh() } catch (e) { setError(friendlyError(e)) } }
 
-  function open(c: ClaimDoc, kind: 'quote' | 'done' | 'cancel') {
+  function open(c: ClaimDoc, kind: 'quote' | 'done' | 'cancel' | 'dispute') {
     setPanel({ key: key(c), kind }); setNote(c.note)
     setPrice((c.quotedCents / 100).toString())
   }
@@ -76,8 +78,8 @@ export default function WorkerDashboard() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">My jobs</h1>
       <StatsGrid items={[
-        ['In progress', stats?.active ?? '...'], ['Waiting for client', stats?.waitingConfirmation ?? '...'],
-        ['Completed jobs', stats?.completed ?? '...'], ['Total earned', stats ? formatCents(stats.totalCents) : '...'],
+        ['In progress', stats?.active ?? dots], ['Waiting for client', stats?.waitingConfirmation ?? dots],
+        ['Completed jobs', stats?.completed ?? dots], ['Total earned', stats ? formatCents(stats.totalCents) : dots],
       ]} />
       <p className="text-xs text-gray-600">Earnings count only jobs the client confirmed, using the final amount you entered. Payments are arranged directly with the client for now.</p>
       <div role="tablist" aria-label="Job status" className="flex flex-wrap gap-2">
@@ -85,6 +87,7 @@ export default function WorkerDashboard() {
           <button key={name} role="tab" aria-selected={tab === st} onClick={() => { setLoading(true); setTab(st) }} className={`rounded-md px-3 py-1 text-sm ${tab === st ? 'bg-emerald-700 text-white' : 'border border-gray-300 bg-white'}`}>{name}</button>
         ))}
       </div>
+      {user && <StrikeNotice uid={user.uid} role="worker" />}
       <ErrorBox message={error} />
       {items.length === 0 && !loading && <Empty>No jobs here yet. Accept a request from the Requests page.</Empty>}
       <ul className="space-y-3">
@@ -108,6 +111,7 @@ export default function WorkerDashboard() {
                 {c.status === 'accepted' && !c.clientAgreed && <button className={btnGhost} onClick={() => open(c, 'quote')}>Edit price or scope</button>}
                 {c.status === 'accepted' && c.clientAgreed && <button className={btn} onClick={() => open(c, 'done')}>Mark service as done</button>}
                 {c.status === 'accepted' && <button className={btnGhost} onClick={() => open(c, 'cancel')}>Cancel job</button>}
+                {((c.status === 'accepted' && c.clientAgreed) || c.status === 'done') && <button className={btnGhost} onClick={() => open(c, 'dispute')}>Report a problem</button>}
                 <ReportButton targetType="request" targetId={c.requestId} />
               </div>
               {p === 'quote' && (
@@ -124,6 +128,7 @@ export default function WorkerDashboard() {
                   <div className="flex gap-2"><button className={btn}>Mark as done</button><button type="button" className={btnGhost} onClick={() => setPanel(null)}>Close</button></div>
                 </form>
               )}
+              {p === 'dispute' && <DisputeForm onSubmit={(r) => act(() => openDispute(c, 'worker', r))} onClose={() => setPanel(null)} />}
               {p === 'cancel' && <CancelForm onCancel={(r) => act(() => cancelClaim(c, 'worker', r))} onClose={() => setPanel(null)} />}
             </li>
           )

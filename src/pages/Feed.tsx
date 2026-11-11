@@ -90,7 +90,7 @@ export default function Feed() {
       <ul className="space-y-3">
         {visible.map((r) => {
           const accepted = mine.has(r.id)
-          const full = r.claimsCount >= r.workersNeeded
+          const full = r.claimsCount >= (r.workersNeeded ?? 1)
           return (
             <RequestCard key={r.id} r={r} distanceMiles={worker ? haversineMiles(worker.lat, worker.lng, r.lat, r.lng) : undefined}>
               {accepted && <span className="text-sm font-medium text-emerald-800">You accepted this. Manage it in <Link to="/dashboard" className="underline">My jobs</Link>.</span>}

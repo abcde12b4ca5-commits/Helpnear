@@ -11,12 +11,12 @@ export default function RequestCard({ r, distanceMiles, children }: { r: Request
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="font-semibold">{r.title}</h3>
         <span className="text-xs text-gray-600">
-          {r.categoryName} &middot; {r.city}, {r.state} {r.zip}{distanceMiles != null ? ` \u00b7 ${Math.max(1, Math.round(distanceMiles))} mi away` : ''}
+          {r.categoryName}{r.city ? <> &middot; {r.city}, {r.state} {r.zip}</> : r.zip ? <> &middot; {r.zip}</> : null}{distanceMiles != null ? ` \u00b7 ${Math.max(1, Math.round(distanceMiles))} mi away` : ''}
         </span>
       </div>
       <p className="mt-1 whitespace-pre-line text-sm text-gray-800">{r.description}</p>
       <p className="mt-2 text-xs text-gray-600">
-        {URGENCY[r.urgency] ?? r.urgency}{r.budgetRange ? ` \u00b7 Budget: ${r.budgetRange}` : ''} &middot; {STATUS[r.status] ?? r.status} &middot; Workers: {r.claimsCount} of {r.workersNeeded}
+        {URGENCY[r.urgency] ?? r.urgency}{r.budgetRange ? ` \u00b7 Budget: ${r.budgetRange}` : ''} &middot; {STATUS[r.status] ?? r.status} &middot; Workers: {r.claimsCount} of {r.workersNeeded ?? 1}
       </p>
       {children && <div className="mt-3 flex flex-wrap items-center gap-2">{children}</div>}
     </li>

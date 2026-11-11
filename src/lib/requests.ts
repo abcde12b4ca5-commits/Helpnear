@@ -26,7 +26,7 @@ import { getAppConfig } from './catalog'
 import { haversineMiles } from './geo'
 import { sendNotification } from './notifications'
 import { notifyEvent, notifyNewRequest } from './push'
-import type { ClaimDoc, ClaimStatus, ContactDoc, RequestDoc, Urgency, WorkerDoc } from './types'
+import type { ClaimDoc, ClaimStatus, ContactDoc, RequestDoc, StrikeDoc, Urgency, WorkerDoc } from './types'
 
 export const PAGE_SIZE = 20
 export type Cursor = QueryDocumentSnapshot<DocumentData> | null
@@ -105,6 +105,17 @@ export async function getMyRequests(clientId: string, after: Cursor): Promise<{ 
 /** Stops new workers from accepting. Workers already accepted can still finish the job. */
 export async function closeRequest(id: string) {
   await updateDoc(doc(db, `requests/${id}`), { status: 'closed' })
+}
+
+/**
+ * The client cancels the whole request: every worker who accepted but has not marked the job done is released
+ * (each one is notified), then the request is closed. Jobs already marked done stay: confirm or send them back first.
+ */
+export async function cancelRequest(requestId: string, claims: ClaimDoc[], reason: string): Promise<void> {
+  for (const c of claims) if (c.status === 'accepted') await cancelClaim(c, 'client', reason)
+  const fresh = await getDoc(doc(db, `requests/${requestId}`))
+  const status = fresh.exists() ? (fresh.data() as RequestDoc).status : 'closed'
+  if (status === 'open' || status === 'filled') await closeRequest(requestId)
 }
 
 /** Every worker who responded to this request (accepted, done, confirmed or cancelled). */
@@ -215,11 +226,33 @@ export async function confirmDone(c: ClaimDoc): Promise<void> {
   void notifyEvent('confirmed', c.requestId, c.workerId)
 }
 
-/** Client says the work is not done (or the amount is wrong): back to "accepted", the worker can mark it done again. */
-export async function reopenClaim(c: ClaimDoc): Promise<void> {
-  await updateDoc(claimRef(c.requestId, c.workerId), { status: 'accepted' })
-  await sendNotification({ toId: c.workerId, fromId: c.clientId, workerId: c.workerId, requestId: c.requestId, type: 'reopened', message: `The client says the work is not finished: ${c.title}.` })
+/**
+ * Client says the work is not done (or the amount is wrong): back to "accepted", the worker can mark it done again.
+ * From the Nth time on (Admin > Settings: disputeAfterReopens) the job becomes a dispute that an admin decides.
+ */
+export async function reopenClaim(c: ClaimDoc): Promise<'reopened' | 'disputed'> {
+  const config = await getAppConfig()
+  const next = (c.reopenCount ?? 0) + 1
+  const dispute = next >= config.disputeAfterReopens
+  await updateDoc(claimRef(c.requestId, c.workerId), dispute
+    ? { status: 'disputed', reopenCount: next, disputeBy: 'client', disputeReason: `The client said the work was not finished ${next} times.`, disputedAt: serverTimestamp() }
+    : { status: 'accepted', reopenCount: next })
+  await sendNotification({
+    toId: c.workerId, fromId: c.clientId, workerId: c.workerId, requestId: c.requestId, type: 'reopened',
+    message: dispute ? `This job is now under admin review: ${c.title}.` : `The client says the work is not finished: ${c.title}.`,
+  })
   void notifyEvent('reopened', c.requestId, c.workerId)
+  return dispute ? 'disputed' : 'reopened'
+}
+
+/** Either side asks an admin to decide (price agreed, but work or payment is in disagreement). */
+export async function openDispute(c: ClaimDoc, by: 'worker' | 'client', reason: string): Promise<void> {
+  await updateDoc(claimRef(c.requestId, c.workerId), { status: 'disputed', disputeBy: by, disputeReason: reason, disputedAt: serverTimestamp() })
+  const toWorker = by === 'client'
+  await sendNotification({
+    toId: toWorker ? c.workerId : c.clientId, fromId: toWorker ? c.clientId : c.workerId, workerId: c.workerId, requestId: c.requestId,
+    type: 'reopened', message: `The ${by} asked an admin to review: ${c.title}.`,
+  })
 }
 
 /** Either side cancels before the job is marked done. Frees the worker slot so another worker can accept. */
@@ -228,9 +261,11 @@ export async function cancelClaim(c: ClaimDoc, by: 'worker' | 'client', reason: 
     const reqRef = doc(db, `requests/${c.requestId}`)
     const [reqSnap, cSnap] = await Promise.all([tx.get(reqRef), tx.get(claimRef(c.requestId, c.workerId))])
     if (!reqSnap.exists() || !cSnap.exists()) throw new Error('This job no longer exists.')
-    if ((cSnap.data() as ClaimDoc).status !== 'accepted') throw new Error('This job can no longer be cancelled.')
+    const cur = cSnap.data() as ClaimDoc
+    if (cur.status !== 'accepted') throw new Error('This job can no longer be cancelled.')
     const r = reqSnap.data() as RequestDoc
-    tx.update(claimRef(c.requestId, c.workerId), { status: 'cancelled', cancelledBy: by, cancelReason: reason, cancelledAt: serverTimestamp() })
+    // cancelWasLate: the client had already agreed, so this cancellation counts as a strike (applied by the scheduled worker)
+    tx.update(claimRef(c.requestId, c.workerId), { status: 'cancelled', cancelledBy: by, cancelReason: reason, cancelledAt: serverTimestamp(), cancelWasLate: cur.clientAgreed === true })
     tx.update(reqRef, { claimsCount: Math.max(0, r.claimsCount - 1), status: r.status === 'filled' ? 'open' : r.status, lastWorkerId: c.workerId })
   })
   const toWorker = by === 'client'
@@ -263,6 +298,12 @@ async function claimStats(field: 'workerId' | 'clientId', uid: string): Promise<
 }
 
 export const getWorkerStats = (uid: string) => claimStats('workerId', uid)
+
+/** The user's own strikes (fair-use ledger), newest first. Only the owner and admins can read them. */
+export async function getMyStrikes(uid: string): Promise<StrikeDoc[]> {
+  const snap = await getDocs(query(collection(db, 'strikes'), where('userId', '==', uid), limit(50)))
+  return snap.docs.map((d) => ({ ...(d.data() as Omit<StrikeDoc, 'id'>), id: d.id })).sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0))
+}
 
 export async function getClientStats(uid: string): Promise<Stats> {
   const [s, r] = await Promise.all([
