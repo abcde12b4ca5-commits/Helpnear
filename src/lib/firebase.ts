@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { CustomProvider, initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
-import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import { initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, connectAuthEmulator } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 import { getTurnstileToken } from './turnstile'
 
@@ -33,7 +33,9 @@ if (WORKER_URL && turnstileKey) {
   initializeAppCheck(app, { provider: new ReCaptchaV3Provider(recaptchaKey), isTokenAutoRefreshEnabled: true })
 }
 
-export const auth = getAuth(app)
+// initializeAuth without a popup resolver: the 90 KB firebaseapp.com auth iframe is no longer loaded on every page view.
+// The resolver is passed to signInWithPopup only when someone actually signs in with Google (see auth.tsx).
+export const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })
 export const db = getFirestore(app)
 
 if (import.meta.env.VITE_USE_EMULATORS === 'true') {

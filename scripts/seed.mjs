@@ -3,7 +3,7 @@
 // Never commit a service account. Existing documents are SKIPPED so admin edits are never overwritten.
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
-import { categories, zones, appConfig, legal } from '../firebase/seed/data.mjs'
+import { categories, appConfig, legal } from '../firebase/seed/data.mjs'
 
 const projectId = process.env.GCLOUD_PROJECT
 if (!projectId) throw new Error('Set GCLOUD_PROJECT')
@@ -18,7 +18,6 @@ async function putIfMissing(path, data) {
 }
 
 for (const c of categories) { const { id, ...rest } = c; await putIfMissing(`categories/${id}`, rest) }
-for (const z of zones) { const { id, ...rest } = z; await putIfMissing(`zones/${id}`, rest) }
 await putIfMissing('config/app', appConfig)
 for (const l of legal) { const { id, ...rest } = l; await putIfMissing(`legal/${id}`, { ...rest, publishedAt: FieldValue.serverTimestamp() }) }
 console.log('done')

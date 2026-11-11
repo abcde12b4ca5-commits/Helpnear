@@ -1,4 +1,6 @@
 # Helpnear (working name)
+US home-services marketplace, nationwide (ZIP + radius matching). See docs/nationwide-update.md for how requests, accepting, agreeing, done and confirm work, and for the deploy checklist.
+
 US home-services marketplace. Vite + React + TS + Tailwind, Firebase Spark (Auth + Firestore), Cloudflare Pages.
 
 ## Run

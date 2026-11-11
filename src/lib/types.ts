@@ -7,17 +7,26 @@ export type ContactMethod = 'phone' | 'email' | 'text'
 export interface AppConfig {
   signupOpen: boolean
   maintenanceMode: boolean
-  maxClaimsPerRequest: number
+  maxWorkersPerRequest: number
   requestExpiryHours: number
   maxCategoriesPerWorker: number
-  maxZonesPerWorker: number
   revealContactOnClaim: boolean
   chatEnabled: boolean
   freeRequestsPerClient: number
   feesEnabled: boolean
   promotionFeeUsd: number | null
-  launchState: string
-  launchCity: string
+  /** Fair-use rules. All editable in Admin > Settings. The scheduled edge worker applies them (see docs/discipline.md). */
+  autoRulesEnabled: boolean
+  penaltyWindowDays: number
+  clientFreezeAt: number
+  clientReviewAt: number
+  workerFreezeAt: number
+  workerReviewAt: number
+  freezeDays: number
+  noResponseHours: number
+  noResponseStrikes: boolean
+  autoConfirmDays: number
+  disputeAfterReopens: number
 }
 
 export interface Category {
@@ -29,15 +38,8 @@ export interface Category {
   allowedServices: string[]
   blockedKeywords: string[]
   notes: string
-}
-
-export interface Zone {
-  id: string
-  name: string
-  state: string
-  city: string
-  zips: string[]
-  enabled: boolean
+  /** Two-letter state codes where this category is switched off (empty = available in every state). */
+  disabledStates: string[]
 }
 
 export interface LegalDoc {
@@ -54,13 +56,26 @@ export interface UserDoc {
   email: string
   termsVersion: string
   status: 'active' | 'suspended'
+  /** Set by an admin or the scheduled worker: cannot post (client) or accept (worker) until this moment. */
+  frozenUntil?: Timestamp | null
+  frozenReason?: string
+  /** Set by the scheduled worker when strikes reach the review threshold. An admin clears it. */
+  needsReview?: boolean
+  reviewReason?: string
 }
 
 export interface WorkerDoc {
   displayName: string
   bio: string
   categories: string[]
-  zones: string[]
+  baseZip: string
+  city: string
+  state: string
+  lat: number
+  lng: number
+  radiusMiles: number
+  /** `${categoryId}|${cell}` for every service x covered cell. Used for feed queries and push matching. */
+  matchKeys: string[]
   confirmedCategories: string[]
   licenseNote: string
   insuranceNote: string
@@ -74,14 +89,24 @@ export interface RequestDoc {
   clientId: string
   categoryId: string
   categoryName: string
-  zoneId: string
-  zoneName: string
   zip: string
+  city: string
+  state: string
+  lat: number
+  lng: number
+  cell: string
+  workersNeeded: number
+  /** Requests posted together share a groupId (one position per kind of worker). Older requests have neither field. */
+  groupId?: string
+  groupSize?: number
+  /** Set only when a worker is released from a request (rules use it to tie the counter to the cancelled claim). */
+  lastWorkerId?: string
   title: string
   description: string
   urgency: Urgency
   budgetRange: string
-  status: 'open' | 'closed' | 'expired' | 'removed'
+  status: 'open' | 'filled' | 'closed' | 'expired' | 'removed'
+  /** Workers currently accepted (cancelled workers are subtracted). */
   claimsCount: number
   matchKey: string
   createdAt: Timestamp | null
@@ -94,10 +119,36 @@ export interface ContactDoc {
   preferredContactMethod: ContactMethod
 }
 
+export type ClaimStatus = 'accepted' | 'done' | 'confirmed' | 'cancelled' | 'disputed' | 'voided'
+
 export interface ClaimDoc {
   workerId: string
   requestId: string
+  clientId: string
+  categoryId: string
+  categoryName: string
+  title: string
   workerName: string
+  status: ClaimStatus
+  /** Client agreed to the worker's price and scope (reset when the worker edits them). */
+  clientAgreed: boolean
+  quotedCents: number
+  note: string
+  createdAt: Timestamp | null
+  finalCents?: number
+  doneAt?: Timestamp | null
+  confirmedAt?: Timestamp | null
+  cancelledBy?: 'worker' | 'client' | 'admin' | 'system'
+  cancelReason?: string
+  cancelledAt?: Timestamp | null
+  /** True when the job was cancelled after the client had agreed to the price (counts as a strike). */
+  cancelWasLate?: boolean
+  reopenCount?: number
+  autoConfirmed?: boolean
+  disputeBy?: 'worker' | 'client'
+  disputeReason?: string
+  disputedAt?: Timestamp | null
+  resolution?: string
 }
 
 export interface ReviewDoc {
@@ -110,11 +161,13 @@ export interface ReviewDoc {
   createdAt: Timestamp | null
 }
 
+export type NotificationType = 'system' | 'claim' | 'agreed' | 'done' | 'confirmed' | 'reopened' | 'cancelled_by_worker' | 'cancelled_by_client'
+
 export interface NotificationDoc {
   id: string
-  type: 'claim'
+  type: NotificationType
   requestId: string
-  workerId: string
+  fromId: string
   message: string
   read: boolean
   createdAt: Timestamp | null
@@ -133,4 +186,17 @@ export interface ThreadDoc {
   clientId: string
   blockedBy: string
   reported: boolean
+}
+
+export type StrikeType = 'late_cancel' | 'no_response' | 'conduct' | 'warning' | 'dispute'
+
+export interface StrikeDoc {
+  id: string
+  userId: string
+  role: Role
+  type: StrikeType
+  requestId: string
+  note: string
+  createdAt: Timestamp | null
+  by: 'admin' | 'system'
 }
