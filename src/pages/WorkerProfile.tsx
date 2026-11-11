@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { brand } from '../config/brand'
 import { db } from '../lib/firebase'
 import { useAuth } from '../lib/auth'
-import { getCategories } from '../lib/catalog'
+import { getCategories, getZones } from '../lib/catalog'
 import { createReview, getWorkerReviews } from '../lib/reviews'
 import { friendlyError } from '../lib/errors'
 import ReportButton from '../components/ReportButton'
@@ -17,7 +17,7 @@ export default function WorkerProfile() {
   const requestId = params.get('request')
   const { user, profile } = useAuth()
   const [worker, setWorker] = useState<WorkerDoc | null | undefined>(undefined)
-  const [names, setNames] = useState<{ cats: Record<string, string> }>({ cats: {} })
+  const [names, setNames] = useState<{ cats: Record<string, string>; zones: Record<string, string> }>({ cats: {}, zones: {} })
   const [reviews, setReviews] = useState<{ items: ReviewDoc[]; average: number | null } | null>(null)
   const [rating, setRating] = useState(5)
   const [text, setText] = useState('')
@@ -27,7 +27,9 @@ export default function WorkerProfile() {
   useEffect(() => {
     getDoc(doc(db, `workers/${id}`)).then((s) => setWorker(s.exists() ? (s.data() as WorkerDoc) : null)).catch((e) => { setError(friendlyError(e)); setWorker(null) })
     getWorkerReviews(id).then(setReviews).catch(() => setReviews({ items: [], average: null }))
-    getCategories().then((c) => setNames({ cats: Object.fromEntries(c.map((x) => [x.id, x.name])) })).catch(() => undefined)
+    Promise.all([getCategories(), getZones()]).then(([c, z]) => setNames({
+      cats: Object.fromEntries(c.map((x) => [x.id, x.name])), zones: Object.fromEntries(z.map((x) => [x.id, x.name])),
+    })).catch(() => undefined)
   }, [id])
 
   async function submit(e: FormEvent) {
@@ -50,7 +52,7 @@ export default function WorkerProfile() {
       </p>
       {worker.bio && <p className="whitespace-pre-line text-sm">{worker.bio}</p>}
       <p className="text-sm">Services: {worker.categories.map((c) => names.cats[c] ?? c).join(', ')}</p>
-      <p className="text-sm">Works around {worker.city}, {worker.state} (within {worker.radiusMiles} miles)</p>
+      <p className="text-sm">Areas: {worker.zones.map((z) => names.zones[z] ?? z).join(', ')}</p>
       {(worker.licenseNote || worker.insuranceNote) && (
         <div className={`${card} text-sm`}>
           {worker.licenseNote && <p>License: {worker.licenseNote}</p>}

@@ -4,22 +4,19 @@ import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { brand } from '../config/brand'
 import { db } from '../lib/firebase'
 import { useAuth } from '../lib/auth'
-import { getAppConfig, getCategories, DEFAULT_CONFIG } from '../lib/catalog'
-import { MAX_MATCH_KEYS, RADIUS_OPTIONS, cellsCovering, matchKeysFor } from '../lib/geo'
-import { useZipLookup } from '../lib/useZip'
+import { getAppConfig, getCategories, getZones, DEFAULT_CONFIG } from '../lib/catalog'
 import { friendlyError } from '../lib/errors'
 import { ErrorBox, Field, Spinner, btn, card, input } from '../components/ui'
-import type { AppConfig, Category } from '../lib/types'
+import type { AppConfig, Category, Zone } from '../lib/types'
 
 export default function Onboarding() {
   const { user, profile, worker, refresh } = useAuth()
   const nav = useNavigate()
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG)
   const [cats, setCats] = useState<Category[] | null>(null)
+  const [zones, setZones] = useState<Zone[]>([])
   const [selCats, setSelCats] = useState<string[]>(worker?.categories ?? [])
-  const [zip, setZip] = useState(worker?.baseZip ?? '')
-  const [radius, setRadius] = useState<number>(worker?.radiusMiles ?? 25)
-  const { info: zipInfo, checked: zipChecked } = useZipLookup(zip)
+  const [selZones, setSelZones] = useState<string[]>(worker?.zones ?? [])
   const [confirmed, setConfirmed] = useState<string[]>(worker?.confirmedCategories ?? [])
   const [bio, setBio] = useState(worker?.bio ?? '')
   const [license, setLicense] = useState(worker?.licenseNote ?? '')
@@ -28,11 +25,10 @@ export default function Onboarding() {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    Promise.all([getAppConfig(), getCategories()])
-      .then(([c, cs]) => { setConfig(c); setCats(cs.filter((x) => x.enabled)) })
+    Promise.all([getAppConfig(), getCategories(), getZones()])
+      .then(([c, cs, zs]) => { setConfig(c); setCats(cs.filter((x) => x.enabled)); setZones(zs.filter((z) => z.enabled)) })
       .catch((e) => setError(friendlyError(e)))
   }, [])
-
 
   const toggle = (list: string[], set: (v: string[]) => void, id: string, max: number) => {
     if (list.includes(id)) set(list.filter((x) => x !== id))
@@ -46,14 +42,10 @@ export default function Onboarding() {
   async function submit(e: FormEvent) {
     e.preventDefault()
     if (!user || !profile) return
-    const chosen = selCats.filter((c) => cats?.some((x) => x.id === c && !x.disabledStates?.includes(zipInfo?.state ?? '')))
-    if (chosen.length === 0) { setError('Choose at least one service.'); return }
-    if (!zipInfo) { setError('Enter a valid US ZIP code for the place you work from.'); return }
-    const matchKeys = matchKeysFor(chosen, cellsCovering(zipInfo.lat, zipInfo.lng, radius))
-    if (matchKeys.length > MAX_MATCH_KEYS) { setError('That is too much area for this many services. Pick a smaller radius or fewer services.'); return }
-    if (!chosen.every((c) => confirmed.includes(c))) { setError('Please confirm the allowed services for every category you selected.'); return }
+    if (selCats.length === 0 || selZones.length === 0) { setError('Choose at least one service and one area.'); return }
+    if (!selCats.every((c) => confirmed.includes(c))) { setError('Please confirm the allowed services for every category you selected.'); return }
     setBusy(true); setError(null)
-    const base = { displayName: profile.displayName, bio: bio.trim(), categories: chosen, baseZip: zipInfo.zip, city: zipInfo.city, state: zipInfo.state, lat: zipInfo.lat, lng: zipInfo.lng, radiusMiles: radius, matchKeys, confirmedCategories: confirmed.filter((c) => chosen.includes(c)), licenseNote: license.trim(), insuranceNote: insurance.trim() }
+    const base = { displayName: profile.displayName, bio: bio.trim(), categories: selCats, zones: selZones, confirmedCategories: confirmed.filter((c) => selCats.includes(c)), licenseNote: license.trim(), insuranceNote: insurance.trim() }
     try {
       if (worker) await updateDoc(doc(db, `workers/${user.uid}`), base)
       else await setDoc(doc(db, `workers/${user.uid}`), { ...base, ratingCount: 0, ratingAverage: 0, isListed: true, createdAt: serverTimestamp() })
@@ -69,7 +61,7 @@ export default function Onboarding() {
       <section aria-labelledby="svc">
         <h2 id="svc" className="font-semibold">Services you offer (up to {Math.min(config.maxCategoriesPerWorker, 5)})</h2>
         <div className="mt-2 space-y-2">
-          {cats.filter((c) => !c.disabledStates?.includes(zipInfo?.state ?? '')).map((c) => (
+          {cats.map((c) => (
             <div key={c.id} className={card}>
               <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={selCats.includes(c.id)} onChange={() => toggleCat(c.id)} /> {c.name}</label>
               {selCats.includes(c.id) && (
@@ -82,18 +74,13 @@ export default function Onboarding() {
           ))}
         </div>
       </section>
-      <section aria-labelledby="areas" className="space-y-3">
-        <h2 id="areas" className="font-semibold">Where you work</h2>
-        <Field label="Your base ZIP code" htmlFor="bzip" hint="Requests inside your radius around this ZIP are sent to you. Anywhere in the United States.">
-          <input id="bzip" required inputMode="numeric" maxLength={5} className={input} value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))} />
-        </Field>
-        {zipChecked && !zipInfo && <p role="alert" className="text-sm text-red-800">We could not find that ZIP code.</p>}
-        {zipInfo && <p className="text-sm text-gray-700" role="status">{zipInfo.city}, {zipInfo.state}</p>}
-        <Field label="How far will you travel?" htmlFor="radius">
-          <select id="radius" className={input} value={radius} onChange={(e) => setRadius(Number(e.target.value))}>
-            {RADIUS_OPTIONS.map((r) => <option key={r} value={r}>{r} miles</option>)}
-          </select>
-        </Field>
+      <section aria-labelledby="areas">
+        <h2 id="areas" className="font-semibold">Areas you work in (up to {Math.min(config.maxZonesPerWorker, 6)})</h2>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {zones.map((z) => (
+            <label key={z.id} className={`${card} flex items-center gap-2 text-sm`}><input type="checkbox" checked={selZones.includes(z.id)} onChange={() => toggle(selZones, setSelZones, z.id, Math.min(config.maxZonesPerWorker, 6))} /> {z.name}</label>
+          ))}
+        </div>
       </section>
       <Field label="About you (optional)" htmlFor="bio"><textarea id="bio" maxLength={500} rows={3} className={input} value={bio} onChange={(e) => setBio(e.target.value)} /></Field>
       <Field label="License number (optional)" htmlFor="lic" hint={`Self-reported. Shown as: Self-reported, not verified by ${brand.name}.`}><input id="lic" maxLength={200} className={input} value={license} onChange={(e) => setLicense(e.target.value)} /></Field>

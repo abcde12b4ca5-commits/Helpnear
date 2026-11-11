@@ -1,32 +1,24 @@
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore'
 import { db } from './firebase'
 import { cached } from './cache'
-import type { AppConfig, Category, LegalDoc } from './types'
+import type { AppConfig, Category, LegalDoc, Zone } from './types'
 
 const TTL = 10 * 60_000
 
 export const DEFAULT_CONFIG: AppConfig = {
   signupOpen: true,
   maintenanceMode: false,
-  maxWorkersPerRequest: 5,
+  maxClaimsPerRequest: 3,
   requestExpiryHours: 72,
   maxCategoriesPerWorker: 5,
+  maxZonesPerWorker: 6,
   revealContactOnClaim: true,
   chatEnabled: false,
   freeRequestsPerClient: 0,
   feesEnabled: false,
   promotionFeeUsd: null,
-  autoRulesEnabled: true,
-  penaltyWindowDays: 30,
-  clientFreezeAt: 3,
-  clientReviewAt: 5,
-  workerFreezeAt: 2,
-  workerReviewAt: 4,
-  freezeDays: 7,
-  noResponseHours: 48,
-  noResponseStrikes: true,
-  autoConfirmDays: 7,
-  disputeAfterReopens: 2,
+  launchState: 'TX',
+  launchCity: 'Houston',
 }
 
 export function getAppConfig(): Promise<AppConfig> {
@@ -40,6 +32,13 @@ export function getCategories(): Promise<Category[]> {
   return cached('categories', TTL, async () => {
     const snap = await getDocs(collection(db, 'categories'))
     return snap.docs.map((d) => ({ ...(d.data() as Omit<Category, 'id'>), id: d.id })).sort((a, b) => a.name.localeCompare(b.name))
+  })
+}
+
+export function getZones(): Promise<Zone[]> {
+  return cached('zones', TTL, async () => {
+    const snap = await getDocs(collection(db, 'zones'))
+    return snap.docs.map((d) => ({ ...(d.data() as Omit<Zone, 'id'>), id: d.id })).sort((a, b) => a.name.localeCompare(b.name))
   })
 }
 

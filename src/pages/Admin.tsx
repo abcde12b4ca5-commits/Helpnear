@@ -5,16 +5,15 @@ import { Spinner } from '../components/ui'
 import Dashboard from './admin/Dashboard'
 import Settings from './admin/Settings'
 import Categories from './admin/Categories'
-import Coverage from './admin/Coverage'
+import Zones from './admin/Zones'
 import Moderation from './admin/Moderation'
-import Disputes from './admin/Disputes'
 import Users from './admin/Users'
 import LegalEditor from './admin/LegalEditor'
 import AuditLog from './admin/AuditLog'
 
 const TABS = [
-  ['Dashboard', Dashboard], ['Settings', Settings], ['Categories', Categories], ['Coverage', Coverage],
-  ['Moderation', Moderation], ['Disputes', Disputes], ['Users', Users], ['Legal', LegalEditor], ['Audit log', AuditLog],
+  ['Dashboard', Dashboard], ['Settings', Settings], ['Categories', Categories], ['Zones', Zones],
+  ['Moderation', Moderation], ['Users', Users], ['Legal', LegalEditor], ['Audit log', AuditLog],
 ] as const
 
 export default function Admin() {

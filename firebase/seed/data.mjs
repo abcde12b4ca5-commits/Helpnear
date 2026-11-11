@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 const BRAND = JSON.parse(readFileSync(new URL('../../src/config/brand.json', import.meta.url), 'utf8')).name
 
-// Seed data. Coverage is nationwide: workers and requests are matched by ZIP + radius (public/zip, built by scripts/build-zips.mjs), there is no zones list.
+// Seed data. Zones have NO ZIP lists on purpose: ZIP-to-zone data must come from a verified source (see docs/open-questions.md).
 const cat = (id, name, enabled, riskLevel, allowedServices, notes = '', blockedKeywords = [], requiresLicenseCheck = false) => ({
-  id, name, enabled, riskLevel, requiresLicenseCheck, allowedServices, blockedKeywords, notes, disabledStates: [],
+  id, name, enabled, riskLevel, requiresLicenseCheck, allowedServices, blockedKeywords, notes,
 })
 
 const HANDYMAN_BLOCKED = ['wiring', 'breaker', 'panel', 'circuit', 'outlet', 'plumbing', 'pipe', 'water heater', 'gas line', 'ac', 'hvac', 'furnace', 'refrigerant', 'irrigation', 'sprinkler']
@@ -47,17 +47,33 @@ export const categories = [
   cat('appliance-repair', 'Appliance repair', false, 'regulated', [], 'Rules not verified.', [], true),
 ]
 
+const zone = (id, name) => ({ id, name, state: 'TX', city: 'Houston', zips: [], enabled: true })
+export const zones = [
+  zone('hou-central', 'Houston - Central'),
+  zone('hou-north', 'Houston - North'),
+  zone('hou-northwest', 'Houston - Northwest'),
+  zone('hou-northeast', 'Houston - Northeast'),
+  zone('hou-east', 'Houston - East'),
+  zone('hou-southeast', 'Houston - Southeast'),
+  zone('hou-south', 'Houston - South'),
+  zone('hou-southwest', 'Houston - Southwest'),
+  zone('hou-west', 'Houston - West'),
+]
+
 export const appConfig = {
   signupOpen: true,
   maintenanceMode: false,
-  maxWorkersPerRequest: 5,
+  maxClaimsPerRequest: 3,
   requestExpiryHours: 72,
   maxCategoriesPerWorker: 5,
+  maxZonesPerWorker: 6,
   revealContactOnClaim: true,
   chatEnabled: false,
   freeRequestsPerClient: 0,
   feesEnabled: false,
   promotionFeeUsd: null,
+  launchState: 'TX',
+  launchCity: 'Houston',
 }
 
 const DRAFT = 'DRAFT: requires attorney review before launch. Not legal advice.\n\n'

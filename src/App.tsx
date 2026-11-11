@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import TermsGate from './components/TermsGate'
-import { RequireAnyRole, RequireRole, RequireWorkerOnboarding } from './components/Guards'
+import { RequireRole, RequireWorkerOnboarding } from './components/Guards'
 import Home from './pages/Home'
 const HowItWorks = lazy(() => import('./pages/HowItWorks'))
 const Legal = lazy(() => import('./pages/Legal'))
@@ -12,7 +12,7 @@ const Onboarding = lazy(() => import('./pages/Onboarding'))
 const NewRequest = lazy(() => import('./pages/NewRequest'))
 const MyRequests = lazy(() => import('./pages/MyRequests'))
 const Feed = lazy(() => import('./pages/Feed'))
-const WorkerDashboard = lazy(() => import('./pages/WorkerDashboard'))
+const Claims = lazy(() => import('./pages/Claims'))
 const WorkerProfile = lazy(() => import('./pages/WorkerProfile'))
 const Notifications = lazy(() => import('./pages/Notifications'))
 const Chat = lazy(() => import('./pages/Chat'))
@@ -33,10 +33,9 @@ export default function App() {
         <Route path="/post" element={<RequireRole role="client"><NewRequest /></RequireRole>} />
         <Route path="/my-requests" element={<RequireRole role="client"><MyRequests /></RequireRole>} />
         <Route path="/feed" element={<RequireRole role="worker"><Feed /></RequireRole>} />
-        <Route path="/dashboard" element={<RequireRole role="worker"><WorkerDashboard /></RequireRole>} />
-        <Route path="/claims" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/claims" element={<RequireRole role="worker"><Claims /></RequireRole>} />
         <Route path="/worker/:id" element={<WorkerProfile />} />
-        <Route path="/notifications" element={<RequireAnyRole><Notifications /></RequireAnyRole>} />
+        <Route path="/notifications" element={<RequireRole role="client"><Notifications /></RequireRole>} />
         <Route path="/chat/:threadId" element={<Chat />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<p className="text-sm text-gray-700">Page not found.</p>} />

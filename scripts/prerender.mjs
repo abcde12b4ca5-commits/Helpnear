@@ -1,13 +1,14 @@
 // Build-time prerender of PUBLIC SEO pages (static HTML, no JS needed to read them) + sitemap.xml + robots.txt + llms.txt.
-// Runs after `vite build`. Data comes from Firestore public-read REST (config/categories) when
+// Runs after `vite build`. Data comes from Firestore public-read REST (config/categories/zones) when
 // VITE_FIREBASE_PROJECT_ID is set, otherwise from the seed file. Set SITE_URL to your real domain.
-// Coverage is nationwide, so there are no per-area pages: one hub plus one page per service.
+// Zone pages are `noindex` until INDEX_ZONE_PAGES=true (turn on only once pages carry real local content).
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
-import { categories as seedCats } from '../firebase/seed/data.mjs'
+import { categories as seedCats, zones as seedZones } from '../firebase/seed/data.mjs'
 
 const SITE = (process.env.SITE_URL || 'https://example.pages.dev').replace(/\/$/, '')
 const BRAND = process.env.BRAND_NAME || JSON.parse(await readFile(new URL('../src/config/brand.json', import.meta.url), 'utf8')).name
 const PROJECT = process.env.VITE_FIREBASE_PROJECT_ID
+const INDEX_ZONES = process.env.INDEX_ZONE_PAGES === 'true'
 const OUT = 'dist'
 const DISCLAIMER = `${BRAND} is a platform that connects people. We are not a contractor or an employer. Licenses and insurance shown by workers are self-reported and not verified by ${BRAND}.`
 
@@ -34,7 +35,7 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
 async function loadData() {
-  if (!PROJECT) return { cats: seedCats, source: 'seed file' }
+  if (!PROJECT) return { cats: seedCats, zones: seedZones, source: 'seed file' }
   try {
     const base = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`
     const read = async (col) => {
@@ -45,10 +46,11 @@ async function loadData() {
     }
     const val = (v) => v == null ? undefined : 'stringValue' in v ? v.stringValue : 'booleanValue' in v ? v.booleanValue : 'arrayValue' in v ? (v.arrayValue.values ?? []).map(val) : undefined
     const cats = (await read('categories')).map(({ id, f }) => ({ id, name: val(f.name), enabled: val(f.enabled), riskLevel: val(f.riskLevel), allowedServices: val(f.allowedServices) ?? [], notes: val(f.notes) ?? '' }))
-    return { cats, source: 'Firestore' }
+    const zones = (await read('zones')).map(({ id, f }) => ({ id, name: val(f.name), city: val(f.city), enabled: val(f.enabled) }))
+    return { cats, zones, source: 'Firestore' }
   } catch (e) {
     console.warn('Firestore read failed, using seed file:', e.message)
-    return { cats: seedCats, source: 'seed file (fallback)' }
+    return { cats: seedCats, zones: seedZones, source: 'seed file (fallback)' }
   }
 }
 
@@ -74,7 +76,7 @@ const faqLd = (faq) => ({ '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({
 function faqFor(cat, where) {
   const guide = GUIDE[cat.id] ?? [`Describe the job clearly and say when you need it done.`, `Ask what is included before you agree on the work.`]
   return [
-    [`How does ${BRAND} work for ${cat.name.toLowerCase()}${where ? ` in ${where}` : ''}?`, `You post a request with the details and your ZIP code. Workers who offer this service near you can accept it with a price and contact you. You agree on the work and the price directly. ${BRAND} does not handle job payments.`],
+    [`How does ${BRAND} work for ${cat.name.toLowerCase()}${where ? ` in ${where}` : ''}?`, `You post a request with the details and your area. Workers who offer this service in that area can claim it and contact you. You agree on the work and the price directly. ${BRAND} does not handle job payments.`],
     [`What should I include in my request?`, guide[0]],
     [`What should I ask a worker?`, guide[1]],
     [`Does ${BRAND} verify licenses or insurance?`, `No. ${DISCLAIMER} Always confirm any license, permit or insurance you need yourself.`],
@@ -82,8 +84,9 @@ function faqFor(cat, where) {
   ]
 }
 
-const { cats, source } = await loadData()
+const { cats, zones, source } = await loadData()
 const enabledCats = cats.filter((c) => c.enabled && c.riskLevel === 'low')
+const enabledZones = zones.filter((z) => z.enabled)
 const urls = [{ path: '/', pri: '1.0' }, { path: '/services/', pri: '0.8' }, { path: '/how-it-works', pri: '0.5' }]
 
 async function write(path, html) {
@@ -94,30 +97,48 @@ async function write(path, html) {
 
 // Hub
 await write('/services', page({
-  title: `Home services across the United States | ${BRAND}`,
-  description: `Post a request for cleaning, handyman work, pressure washing, painting, lawn care and more. Local workers near you can reach out. Free to use.`,
+  title: `Home services in the Houston area | ${BRAND}`,
+  description: `Post a request for cleaning, handyman work, pressure washing, painting, lawn care and more. Local workers in the Houston area can reach out. Free to use.`,
   path: '/services/', robots: 'index,follow',
   jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/']])] },
-  body: `<h1>Home services across the United States</h1><p>Choose a service to learn what to include in your request and how ${esc(BRAND)} works.</p><ul>${enabledCats.map((c) => `<li><a href="/services/${c.id}/">${esc(c.name)}</a></li>`).join('')}</ul><p><a class="cta" href="/signup">Post a request</a></p>`,
+  body: `<h1>Home services in the Houston area</h1><p>Choose a service to learn what to include in your request and how ${esc(BRAND)} works.</p><ul>${enabledCats.map((c) => `<li><a href="/services/${c.id}/">${esc(c.name)}</a></li>`).join('')}</ul><p><a class="cta" href="/signup">Post a request</a></p>`,
 }))
 
 for (const cat of enabledCats) {
   const faq = faqFor(cat, '')
   urls.push({ path: `/services/${cat.id}/`, pri: '0.8' })
   await write(`/services/${cat.id}`, page({
-    title: `${cat.name} near you | ${BRAND}`,
+    title: `${cat.name} in the Houston area | ${BRAND}`,
     description: `Post a ${cat.name.toLowerCase()} request and let local workers reach out. See what to include and what to ask. Free to use.`,
     path: `/services/${cat.id}/`, robots: 'index,follow',
     jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/'], [cat.name, `/services/${cat.id}/`]]), faqLd(faq)] },
-    body: `<h1>${esc(cat.name)} near you</h1>
-<p>${esc(BRAND)} connects you with local workers who offer ${esc(cat.name.toLowerCase())}. Post what you need and workers near you can accept your request.</p>
+    body: `<h1>${esc(cat.name)} in the Houston area</h1>
+<p>${esc(BRAND)} connects you with local workers who offer ${esc(cat.name.toLowerCase())}. Post what you need and workers in your area can claim your request.</p>
 <h2>What this covers</h2><ul>${cat.allowedServices.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>${cat.notes ? `<p><em>${esc(cat.notes)}</em></p>` : ''}
+<h2>Choose your area</h2><ul>${enabledZones.map((z) => `<li><a href="/services/${cat.id}/${slug(z.id)}/">${esc(cat.name)} in ${esc(z.name)}</a></li>`).join('')}</ul>
 <h2>Frequently asked questions</h2>${faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')}
 <p><a class="cta" href="/signup">Post a ${esc(cat.name.toLowerCase())} request</a></p>`,
   }))
+  for (const z of enabledZones) {
+    const where = z.name
+    const zfaq = faqFor(cat, where)
+    const path = `/services/${cat.id}/${slug(z.id)}/`
+    if (INDEX_ZONES) urls.push({ path, pri: '0.6' })
+    await write(`/services/${cat.id}/${slug(z.id)}`, page({
+      title: `${cat.name} in ${where} | ${BRAND}`,
+      description: `Request ${cat.name.toLowerCase()} in ${where}. Local workers can claim your request and contact you. Free to use.`,
+      path, robots: INDEX_ZONES ? 'index,follow' : 'noindex,follow',
+      jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/'], [cat.name, `/services/${cat.id}/`], [where, path]]), faqLd(zfaq)] },
+      body: `<h1>${esc(cat.name)} in ${esc(where)}</h1>
+<p>Post a ${esc(cat.name.toLowerCase())} request for ${esc(where)}. Workers who cover this area can claim it and reach out to you directly.</p>
+<h2>What this covers</h2><ul>${cat.allowedServices.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
+<h2>Frequently asked questions</h2>${zfaq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')}
+<p><a class="cta" href="/signup">Post a request</a></p><p><a href="/services/${cat.id}/">All areas for ${esc(cat.name.toLowerCase())}</a></p>`,
+    }))
+  }
 }
 
 await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
 await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nSitemap: ${SITE}/sitemap.xml\n`)
-await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers anywhere in the United States.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
-console.log(`prerendered ${enabledCats.length} services from ${source}; ${urls.length} URLs in sitemap`)
+await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers in the Houston, TX area.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
+console.log(`prerendered ${enabledCats.length} services x ${enabledZones.length} areas from ${source}; ${urls.length} URLs in sitemap (zone pages ${INDEX_ZONES ? 'indexable' : 'noindex'})`)

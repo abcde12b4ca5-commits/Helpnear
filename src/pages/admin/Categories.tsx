@@ -10,20 +10,18 @@ import { ErrorBox, Spinner, btn, btnGhost, card, input } from '../../components/
 import type { Category } from '../../lib/types'
 
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean)
-const states = (s: string) => [...new Set(s.split(/[ ,]+/).map((x) => x.trim().toUpperCase()).filter((x) => /^[A-Z]{2}$/.test(x)))]
 const words = (s: string) => s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean)
-const blank = (id: string, name: string): Category => ({ id, name, enabled: false, riskLevel: 'low', requiresLicenseCheck: false, allowedServices: [], blockedKeywords: [], notes: '', disabledStates: [] })
+const blank = (id: string, name: string): Category => ({ id, name, enabled: false, riskLevel: 'low', requiresLicenseCheck: false, allowedServices: [], blockedKeywords: [], notes: '' })
 
 function Row({ cat, onSaved, onError }: { cat: Category; onSaved: () => void; onError: (m: string) => void }) {
   const { user } = useAuth()
   const [c, setC] = useState(cat)
   const [services, setServices] = useState(cat.allowedServices.join('\n'))
   const [blocked, setBlocked] = useState(cat.blockedKeywords.join(', '))
-  const [off, setOff] = useState((cat.disabledStates ?? []).join(', '))
   const locked = c.riskLevel !== 'low' || c.requiresLicenseCheck // can only be enabled after a license-verification feature exists
   async function save() {
     if (!user) return
-    const { id, ...data } = { ...c, enabled: locked ? false : c.enabled, allowedServices: lines(services), blockedKeywords: words(blocked), disabledStates: states(off) }
+    const { id, ...data } = { ...c, enabled: locked ? false : c.enabled, allowedServices: lines(services), blockedKeywords: words(blocked) }
     try { await adminWrite(user.uid, 'update-category', `categories/${id}`, (b) => b.set(doc(db, `categories/${id}`), data)); onSaved() } catch (e) { onError(friendlyError(e)) }
   }
   return (
@@ -38,7 +36,6 @@ function Row({ cat, onSaved, onError }: { cat: Category; onSaved: () => void; on
       {locked && <p className="text-xs text-amber-900">Cannot be enabled until a license-verification feature exists.</p>}
       <textarea aria-label="Allowed services, one per line" rows={3} className={input} value={services} onChange={(e) => setServices(e.target.value)} />
       <input aria-label="Blocked keywords, comma separated" className={input} placeholder="Blocked keywords, comma separated" value={blocked} onChange={(e) => setBlocked(e.target.value)} />
-      <input aria-label="States where this service is switched off" className={input} placeholder="States where this service is OFF, e.g. NY, CA (empty = available everywhere)" value={off} onChange={(e) => setOff(e.target.value)} />
       <input aria-label="Notes" className={input} placeholder="Notes" value={c.notes} onChange={(e) => setC({ ...c, notes: e.target.value })} />
       <button className={btnGhost} onClick={save}>Save</button>
     </li>

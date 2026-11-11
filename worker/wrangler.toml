@@ -2,10 +2,6 @@ name = "helpnear-worker"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
-# Fair-use rules (auto-confirm, release, strikes, freezes) run on this schedule. Admin > Settings can switch them off.
-[triggers]
-crons = ["*/15 * * * *"]
-
 [vars]
 FIREBASE_PROJECT_ID = "REPLACE_WITH_FIREBASE_PROJECT_ID"
 # Web app id from Firebase console > Project settings > Your apps (looks like 1:1234567890:web:abcdef)

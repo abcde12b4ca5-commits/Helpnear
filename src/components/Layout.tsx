@@ -16,7 +16,7 @@ function VerifyBanner() {
   }
   return (
     <div className="bg-amber-50 px-4 py-2 text-center text-sm text-amber-900" role="status">
-      Please verify your email to post or accept requests. We sent a link to {user.email}.{' '}
+      Please verify your email to post or claim requests. We sent a link to {user.email}.{' '}
       <button className="font-semibold underline" onClick={() => run(resendVerification, 'Verification email sent.')}>Resend</button>{' '}
       <button className="font-semibold underline" onClick={() => run(refresh, 'Status refreshed.')}>I have verified</button>
       {msg && <span className="ml-2">{msg}</span>}
@@ -29,9 +29,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [maintenance, setMaintenance] = useState(false)
   const [unread, setUnread] = useState(0)
   useEffect(() => {
-    if (user && profile) getUnreadCount(user.uid).then(setUnread).catch(() => undefined)
+    if (user && profile?.role === 'client') getUnreadCount(user.uid).then(setUnread).catch(() => undefined)
   }, [user, profile])
-  const [mountedAt] = useState(() => Date.now())
   useEffect(() => { getAppConfig().then((c) => setMaintenance(c.maintenanceMode)).catch(() => undefined) }, [])
   const link = ({ isActive }: { isActive: boolean }) => `px-2 py-1 text-sm ${isActive ? 'font-semibold text-emerald-800' : 'text-gray-700 hover:text-emerald-800'}`
 
@@ -46,13 +45,13 @@ export default function Layout({ children }: { children: ReactNode }) {
           {user && profile?.role === 'client' && (<>
             <NavLink to="/post" className={link}>Post a request</NavLink>
             <NavLink to="/my-requests" className={link}>My requests</NavLink>
+            <NavLink to="/notifications" className={link}>Notifications{unread > 0 ? ` (${unread})` : ''}</NavLink>
           </>)}
           {user && profile?.role === 'worker' && (<>
             <NavLink to="/feed" className={link}>Requests</NavLink>
-            <NavLink to="/dashboard" className={link}>My jobs</NavLink>
+            <NavLink to="/claims" className={link}>My claims</NavLink>
             <NavLink to="/onboarding" className={link}>Profile</NavLink>
           </>)}
-          {user && profile && <NavLink to="/notifications" className={link}>Notifications{unread > 0 ? ` (${unread})` : ''}</NavLink>}
           {isAdmin && <NavLink to="/admin" className={link}>Admin</NavLink>}
           {user
             ? <button className={btnGhost} onClick={() => signOut()}>Sign out</button>
@@ -60,11 +59,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
       </header>
       <VerifyBanner />
-      {profile?.frozenUntil && profile.frozenUntil.toMillis() > mountedAt && (
-        <div className="bg-red-50 px-4 py-2 text-center text-sm text-red-900" role="alert">
-          Your account is limited until {profile.frozenUntil.toDate().toLocaleDateString('en-US')}{profile.frozenReason ? `: ${profile.frozenReason}` : '.'} You cannot {profile.role === 'worker' ? 'accept new requests' : 'post new requests'} until then. Contact support if you think this is a mistake.
-        </div>
-      )}
       {maintenance && <div className="bg-red-50 px-4 py-2 text-center text-sm text-red-900" role="alert">{brand.name} is in maintenance mode. Some actions may be unavailable.</div>}
       <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">{children}</main>
       <footer className="border-t bg-white px-4 py-6 text-center text-xs text-gray-600">

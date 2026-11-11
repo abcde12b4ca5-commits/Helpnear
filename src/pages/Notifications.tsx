@@ -8,7 +8,7 @@ import { Empty, ErrorBox, Spinner, btnGhost, card } from '../components/ui'
 import type { NotificationDoc } from '../lib/types'
 
 export default function Notifications() {
-  const { user, profile } = useAuth()
+  const { user } = useAuth()
   const [items, setItems] = useState<NotificationDoc[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [canPush, setCanPush] = useState(false)
@@ -40,7 +40,7 @@ export default function Notifications() {
         {items.map((n) => (
           <li key={n.id} className={`${card} flex items-center justify-between text-sm ${n.read ? 'opacity-70' : 'font-semibold'}`}>
             <span>{n.message}</span>
-            <Link to={profile?.role === 'worker' ? '/dashboard' : '/my-requests'} className="underline" onClick={() => open(n)}>{n.read ? 'View' : 'View and mark read'}</Link>
+            <Link to="/my-requests" className="underline" onClick={() => open(n)}>{n.read ? 'View' : 'View and mark read'}</Link>
           </li>
         ))}
       </ul>

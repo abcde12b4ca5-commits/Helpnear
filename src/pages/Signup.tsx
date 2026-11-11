@@ -3,11 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { friendlyError } from '../lib/errors'
 import { ErrorBox, Field, btn, input } from '../components/ui'
-import GoogleButton, { OrDivider } from '../components/GoogleButton'
 import type { Role } from '../lib/types'
 
 export default function Signup() {
-  const { signUp, signUpWithGoogle } = useAuth()
+  const { signUp } = useAuth()
   const nav = useNavigate()
   const [role, setRole] = useState<Role>('client')
   const [displayName, setDisplayName] = useState('')
@@ -26,15 +25,6 @@ export default function Signup() {
     try {
       await signUp({ email: email.trim(), password, displayName: displayName.trim(), role })
       nav(role === 'worker' ? '/onboarding' : '/post')
-    } catch (err) { setError(friendlyError(err)) } finally { setBusy(false) }
-  }
-
-  async function google() {
-    if (!over18 || !terms) { setError('Please confirm you are 18 or older and accept the Terms and Privacy Policy.'); return }
-    setBusy(true); setError(null)
-    try {
-      const finalRole = await signUpWithGoogle({ role, displayName: displayName.trim() })
-      nav(finalRole === 'worker' ? '/onboarding' : '/post')
     } catch (err) { setError(friendlyError(err)) } finally { setBusy(false) }
   }
 
@@ -58,8 +48,6 @@ export default function Signup() {
       </label>
       <ErrorBox message={error} />
       <button className={`${btn} w-full`} disabled={busy}>{busy ? 'Creating account...' : 'Create account'}</button>
-      <OrDivider />
-      <GoogleButton label="Sign up with Google" busy={busy} onClick={google} />
       <p className="text-sm text-gray-700">Already have an account? <Link to="/login" className="underline">Sign in</Link></p>
     </form>
   )
