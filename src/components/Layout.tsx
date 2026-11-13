@@ -6,6 +6,7 @@ import { getAppConfig } from '../lib/catalog'
 import { getUnreadCount } from '../lib/notifications'
 import { friendlyError } from '../lib/errors'
 import { btnGhost } from './ui'
+import { useRouteMeta } from '../lib/useRouteMeta'
 
 function VerifyBanner() {
   const { user, verified, resendVerification, refresh } = useAuth()
@@ -28,6 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { user, profile, isAdmin, signOut } = useAuth()
   const { pathname } = useLocation()
   const isHome = pathname === '/'
+  useRouteMeta()
   const [maintenance, setMaintenance] = useState(false)
   const [unread, setUnread] = useState(0)
   const [scrolled, setScrolled] = useState(false)

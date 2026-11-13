@@ -145,6 +145,7 @@ export default function Home() {
               )
             })}
           </div>
+          <p className="hn-rv" style={{ marginTop: '1rem' }}><a className="hn-bt" href="/services/">Browse all 15 services →</a></p>
         </div>
       </section>
 

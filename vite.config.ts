@@ -5,7 +5,8 @@ import react from '@vitejs/plugin-react'
 // Replaces %BRAND_NAME% in index.html with the name from src/config/brand.json
 function brandHtml(): Plugin {
   const { name, tagline } = JSON.parse(readFileSync(new URL('./src/config/brand.json', import.meta.url), 'utf8')) as { name: string; tagline: string }
-  return { name: 'brand-html', transformIndexHtml: (html) => html.replaceAll('%BRAND_NAME%', name).replaceAll('%BRAND_TAGLINE%', tagline) }
+  const site = (process.env.SITE_URL || 'https://example.pages.dev').replace(/\/$/, '')
+  return { name: 'brand-html', transformIndexHtml: (html) => html.replaceAll('%BRAND_NAME%', name).replaceAll('%BRAND_TAGLINE%', tagline).replaceAll('%SITE_URL%', site) }
 }
 
 // Inlines the (small) built stylesheet into index.html so CSS no longer blocks the first paint.

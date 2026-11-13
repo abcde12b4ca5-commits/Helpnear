@@ -15,6 +15,7 @@
     "test:worker": "vitest run tests/worker.test.ts tests/policy.test.ts",
     "worker:deploy": "cd worker && wrangler deploy",
     "worker:dev": "cd worker && wrangler dev",
+    "indexnow": "node scripts/indexnow.mjs",
     "zips": "FORCE_ZIPS=1 node scripts/build-zips.mjs"
   },
   "dependencies": {

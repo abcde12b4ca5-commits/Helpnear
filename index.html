@@ -5,7 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>%BRAND_NAME% | Local help for your home across the United States</title>
     <meta name="description" content="Post a home-service request (cleaning, handyman, pressure washing, painting, lawn care) and local workers can reach out. Free to use." />
-    <meta name="robots" content="index,follow" />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
+    <link rel="canonical" href="%SITE_URL%/" />
+    <meta name="theme-color" content="#1f4bff" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="%BRAND_NAME%" />
+    <meta property="og:title" content="%BRAND_NAME% | Hire local. Get it done." />
+    <meta property="og:description" content="Post your home job in a minute. Workers who cover your ZIP code send you a price. Free to use, across the U.S." />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/img/handy.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","name":"%BRAND_NAME%","url":"%SITE_URL%/"},{"@type":"WebSite","name":"%BRAND_NAME%","url":"%SITE_URL%/"}]}</script>
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -32,6 +42,7 @@
           <p class="hn-lead">Post your home job in a minute. Workers who cover your ZIP code see it and send you a price. Free to use, and you pay them directly.</p>
           <div class="hn-cta"><a class="hn-btn hn-btn-lg" href="/signup">Post a request →</a><a class="hn-btn hn-btn-lg hn-y" href="/signup?role=worker">I’m a worker</a></div>
         </div></div></header>
+      <nav class="hn-w" aria-label="Services" style="padding-bottom:3rem"><p><a href="/services/">Browse all home services</a>: <a href="/services/handyman/">Handyman</a> · <a href="/services/lawn-care/">Lawn care</a> · <a href="/services/pressure-washing/">Pressure washing</a> · <a href="/services/tv-shelf-mounting/">TV mounting</a> · <a href="/services/furniture-assembly/">Furniture assembly</a> · <a href="/services/house-cleaning/">House cleaning</a> · <a href="/services/painting/">Painting</a></p></nav>
       </main>
       <footer class="hn-foot"><div class="hn-w">
         <p class="font-display text-xl font-extrabold text-tx">%BRAND_NAME%</p>
