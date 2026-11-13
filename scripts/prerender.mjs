@@ -82,8 +82,8 @@ function page({ title, description, path, robots, body, jsonld }) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(description)}">
-<meta name="robots" content="${robots}"><link rel="canonical" href="${url}">
-<meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}">
+<meta name="robots" content="${robots},max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${url}">
+<meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:image" content="${SITE}/img/handy.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f4bff">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <meta name="color-scheme" content="light dark">
@@ -118,6 +118,28 @@ async function write(path, html) {
   await writeFile(`${dir}/index.html`, html)
 }
 
+// How it works (static copy of the SPA page so crawlers see real content)
+await write('/how-it-works', page({
+  title: `How ${BRAND} works | Post a job, get prices, pay directly`,
+  description: `See how ${BRAND} works: post a request, local workers send prices, you pay the worker directly. Free to use.`,
+  path: '/how-it-works', robots: 'index,follow',
+  jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['How it works', '/how-it-works']]), {
+    '@type': 'HowTo', name: `How ${BRAND} works`,
+    step: [
+      { '@type': 'HowToStep', name: 'Post it', text: 'Choose the service, add your ZIP code, details, urgency and how many workers you need.' },
+      { '@type': 'HowToStep', name: 'Get prices', text: 'Workers who cover your ZIP code see the request and can accept it with a price.' },
+      { '@type': 'HowToStep', name: 'Done and rated', text: 'Agree on the work, pay the worker directly, then confirm the job and leave a review.' },
+    ] }] },
+  body: `<h1>How ${esc(BRAND)} works</h1>
+<ol><li><strong>Clients</strong> post a request: the service, the ZIP code, details, how urgent it is and how many workers they need.</li>
+<li><strong>Workers</strong> who offer that service within their travel distance of that ZIP see the request and can accept it with a price, or decline it.</li>
+<li>When a worker accepts, they can see your contact details and reach out. You agree on the price and the work, then confirm the agreement in the app.</li>
+<li>After the work, the worker marks the service as done and you confirm it. Confirmed jobs appear in both dashboards, and you can rate the worker.</li>
+<li>Payment is handled directly between you and the worker. ${esc(BRAND)} never handles job payments.</li></ol>
+<p>${esc(DISCLAIMER)} Always confirm required licenses and permits yourself.</p>
+<p><a href="/services/">Browse services</a></p><p><a class="cta" href="/signup">Get started free</a></p>`,
+}))
+
 // Hub
 await write('/services', page({
   title: `Home services across the United States | ${BRAND}`,
@@ -139,11 +161,12 @@ for (const cat of enabledCats) {
 <p>${esc(BRAND)} connects you with local workers who offer ${esc(cat.name.toLowerCase())}. Post what you need and workers near you can accept your request.</p>
 <h2>What this covers</h2><ul>${cat.allowedServices.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>${cat.notes ? `<p><em>${esc(cat.notes)}</em></p>` : ''}
 <h2>Frequently asked questions</h2>${faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')}
+<h2>Other services</h2><ul>${enabledCats.filter((o) => o.id !== cat.id).map((o) => `<li><a href="/services/${o.id}/">${esc(o.name)}</a></li>`).join('')}</ul>
 <p><a class="cta" href="/signup">Post a ${esc(cat.name.toLowerCase())} request</a></p>`,
   }))
 }
 
-await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
-await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nSitemap: ${SITE}/sitemap.xml\n`)
+await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
+await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\n`)
 await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers anywhere in the United States.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
 console.log(`prerendered ${enabledCats.length} services from ${source}; ${urls.length} URLs in sitemap`)

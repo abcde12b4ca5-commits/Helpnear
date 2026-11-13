@@ -8,3 +8,24 @@
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+/admin*
+  X-Robots-Tag: noindex, nofollow
+/chat/*
+  X-Robots-Tag: noindex, nofollow
+/login
+  X-Robots-Tag: noindex
+/signup
+  X-Robots-Tag: noindex
+/post
+  X-Robots-Tag: noindex, nofollow
+/my-requests
+  X-Robots-Tag: noindex, nofollow
+/feed
+  X-Robots-Tag: noindex, nofollow
+/dashboard
+  X-Robots-Tag: noindex, nofollow
+/onboarding
+  X-Robots-Tag: noindex, nofollow
+/notifications
+  X-Robots-Tag: noindex, nofollow
