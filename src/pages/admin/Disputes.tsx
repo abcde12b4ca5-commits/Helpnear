@@ -41,7 +41,7 @@ export default function Disputes() {
   if (!rows) return <Spinner />
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-700">Jobs where a side reported a problem, or where the client said "not done yet" too many times. Decide, write a short note, and optionally give a strike to the side at fault.</p>
+      <p className="text-sm text-mu">Jobs where a side reported a problem, or where the client said "not done yet" too many times. Decide, write a short note, and optionally give a strike to the side at fault.</p>
       <ErrorBox message={err} />
       {rows.length === 0 && <Empty>No open disputes.</Empty>}
       <ul className="space-y-3">
@@ -52,7 +52,7 @@ export default function Disputes() {
               <p><strong>{c.title}</strong> ({c.categoryName})</p>
               <p>Worker: {c.workerName} <code className="text-xs">{c.workerId}</code> &middot; Client <code className="text-xs">{c.clientId}</code></p>
               <p>Quoted {formatCents(c.quotedCents)}{c.finalCents != null ? <> &middot; Worker's final {formatCents(c.finalCents)}</> : null} &middot; "Not done yet" {c.reopenCount ?? 0}x</p>
-              <p className="text-gray-800">Raised by the <strong>{c.disputeBy}</strong>: {c.disputeReason}</p>
+              <p className="text-tx">Raised by the <strong>{c.disputeBy}</strong>: {c.disputeReason}</p>
               <label className="block">Decision note (both sides see it)<input className={`${input} mt-1`} maxLength={300} value={notes[k] ?? ''} onChange={(e) => setNotes({ ...notes, [k]: e.target.value })} /></label>
               <label className="block">Final amount if you confirm (USD)<input className={`${input} mt-1`} inputMode="decimal" value={amounts[k] ?? ((c.finalCents ?? c.quotedCents) / 100).toString()} onChange={(e) => setAmounts({ ...amounts, [k]: e.target.value })} /></label>
               <label className="block">Strike for the side at fault

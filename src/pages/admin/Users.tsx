@@ -65,7 +65,7 @@ export default function Users() {
         <button type="button" className={btnGhost} onClick={showFlagged}>Show accounts flagged for review</button>
       </form>
       <ErrorBox message={err} />
-      {msg && <p role="status" className="text-sm text-emerald-800">{msg}</p>}
+      {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
       {rows.length === 0 && <Empty>No users found.</Empty>}
       <ul className="space-y-2">
         {rows.map((r) => {
@@ -74,11 +74,11 @@ export default function Users() {
           return (
             <li key={r.id} className={`${card} space-y-2 text-sm`}>
               <p>
-                {r.displayName} &middot; {r.email} &middot; {r.role} &middot; <strong>{r.status}</strong> <code className="text-xs text-gray-600">{r.id}</code>
-                {frozen && <span className="ml-2 rounded bg-red-100 px-2 py-0.5 text-red-900">frozen until {when(r.frozenUntil)}{r.frozenReason ? `: ${r.frozenReason}` : ''}</span>}
-                {r.needsReview && <span className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-amber-900">needs review{r.reviewReason ? `: ${r.reviewReason}` : ''}</span>}
+                {r.displayName} &middot; {r.email} &middot; {r.role} &middot; <strong>{r.status}</strong> <code className="text-xs text-mu">{r.id}</code>
+                {frozen && <span className="ml-2 rounded bg-danger-bg px-2 py-0.5 text-danger-tx">frozen until {when(r.frozenUntil)}{r.frozenReason ? `: ${r.frozenReason}` : ''}</span>}
+                {r.needsReview && <span className="ml-2 rounded bg-warn-bg px-2 py-0.5 text-warn-tx">needs review{r.reviewReason ? `: ${r.reviewReason}` : ''}</span>}
               </p>
-              <label className="block text-xs text-gray-700">Reason or note (used by Escalate and Freeze)
+              <label className="block text-xs text-mu">Reason or note (used by Escalate and Freeze)
                 <input className={`${input} mt-1`} maxLength={200} value={reason} onChange={(e) => setReasons({ ...reasons, [r.id]: e.target.value })} />
               </label>
               <div className="flex flex-wrap items-center gap-2">
@@ -97,8 +97,8 @@ export default function Users() {
                 }}>Ban (fraud)</button>
               </div>
               {strikes[r.id] && (
-                <ul className="space-y-1 rounded-md bg-gray-50 p-2">
-                  {strikes[r.id].length === 0 && <li className="text-gray-600">No strikes.</li>}
+                <ul className="space-y-1 rounded-xl bg-bg p-2">
+                  {strikes[r.id].length === 0 && <li className="text-mu">No strikes.</li>}
                   {strikes[r.id].map((s) => (
                     <li key={s.id} className="flex items-center justify-between gap-2">
                       <span>{when(s.createdAt)} &middot; <strong>{s.type}</strong> &middot; {s.by}{s.note ? ` \u00b7 ${s.note}` : ''}</span>

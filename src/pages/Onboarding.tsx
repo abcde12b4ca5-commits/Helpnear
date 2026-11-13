@@ -73,7 +73,7 @@ export default function Onboarding() {
             <div key={c.id} className={card}>
               <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={selCats.includes(c.id)} onChange={() => toggleCat(c.id)} /> {c.name}</label>
               {selCats.includes(c.id) && (
-                <div className="mt-2 text-xs text-gray-700">
+                <div className="mt-2 text-xs text-mu">
                   <p>Allowed: {c.allowedServices.join('; ')}</p>
                   <label className="mt-2 flex items-start gap-2"><input type="checkbox" className="mt-0.5" checked={confirmed.includes(c.id)} onChange={(e) => setConfirmed(e.target.checked ? [...confirmed, c.id] : confirmed.filter((x) => x !== c.id))} /> I will only perform the allowed services in this category.</label>
                 </div>
@@ -87,8 +87,8 @@ export default function Onboarding() {
         <Field label="Your base ZIP code" htmlFor="bzip" hint="Requests inside your radius around this ZIP are sent to you. Anywhere in the United States.">
           <input id="bzip" required inputMode="numeric" maxLength={5} className={input} value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))} />
         </Field>
-        {zipChecked && !zipInfo && <p role="alert" className="text-sm text-red-800">We could not find that ZIP code.</p>}
-        {zipInfo && <p className="text-sm text-gray-700" role="status">{zipInfo.city}, {zipInfo.state}</p>}
+        {zipChecked && !zipInfo && <p role="alert" className="text-sm text-danger-tx">We could not find that ZIP code.</p>}
+        {zipInfo && <p className="text-sm text-mu" role="status">{zipInfo.city}, {zipInfo.state}</p>}
         <Field label="How far will you travel?" htmlFor="radius">
           <select id="radius" className={input} value={radius} onChange={(e) => setRadius(Number(e.target.value))}>
             {RADIUS_OPTIONS.map((r) => <option key={r} value={r}>{r} miles</option>)}

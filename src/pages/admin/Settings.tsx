@@ -61,7 +61,7 @@ export default function Settings() {
         <Field key={k} label={label} htmlFor={k}><input id={k} type="number" min={min} max={max} className={input} value={Number(cfg[k])} onChange={(e) => setCfg({ ...cfg, [k]: Math.min(max, Math.max(min, Number(e.target.value) || min)) })} /></Field>
       ))}
       <ErrorBox message={err} />
-      {msg && <p role="status" className="text-sm text-emerald-800">{msg}</p>}
+      {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
       <div className="flex flex-wrap gap-2">
         <button className={btn} onClick={save}>Save settings</button>
         <button className={btnGhost} onClick={runNow}>Run the fair-use rules now</button>

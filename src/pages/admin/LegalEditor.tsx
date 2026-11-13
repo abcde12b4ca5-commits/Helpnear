@@ -42,7 +42,7 @@ export default function LegalEditor() {
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isDraft} onChange={(e) => setIsDraft(e.target.checked)} /> Still a draft (needs attorney review)</label>
       <Field label="Text" htmlFor="b"><textarea id="b" rows={16} className={input} value={body} onChange={(e) => setBody(e.target.value)} /></Field>
       <ErrorBox message={err} />
-      {msg && <p role="status" className="text-sm text-emerald-800">{msg}</p>}
+      {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
       <button className={btn} onClick={publish}>Publish</button>
     </div>
   )

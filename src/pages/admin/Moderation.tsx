@@ -45,7 +45,7 @@ export default function Moderation() {
   return (
     <div className="space-y-6">
       <ErrorBox message={err} />
-      {msg && <p role="status" className="text-sm text-emerald-800">{msg}</p>}
+      {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
       <section>
         <h2 className="mb-2 font-semibold">Open reports</h2>
         {reports.length === 0 && <Empty>No open reports.</Empty>}
@@ -53,7 +53,7 @@ export default function Moderation() {
           {reports.map((r) => (
             <li key={r.id} className={`${card} space-y-2 text-sm`}>
               <p><strong>{r.targetType}</strong> <code>{r.targetId}</code> reported by <code>{r.reporterId}</code></p>
-              <p className="text-gray-800">{r.reason}</p>
+              <p className="text-tx">{r.reason}</p>
               <div className="flex flex-wrap gap-2">
                 {r.targetType === 'request' && <button className={btnGhost} onClick={() => setRequest(r.targetId, 'removed').then(() => setReport(r, 'resolved'))}>Remove request and resolve</button>}
                 {r.targetType === 'worker' && <button className={btnGhost} onClick={() => run(() => setUserSuspended(user!.uid, r.targetId, 'worker', true)).then(() => setReport(r, 'resolved'))}>Suspend worker and resolve</button>}

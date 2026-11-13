@@ -41,11 +41,11 @@ export default function WorkerProfile() {
   }
 
   if (worker === undefined) return <Spinner />
-  if (!worker) return <p className="text-sm text-gray-700">Profile not found.</p>
+  if (!worker) return <p className="text-sm text-mu">Profile not found.</p>
   return (
     <div className="max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold">{worker.displayName}</h1>
-      <p className="text-sm text-gray-700">
+      <p className="text-sm text-mu">
         {reviews?.average != null ? `Rating ${reviews.average.toFixed(1)} from ${reviews.items.length} recent review(s)` : 'No reviews yet'}
       </p>
       {worker.bio && <p className="whitespace-pre-line text-sm">{worker.bio}</p>}
@@ -55,7 +55,7 @@ export default function WorkerProfile() {
         <div className={`${card} text-sm`}>
           {worker.licenseNote && <p>License: {worker.licenseNote}</p>}
           {worker.insuranceNote && <p>Insurance: {worker.insuranceNote}</p>}
-          <p className="mt-1 text-xs text-gray-600">Self-reported, not verified by {brand.name}.</p>
+          <p className="mt-1 text-xs text-mu">Self-reported, not verified by {brand.name}.</p>
         </div>
       )}
       <ReportButton targetType="worker" targetId={id} />
@@ -72,7 +72,7 @@ export default function WorkerProfile() {
           <button className={btn}>Submit review</button>
         </form>
       )}
-      {done && <p className="text-sm text-emerald-800" role="status">Thanks for your review.</p>}
+      {done && <p className="text-sm text-ac" role="status">Thanks for your review.</p>}
       <section aria-labelledby="rv">
         <h2 id="rv" className="font-semibold">Reviews</h2>
         <ul className="mt-2 space-y-2">

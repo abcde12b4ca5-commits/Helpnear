@@ -7,8 +7,8 @@ export function StatsGrid({ items }: { items: [string, string | number][] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {items.map(([label, v]) => (
-        <div key={label} className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-          <p className="text-xs text-gray-600">{label}</p>
+        <div key={label} className="rounded-2xl border-2 border-ln bg-sf p-3 shadow-sm">
+          <p className="text-xs text-mu">{label}</p>
           <p className="text-xl font-bold">{v}</p>
         </div>
       ))}
@@ -26,7 +26,7 @@ export function CancelForm({ onCancel, onClose }: { onCancel: (reason: string) =
     try { await onCancel(reason.trim()) } finally { setBusy(false) }
   }
   return (
-    <form onSubmit={submit} className="mt-2 flex w-full flex-wrap items-end gap-2 rounded-md border border-gray-200 p-3">
+    <form onSubmit={submit} className="mt-2 flex w-full flex-wrap items-end gap-2 rounded-xl border-2 border-ln p-3">
       <label className="flex-1 text-sm">Why are you cancelling?
         <input required minLength={3} maxLength={200} className={`${input} mt-1`} value={reason} onChange={(e) => setReason(e.target.value)} />
       </label>
@@ -46,7 +46,7 @@ export function DisputeForm({ onSubmit, onClose }: { onSubmit: (reason: string) 
     try { await onSubmit(reason.trim()) } finally { setBusy(false) }
   }
   return (
-    <form onSubmit={submit} className="mt-2 w-full space-y-2 rounded-md border border-gray-200 p-3">
+    <form onSubmit={submit} className="mt-2 w-full space-y-2 rounded-xl border-2 border-ln p-3">
       <label className="block text-sm">What went wrong? An admin will read this and decide.
         <textarea required minLength={5} maxLength={500} rows={3} className={`${input} mt-1`} value={reason} onChange={(e) => setReason(e.target.value)} />
       </label>
@@ -72,5 +72,5 @@ export function StrikeNotice({ uid, role }: { uid: string; role: 'client' | 'wor
     }).catch(() => undefined)
     return () => { active = false }
   }, [uid, role])
-  return text ? <p role="status" className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">{text}</p> : null
+  return text ? <p role="status" className="rounded-xl bg-warn-bg p-3 text-sm text-warn-tx">{text}</p> : null
 }

@@ -19,12 +19,12 @@ export default function ReportButton({ targetType, targetId }: { targetType: 're
   }
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
-      <button className="text-xs text-gray-600 underline" onClick={() => setOpen(!open)}>Report</button>
+      <button className="text-xs text-mu underline" onClick={() => setOpen(!open)}>Report</button>
       {open && (<>
         <input aria-label="Reason for report" className={`${input} w-56`} maxLength={500} placeholder="What is wrong?" value={reason} onChange={(e) => setReason(e.target.value)} />
         <button className={btnGhost} disabled={reason.trim().length < 3} onClick={send}>Send</button>
       </>)}
-      {msg && <span className="text-xs text-gray-700" role="status">{msg}</span>}
+      {msg && <span className="text-xs text-mu" role="status">{msg}</span>}
     </span>
   )
 }

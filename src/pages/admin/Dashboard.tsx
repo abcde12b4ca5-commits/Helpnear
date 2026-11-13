@@ -18,9 +18,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
-        {items.map(([label, v]) => <div key={label} className={card}><p className="text-xs text-gray-600">{label}</p><p className="text-2xl font-bold">{err ? '-' : v ?? '...'}</p></div>)}
+        {items.map(([label, v]) => <div key={label} className={card}><p className="text-xs text-mu">{label}</p><p className="text-2xl font-bold">{err ? '-' : v ?? '...'}</p></div>)}
       </div>
-      <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+      <p className="rounded-xl bg-warn-bg p-3 text-sm text-warn-tx">
         Spark free limits are hard daily caps (reads, writes, deletes); when exceeded the service stops until the next day. This page uses cheap count queries and cannot measure your reads. Check the Usage tab in the Firebase console daily during launch, and consider turning on maintenance mode (Settings) if you are close to a limit.
       </p>
     </div>

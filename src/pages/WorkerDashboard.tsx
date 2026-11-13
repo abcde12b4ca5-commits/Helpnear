@@ -81,10 +81,10 @@ export default function WorkerDashboard() {
         ['In progress', stats?.active ?? dots], ['Waiting for client', stats?.waitingConfirmation ?? dots],
         ['Completed jobs', stats?.completed ?? dots], ['Total earned', stats ? formatCents(stats.totalCents) : dots],
       ]} />
-      <p className="text-xs text-gray-600">Earnings count only jobs the client confirmed, using the final amount you entered. Payments are arranged directly with the client for now.</p>
+      <p className="text-xs text-mu">Earnings count only jobs the client confirmed, using the final amount you entered. Payments are arranged directly with the client for now.</p>
       <div role="tablist" aria-label="Job status" className="flex flex-wrap gap-2">
         {TABS.map(([name, st]) => (
-          <button key={name} role="tab" aria-selected={tab === st} onClick={() => { setLoading(true); setTab(st) }} className={`rounded-md px-3 py-1 text-sm ${tab === st ? 'bg-emerald-700 text-white' : 'border border-gray-300 bg-white'}`}>{name}</button>
+          <button key={name} role="tab" aria-selected={tab === st} onClick={() => { setLoading(true); setTab(st) }} className={`rounded-xl px-3 py-1 text-sm ${tab === st ? 'bg-bl text-white' : 'border-2 border-bd bg-sf text-tx'}`}>{name}</button>
         ))}
       </div>
       {user && <StrikeNotice uid={user.uid} role="worker" />}
@@ -98,11 +98,11 @@ export default function WorkerDashboard() {
             <li key={key(c)} className={card}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="font-semibold">{c.title}</h3>
-                <span className="text-xs text-gray-600">{c.categoryName}</span>
+                <span className="text-xs text-mu">{c.categoryName}</span>
               </div>
               <p className="mt-1 text-sm">Your price: <strong>{formatCents(c.quotedCents)}</strong>{c.status === 'confirmed' || c.status === 'done' ? <> &middot; Final: <strong>{formatCents(c.finalCents)}</strong></> : null}</p>
-              <p className="text-sm text-gray-700">{c.note}</p>
-              <p className="mt-1 text-sm font-medium text-emerald-900">{claimLabel(c, 'worker')}</p>
+              <p className="text-sm text-mu">{c.note}</p>
+              <p className="mt-1 text-sm font-medium text-ac">{claimLabel(c, 'worker')}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 {c.status !== 'cancelled' && (contact
                   ? <p className="text-sm">Contact ({contact.preferredContactMethod}): {contact.phone || '-'} &middot; {contact.email || '-'}</p>
@@ -115,15 +115,15 @@ export default function WorkerDashboard() {
                 <ReportButton targetType="request" targetId={c.requestId} />
               </div>
               {p === 'quote' && (
-                <form onSubmit={(e) => submitQuote(e, c)} className="mt-3 space-y-3 rounded-md border border-gray-200 p-3">
+                <form onSubmit={(e) => submitQuote(e, c)} className="mt-3 space-y-3 rounded-xl border-2 border-ln p-3">
                   <Field label="Price (USD)" htmlFor={`q-${c.requestId}`}><input id={`q-${c.requestId}`} required inputMode="decimal" className={input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
                   <Field label="What it includes" htmlFor={`qn-${c.requestId}`}><textarea id={`qn-${c.requestId}`} required minLength={5} maxLength={500} rows={3} className={input} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
-                  <p className="text-xs text-gray-600">The client will be asked to agree again.</p>
+                  <p className="text-xs text-mu">The client will be asked to agree again.</p>
                   <div className="flex gap-2"><button className={btn}>Save</button><button type="button" className={btnGhost} onClick={() => setPanel(null)}>Close</button></div>
                 </form>
               )}
               {p === 'done' && (
-                <form onSubmit={(e) => submitDone(e, c)} className="mt-3 space-y-3 rounded-md border border-gray-200 p-3">
+                <form onSubmit={(e) => submitDone(e, c)} className="mt-3 space-y-3 rounded-xl border-2 border-ln p-3">
                   <Field label="Final amount for the work (USD)" htmlFor={`f-${c.requestId}`} hint="The client will be asked to confirm that the service was done."><input id={`f-${c.requestId}`} required inputMode="decimal" className={input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
                   <div className="flex gap-2"><button className={btn}>Mark as done</button><button type="button" className={btnGhost} onClick={() => setPanel(null)}>Close</button></div>
                 </form>

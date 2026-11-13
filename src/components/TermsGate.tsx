@@ -33,7 +33,7 @@ export default function TermsGate({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto max-w-md space-y-4">
       <h1 className="text-xl font-bold">Updated Terms</h1>
-      <p className="text-sm text-gray-800">We updated our <Link to="/legal/terms" target="_blank" className="underline">Terms</Link> and <Link to="/legal/privacy" target="_blank" className="underline">Privacy Policy</Link>. Please review and accept to continue.</p>
+      <p className="text-sm text-tx">We updated our <Link to="/legal/terms" target="_blank" className="underline">Terms</Link> and <Link to="/legal/privacy" target="_blank" className="underline">Privacy Policy</Link>. Please review and accept to continue.</p>
       <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={checked} onChange={(e) => setChecked(e.target.checked)} /> I accept the updated Terms and Privacy Policy.</label>
       <ErrorBox message={error} />
       <button className={btn} disabled={!checked} onClick={accept}>Continue</button>

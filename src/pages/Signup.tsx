@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { friendlyError } from '../lib/errors'
 import { ErrorBox, Field, btn, input } from '../components/ui'
@@ -9,7 +9,8 @@ import type { Role } from '../lib/types'
 export default function Signup() {
   const { signUp, signUpWithGoogle } = useAuth()
   const nav = useNavigate()
-  const [role, setRole] = useState<Role>('client')
+  const [params] = useSearchParams()
+  const [role, setRole] = useState<Role>(params.get('role') === 'worker' ? 'worker' : 'client')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,7 +61,7 @@ export default function Signup() {
       <button className={`${btn} w-full`} disabled={busy}>{busy ? 'Creating account...' : 'Create account'}</button>
       <OrDivider />
       <GoogleButton label="Sign up with Google" busy={busy} onClick={google} />
-      <p className="text-sm text-gray-700">Already have an account? <Link to="/login" className="underline">Sign in</Link></p>
+      <p className="text-sm text-mu">Already have an account? <Link to="/login" className="underline">Sign in</Link></p>
     </form>
   )
 }

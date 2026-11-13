@@ -28,7 +28,7 @@ export default function Admin() {
       <h1 className="text-2xl font-bold">Admin</h1>
       <div role="tablist" aria-label="Admin sections" className="flex flex-wrap gap-2">
         {TABS.map(([n]) => (
-          <button key={n} role="tab" aria-selected={tab === n} onClick={() => setTab(n)} className={`rounded-md px-3 py-1 text-sm ${tab === n ? 'bg-emerald-700 text-white' : 'border border-gray-300 bg-white'}`}>{n}</button>
+          <button key={n} role="tab" aria-selected={tab === n} onClick={() => setTab(n)} className={`rounded-xl px-3 py-1 text-sm ${tab === n ? 'bg-bl text-white' : 'border-2 border-bd bg-sf text-tx'}`}>{n}</button>
         ))}
       </div>
       <Active />

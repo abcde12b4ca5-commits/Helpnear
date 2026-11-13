@@ -34,7 +34,7 @@ export default function Chat() {
   const run = async (fn: () => Promise<void>) => { try { setError(null); await fn() } catch (e) { setError(friendlyError(e)) } }
 
   if (thread === undefined) return <Spinner />
-  if (!thread || !user) return <p className="text-sm text-gray-700">Chat is not available.</p>
+  if (!thread || !user) return <p className="text-sm text-mu">Chat is not available.</p>
   const blockedByMe = thread.blockedBy === user.uid
   const blocked = thread.blockedBy !== ''
   const toggleMute = () => { const v = !muted; setMuted(v); try { localStorage.setItem(`mute:${threadId}`, v ? '1' : '0') } catch { /* storage may be unavailable */ } }
@@ -48,15 +48,15 @@ export default function Chat() {
           <button className={btnGhost} onClick={() => run(async () => { await reportThread(threadId, user.uid, 'Reported from chat'); setThread({ ...thread, reported: true }) })} disabled={thread.reported}>{thread.reported ? 'Reported' : 'Report'}</button>
         </div>
       </div>
-      <p className="text-xs text-gray-600">Text only. Do not share payment details. An admin can read this chat only if it is reported.</p>
+      <p className="text-xs text-mu">Text only. Do not share payment details. An admin can read this chat only if it is reported.</p>
       <ErrorBox message={error} />
       <div className={`${card} h-80 space-y-2 overflow-y-auto`} aria-live={muted ? 'off' : 'polite'}>
         {messages.map((m) => (
-          <p key={m.id} className={`max-w-[85%] rounded-md px-3 py-2 text-sm ${m.senderId === user.uid ? 'ml-auto bg-emerald-100' : 'bg-gray-100'}`}>{m.text}</p>
+          <p key={m.id} className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${m.senderId === user.uid ? 'ml-auto bg-ye text-ink' : 'bg-ln text-tx'}`}>{m.text}</p>
         ))}
         <div ref={end} />
       </div>
-      {blocked ? <p className="text-sm text-gray-700">{blockedByMe ? 'You blocked this chat.' : 'This chat has been blocked.'}</p> : (
+      {blocked ? <p className="text-sm text-mu">{blockedByMe ? 'You blocked this chat.' : 'This chat has been blocked.'}</p> : (
         <form onSubmit={send} className="flex gap-2">
           <input aria-label="Message" className={input} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} />
           <button className={btn} disabled={!text.trim()}>Send</button>

@@ -22,8 +22,8 @@ export default function GoogleButton({ label, busy, disabled, onClick }: { label
 
 export function OrDivider() {
   return (
-    <div className="flex items-center gap-3 text-xs text-gray-500" role="separator">
-      <span className="h-px flex-1 bg-gray-200" /> or <span className="h-px flex-1 bg-gray-200" />
+    <div className="flex items-center gap-3 text-xs text-mu" role="separator">
+      <span className="h-px flex-1 bg-ln" /> or <span className="h-px flex-1 bg-ln" />
     </div>
   )
 }

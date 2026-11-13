@@ -69,17 +69,17 @@ export default function MyRequests() {
             {(r.status === 'open' || r.status === 'filled') && <button className={btnGhost} onClick={() => setCancelling(`req:${r.id}`)}>Cancel request</button>}
             {cancelling === `req:${r.id}` && (
               <div className="w-full">
-                <p className="text-xs text-gray-700">This cancels the request and every worker who has not finished yet. Workers are told. Please cancel only when you really do not need the work: repeated late cancellations can limit your account.</p>
+                <p className="text-xs text-mu">This cancels the request and every worker who has not finished yet. Workers are told. Please cancel only when you really do not need the work: repeated late cancellations can limit your account.</p>
                 <CancelForm onCancel={(reason) => act(() => cancelRequest(r.id, claims[r.id] ?? [], reason))} onClose={() => setCancelling(null)} />
               </div>
             )}
             {claims[r.id]?.map((c) => {
               const k = `${r.id}_${c.workerId}`
               return (
-                <div key={k} className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm">
+                <div key={k} className="mt-2 w-full rounded-xl border-2 border-ln p-3 text-sm">
                   <p><Link className="font-semibold underline" to={`/worker/${c.workerId}?request=${r.id}`}>{c.workerName}</Link> &middot; Price: <strong>{formatCents(c.quotedCents)}</strong>{(c.status === 'done' || c.status === 'confirmed') && <> &middot; Final: <strong>{formatCents(c.finalCents)}</strong></>}</p>
-                  <p className="text-gray-700">{c.note}</p>
-                  <p className="mt-1 font-medium text-emerald-900">{claimLabel(c, 'client')}</p>
+                  <p className="text-mu">{c.note}</p>
+                  <p className="mt-1 font-medium text-ac">{claimLabel(c, 'client')}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {c.status === 'accepted' && !c.clientAgreed && <button className={btn} onClick={() => act(() => agreeClaim(c))}>Agree to price and work</button>}
                     {c.status === 'done' && <button className={btn} onClick={() => act(() => confirmDone(c))}>Confirm service was done</button>}
@@ -117,7 +117,7 @@ export default function MyRequests() {
               Job with {g.reqs.reduce((n, r) => n + r.workersNeeded, 0)} workers in {g.reqs.length} groups
               {' '}&middot; price agreed with {g.reqs.reduce((n, r) => n + (claims[r.id]?.filter((c) => c.clientAgreed && c.status !== 'cancelled').length ?? 0), 0)} of {g.reqs.reduce((n, r) => n + r.workersNeeded, 0)}
             </p>
-            <ul className="space-y-3 border-l-2 border-emerald-200 pl-3">{g.reqs.map(renderRequest)}</ul>
+            <ul className="space-y-3 border-l-2 border-bl pl-3">{g.reqs.map(renderRequest)}</ul>
           </li>
         ) : renderRequest(g.reqs[0]))}
       </ul>

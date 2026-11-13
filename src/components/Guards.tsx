@@ -8,8 +8,8 @@ export function RequireRole({ role, children }: { role: Role; children: ReactNod
   const { user, profile, worker, loading } = useAuth()
   if (loading) return <Spinner />
   if (!user) return <Navigate to="/login" replace />
-  if (!profile) return <p className="text-sm text-red-800" role="alert">Your profile could not be loaded. Please sign out and try again.</p>
-  if (profile.status === 'suspended') return <p className="text-sm text-red-800" role="alert">Your account is suspended.</p>
+  if (!profile) return <p className="text-sm text-danger-tx" role="alert">Your profile could not be loaded. Please sign out and try again.</p>
+  if (profile.status === 'suspended') return <p className="text-sm text-danger-tx" role="alert">Your account is suspended.</p>
   if (profile.role !== role) return <Navigate to="/" replace />
   if (role === 'worker' && !worker?.matchKeys) return <Navigate to="/onboarding" replace /> // no profile, or an old profile without ZIP + radius
   return <>{children}</>
@@ -28,8 +28,8 @@ export function RequireAnyRole({ children }: { children: ReactNode }) {
   const { user, profile, worker, loading } = useAuth()
   if (loading) return <Spinner />
   if (!user) return <Navigate to="/login" replace />
-  if (!profile) return <p className="text-sm text-red-800" role="alert">Your profile could not be loaded. Please sign out and try again.</p>
-  if (profile.status === 'suspended') return <p className="text-sm text-red-800" role="alert">Your account is suspended.</p>
+  if (!profile) return <p className="text-sm text-danger-tx" role="alert">Your profile could not be loaded. Please sign out and try again.</p>
+  if (profile.status === 'suspended') return <p className="text-sm text-danger-tx" role="alert">Your account is suspended.</p>
   if (profile.role === 'worker' && !worker?.matchKeys) return <Navigate to="/onboarding" replace />
   return <>{children}</>
 }

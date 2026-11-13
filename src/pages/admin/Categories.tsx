@@ -29,13 +29,13 @@ function Row({ cat, onSaved, onError }: { cat: Category; onSaved: () => void; on
   return (
     <li className={`${card} space-y-2`}>
       <div className="flex flex-wrap items-center gap-3">
-        <strong className="text-sm">{c.name}</strong><code className="text-xs text-gray-600">{c.id}</code>
+        <strong className="text-sm">{c.name}</strong><code className="text-xs text-mu">{c.id}</code>
         <label className="flex items-center gap-1 text-sm"><input type="checkbox" disabled={locked} checked={c.enabled && !locked} onChange={(e) => setC({ ...c, enabled: e.target.checked })} /> Enabled</label>
         <select aria-label="Risk level" className={`${input} w-auto`} value={c.riskLevel} onChange={(e) => setC({ ...c, riskLevel: e.target.value as Category['riskLevel'] })}>
           <option value="low">low</option><option value="regulated">regulated</option><option value="high">high</option>
         </select>
       </div>
-      {locked && <p className="text-xs text-amber-900">Cannot be enabled until a license-verification feature exists.</p>}
+      {locked && <p className="text-xs text-warn-tx">Cannot be enabled until a license-verification feature exists.</p>}
       <textarea aria-label="Allowed services, one per line" rows={3} className={input} value={services} onChange={(e) => setServices(e.target.value)} />
       <input aria-label="Blocked keywords, comma separated" className={input} placeholder="Blocked keywords, comma separated" value={blocked} onChange={(e) => setBlocked(e.target.value)} />
       <input aria-label="States where this service is switched off" className={input} placeholder="States where this service is OFF, e.g. NY, CA (empty = available everywhere)" value={off} onChange={(e) => setOff(e.target.value)} />

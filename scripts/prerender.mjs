@@ -52,7 +52,30 @@ async function loadData() {
   }
 }
 
-const css = 'body{font-family:system-ui,sans-serif;max-width:46rem;margin:0 auto;padding:1rem;line-height:1.6;color:#111}a{color:#047857}h1{font-size:1.7rem}footer{margin-top:2rem;font-size:.85rem;color:#444}.cta{display:inline-block;background:#047857;color:#fff;padding:.6rem 1rem;border-radius:.4rem;text-decoration:none;font-weight:600}'
+// Static pages share the site's editorial design tokens (kept in sync with src/index.css).
+const css = `:root{--bg:#f6f4ee;--sf:#fff;--tx:#0b1020;--mu:#5a6075;--ln:#dedbd0;--bl:#1f4bff;--ye:#ffd23f;--ac:#1f4bff}
+@media(prefers-color-scheme:dark){:root{--bg:#0a0e1a;--sf:#131a2e;--tx:#f1f2f8;--mu:#9aa1ba;--ln:#232c48;--ac:#ffd23f}}
+*{box-sizing:border-box;margin:0}html{scroll-behavior:smooth;background:var(--bg)}
+body{font:400 1rem/1.6 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+h1,h2,h3,.f{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.035em;line-height:1.02}
+a{color:inherit}
+.w{max-width:76rem;margin:0 auto;padding:0 1.25rem}
+nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln)}
+nav .w{display:flex;align-items:center;gap:1.4rem;height:4rem}
+.logo{display:flex;align-items:center;gap:.55rem;font:800 1.45rem 'Bricolage Grotesque',sans-serif;letter-spacing:-.04em;margin-right:auto;text-decoration:none}
+.logo i{display:grid;place-items:center;width:2rem;height:2rem;border-radius:.6rem;background:var(--bl);color:var(--ye);font-style:normal;font-size:1.1rem;transform:rotate(-8deg)}
+nav a.l{font-size:.9rem;font-weight:600;color:var(--mu);text-decoration:none}nav a.l:hover{color:var(--tx)}
+@media(max-width:39.99rem){nav a.l{display:none}}
+main{max-width:46rem;margin:0 auto;padding:3rem 1.25rem 2rem}
+h1{font-size:clamp(2.4rem,7vw,4rem);font-weight:800;margin-bottom:1rem}
+h2{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:800;margin:2rem 0 .6rem}
+h3{font-size:1.2rem;font-weight:800;margin:1.2rem 0 .3rem}
+p,li{color:var(--mu)}p{margin:.6rem 0}ul{padding-left:1.2rem;margin:.6rem 0}
+main a:not(.cta){color:var(--ac);text-decoration:underline;text-underline-offset:3px}
+.cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.9rem;font:800 .95rem 'Bricolage Grotesque',sans-serif;background:var(--bl);color:#fff;text-decoration:none;box-shadow:0 8px 0 -2px rgba(11,16,32,.9)}
+.cta:hover{transform:translateY(3px);box-shadow:0 4px 0 -2px rgba(11,16,32,.9)}
+.cta.y{background:var(--ye);color:#0b1020}
+footer{padding:3rem 1.25rem 2.5rem;font-size:.8rem;color:var(--mu);text-align:center}footer p{max-width:42rem;margin:.6rem auto}footer a{text-decoration:underline;text-underline-offset:3px}`
 
 function page({ title, description, path, robots, body, jsonld }) {
   const url = `${SITE}${path}`
@@ -61,11 +84,14 @@ function page({ title, description, path, robots, body, jsonld }) {
 <title>${esc(title)}</title><meta name="description" content="${esc(description)}">
 <meta name="robots" content="${robots}"><link rel="canonical" href="${url}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<meta name="color-scheme" content="light dark">
 <style>${css}</style>
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script></head>
-<body><header><a href="/">${esc(BRAND)}</a> &middot; <a href="/services/">Services</a> &middot; <a href="/how-it-works">How it works</a></header>
+<body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">⌂</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/login">Sign in</a><a class="cta y" style="margin:0;padding:.6rem 1.1rem;box-shadow:none" href="/signup">Get started</a></div></nav>
 <main>${body}</main>
-<footer><p>${esc(DISCLAIMER)}</p><p><a href="/legal/terms">Terms</a> &middot; <a href="/legal/privacy">Privacy</a> &middot; <a href="/legal/guidelines">Community Guidelines</a></p></footer></body></html>`
+<footer><p class="f" style="font-size:1.3rem;color:var(--tx);font-weight:800">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer></body></html>`
 }
 
 const crumbs = (items) => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: `${SITE}${path}` })) })

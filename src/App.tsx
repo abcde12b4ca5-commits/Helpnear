@@ -22,7 +22,7 @@ export default function App() {
   return (
     <Layout>
       <TermsGate>
-      <Suspense fallback={<p className="py-8 text-center text-sm text-gray-600">Loading...</p>}>
+      <Suspense fallback={<p className="py-8 text-center text-sm text-mu">Loading...</p>}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
@@ -39,7 +39,7 @@ export default function App() {
         <Route path="/notifications" element={<RequireAnyRole><Notifications /></RequireAnyRole>} />
         <Route path="/chat/:threadId" element={<Chat />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="*" element={<p className="text-sm text-gray-700">Page not found.</p>} />
+        <Route path="*" element={<p className="text-sm text-mu">Page not found.</p>} />
       </Routes>
       </Suspense>
       </TermsGate>

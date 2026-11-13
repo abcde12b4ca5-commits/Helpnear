@@ -30,17 +30,17 @@ export default function Coverage() {
   const gaps = rows?.filter((r) => r.open > 0 && r.workers === 0) ?? []
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-700">Counts workers (listed) and open requests per state. Uses about 100 read operations each time you load it.</p>
+      <p className="text-sm text-mu">Counts workers (listed) and open requests per state. Uses about 100 read operations each time you load it.</p>
       <button className={btn} onClick={load} disabled={busy}>{busy ? 'Loading...' : 'Load coverage'}</button>
       <ErrorBox message={err} />
-      {gaps.length > 0 && <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">Open requests with no workers in: {gaps.map((g) => g.state).join(', ')}</p>}
+      {gaps.length > 0 && <p className="rounded-xl bg-warn-bg p-3 text-sm text-warn-tx">Open requests with no workers in: {gaps.map((g) => g.state).join(', ')}</p>}
       {rows && (
         <div className={`${card} overflow-x-auto`}>
           <table className="w-full text-left text-sm">
             <thead><tr><th className="p-1">State</th><th className="p-1">Workers</th><th className="p-1">Open requests</th></tr></thead>
             <tbody>{rows.filter((r) => r.workers > 0 || r.open > 0).map((r) => <tr key={r.state} className="border-t"><td className="p-1">{r.state}</td><td className="p-1">{r.workers}</td><td className="p-1">{r.open}</td></tr>)}</tbody>
           </table>
-          {rows.every((r) => r.workers === 0 && r.open === 0) && <p className="p-2 text-sm text-gray-600">No workers or open requests yet.</p>}
+          {rows.every((r) => r.workers === 0 && r.open === 0) && <p className="p-2 text-sm text-mu">No workers or open requests yet.</p>}
         </div>
       )}
     </div>

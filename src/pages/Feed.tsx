@@ -84,7 +84,7 @@ export default function Feed() {
         <h1 className="text-2xl font-bold">Requests for you</h1>
         <button className={btnGhost} onClick={start}>Refresh</button>
       </div>
-      {!verified && <p className="text-sm text-amber-900">Verify your email to accept requests.</p>}
+      {!verified && <p className="text-sm text-warn-tx">Verify your email to accept requests.</p>}
       <ErrorBox message={error} />
       {visible.length === 0 && !loading && <Empty>No open requests match your services and area right now. Check back soon.</Empty>}
       <ul className="space-y-3">
@@ -93,15 +93,15 @@ export default function Feed() {
           const full = r.claimsCount >= (r.workersNeeded ?? 1)
           return (
             <RequestCard key={r.id} r={r} distanceMiles={worker ? haversineMiles(worker.lat, worker.lng, r.lat, r.lng) : undefined}>
-              {accepted && <span className="text-sm font-medium text-emerald-800">You accepted this. Manage it in <Link to="/dashboard" className="underline">My jobs</Link>.</span>}
+              {accepted && <span className="text-sm font-medium text-ac">You accepted this. Manage it in <Link to="/dashboard" className="underline">My jobs</Link>.</span>}
               {!accepted && accepting !== r.id && (<>
                 <button className={btn} disabled={!verified || full} onClick={() => { setAccepting(r.id); setPrice(''); setNote(''); setError(null) }}>{full ? 'All workers found' : 'Accept'}</button>
                 <button className={btnGhost} onClick={() => decline(r)}>Decline</button>
               </>)}
               <ReportButton targetType="request" targetId={r.id} />
               {!accepted && accepting === r.id && (
-                <form onSubmit={(e) => accept(e, r)} className="mt-2 w-full space-y-3 rounded-md border border-gray-200 p-3">
-                  <p className="text-xs text-gray-700">Your price and what it includes. The client sees this and agrees before you start. Your contact exchange happens after you accept.</p>
+                <form onSubmit={(e) => accept(e, r)} className="mt-2 w-full space-y-3 rounded-xl border-2 border-ln p-3">
+                  <p className="text-xs text-mu">Your price and what it includes. The client sees this and agrees before you start. Your contact exchange happens after you accept.</p>
                   <Field label="Your price (USD)" htmlFor={`p-${r.id}`}><input id={`p-${r.id}`} required inputMode="decimal" className={input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
                   <Field label="What the price includes" htmlFor={`n-${r.id}`}><textarea id={`n-${r.id}`} required minLength={5} maxLength={500} rows={3} className={input} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
                   <div className="flex gap-2"><button className={btn} disabled={busy}>{busy ? 'Accepting...' : 'Accept this request'}</button><button type="button" className={btnGhost} onClick={() => setAccepting(null)}>Cancel</button></div>

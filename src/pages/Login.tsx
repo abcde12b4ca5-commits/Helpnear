@@ -31,7 +31,7 @@ export default function Login() {
       <button className={`${btn} w-full`} disabled={busy}>{busy ? 'Signing in...' : 'Sign in'}</button>
       <OrDivider />
       <GoogleButton label="Sign in with Google" busy={busy} onClick={google} />
-      <p className="text-sm text-gray-700">New here? <Link to="/signup" className="underline">Create an account</Link></p>
+      <p className="text-sm text-mu">New here? <Link to="/signup" className="underline">Create an account</Link></p>
     </form>
   )
 }
