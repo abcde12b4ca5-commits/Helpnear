@@ -212,14 +212,14 @@ test.describe('quota protection: public visitors cost no Firestore reads', () =>
   })
 })
 
-test.describe('Content-Security-Policy (report-only) would not block anything the public pages need', () => {
-  const csp = /Content-Security-Policy-Report-Only: (.*)/.exec(readFileSync('public/_headers', 'utf8'))![1]
+test.describe('The real Content-Security-Policy (from the build) would not block anything the public pages need', () => {
+  const csp = () => /Content-Security-Policy(?:-Report-Only)?: (.*)/.exec(readFileSync('dist/_headers', 'utf8'))![1]
   for (const path of ['/', '/how-it-works', '/login', '/signup', '/services/handyman/', '/legal/terms']) {
     test(`${path}: no violations`, async ({ page }) => {
       await page.route('**/*', async (route) => {
         if (route.request().resourceType() !== 'document') return route.continue()
         const res = await route.fetch()
-        await route.fulfill({ response: res, headers: { ...res.headers(), 'content-security-policy-report-only': csp } })
+        await route.fulfill({ response: res, headers: { ...res.headers(), 'content-security-policy-report-only': csp() } })
       })
       await page.addInitScript(() => {
         ;(window as unknown as { __csp: string[] }).__csp = []

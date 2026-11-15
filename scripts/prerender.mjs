@@ -94,6 +94,8 @@ main a:not(.cta){color:var(--ac);text-decoration:underline;text-underline-offset
 .cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.8rem;font:600 .95rem Inter,sans-serif;background:var(--ye);color:#0a0e1a;text-decoration:none;transition:.2s}
 .cta:hover{transform:translateY(-1px);filter:brightness(1.08)}
 .cta.y{background:var(--ye);color:#0a0e1a}
+.cta.sm{margin:0;padding:.6rem 1.1rem;box-shadow:none}
+footer .fb{font-size:1.3rem;color:var(--tx);font-weight:600}
 footer{padding:3rem 1.25rem 2.5rem;font-size:.8rem;color:var(--mu);text-align:center}footer p{max-width:42rem;margin:.6rem auto}footer a{text-decoration:underline;text-underline-offset:3px}`
 
 function page({ title, description, path, robots, body, jsonld }) {
@@ -107,9 +109,9 @@ ${FONT_PRELOAD}
 <meta name="color-scheme" content="dark">
 <style>${FONT_FACE}${css}</style>
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script></head>
-<body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">⌂</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/login">Sign in</a><a class="cta y" style="margin:0;padding:.6rem 1.1rem;box-shadow:none" href="/signup">Get started</a></div></nav>
+<body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">⌂</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/login">Sign in</a><a class="cta y sm" href="/signup">Get started</a></div></nav>
 <main>${body}</main>
-<footer><p class="f" style="font-size:1.3rem;color:var(--tx);font-weight:600">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer></body></html>`
+<footer><p class="f fb">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer></body></html>`
 }
 
 const crumbs = (items) => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: `${SITE}${path}` })) })
@@ -185,6 +187,23 @@ for (const cat of enabledCats) {
 }
 
 await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
-await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\n`)
+await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nAgentmap: ${SITE}/.well-known/ard.json\n`)
 await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers anywhere in the United States.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
+// Agent discovery (ARD): the site has no MCP server or API, so the only honest entry is the llms.txt index above. Without these files the single-page-app
+// fallback answers /.well-known/ai-catalog.json with the HTML home page, which Lighthouse reports as "Malformed JSON".
+const host = new URL(SITE).hostname
+const catalog = JSON.stringify({
+  specVersion: '1.0',
+  entries: [{
+    identifier: `urn:air:${host}:docs:llms-txt`,
+    displayName: `${BRAND} site index (llms.txt)`,
+    type: 'text/markdown',
+    url: `${SITE}/llms.txt`,
+    description: `Plain-text index of the home services that ${BRAND} covers, with a link to each service page.`,
+    representativeQueries: [`What home services can I request on ${BRAND}?`, `Does ${BRAND} cover lawn care or pressure washing?`, `How do I find a local handyman with ${BRAND}?`],
+  }],
+}, null, 2) + '\n'
+await mkdir(`${OUT}/.well-known`, { recursive: true })
+await writeFile(`${OUT}/.well-known/ai-catalog.json`, catalog)
+await writeFile(`${OUT}/.well-known/ard.json`, catalog)
 console.log(`prerendered ${enabledCats.length} services from ${source}; ${urls.length} URLs in sitemap`)

@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { buildCsp } from '../../scripts/csp.mjs'
 
 // The _headers file is the ONLY place security headers are set for the live site (Cloudflare Pages reads it). A typo here silently removes protection,
 // so these tests read the real file.
@@ -18,7 +18,6 @@ describe('security headers (public/_headers)', () => {
   it('applies the baseline headers to every page', () => {
     expect(val(all, 'X-Content-Type-Options')).toBe('nosniff')
     expect(val(all, 'X-Frame-Options')).toBe('DENY')
-    expect(val(all, 'Content-Security-Policy')).toContain("frame-ancestors 'none'")
     expect(val(all, 'Referrer-Policy')).toMatch(/strict-origin|no-referrer|same-origin/)
     expect(Number(/max-age=(\d+)/.exec(val(all, 'Strict-Transport-Security'))?.[1])).toBeGreaterThanOrEqual(31536000)
   })
@@ -34,23 +33,27 @@ describe('security headers (public/_headers)', () => {
     expect(Math.max(...rules.map((l) => l.length))).toBeLessThan(2000)
     expect(blocks.size).toBeLessThanOrEqual(100)
     for (const l of rules) if (l.startsWith(' ')) expect(l.trim().startsWith('#'), `indented comment would be read as a header: ${l.slice(0, 60)}`).toBe(false)
-    for (const l of rules) if (l.startsWith(' ') && l.trim()) expect(l.trim(), l.slice(0, 60)).toMatch(/^[A-Za-z][\w-]*:\s?.+/)
+    for (const l of rules) if (l.startsWith(' ') && l.trim()) expect(l.trim(), l.slice(0, 60)).toMatch(/^(!\s?[A-Za-z][\w-]*|[A-Za-z][\w-]*:\s?.+)$/) // a header, or "! Header" which removes one
   })
   it('sends a Permissions-Policy that switches off camera, microphone and location (the site uses none of them)', () => {
     const pp = val(all, 'Permissions-Policy')
     for (const f of ['camera', 'microphone', 'geolocation']) expect(pp).toContain(`${f}=()`)
   })
-  it('has a full Content-Security-Policy in report-only mode, and its inline-script hash matches index.html', () => {
-    const csp = val(all, 'Content-Security-Policy-Report-Only')
-    for (const d of ['default-src', 'script-src', 'style-src', 'connect-src', 'font-src', 'frame-src', "object-src 'none'", "base-uri 'self'"]) expect(csp).toContain(d)
-    expect(csp).not.toMatch(/script-src[^;]*'unsafe-(inline|eval)'/) // scripts are never allowed to be inline except by hash
-    const inline = [...readFileSync('index.html', 'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1])
-    expect(inline.length).toBeGreaterThan(0)
-    for (const code of inline) expect(csp, `inline script changed; update the hash in public/_headers`).toContain(`'sha256-${createHash('sha256').update(code).digest('base64')}'`)
+  it('sends the Content-Security-Policy as a placeholder that the build fills in (scripts/headers.mjs), with no report-only copy left', () => {
+    expect(val(all, 'Content-Security-Policy')).toBe('__CSP__')
+    expect(val(all, 'Content-Security-Policy-Report-Only')).toBe('')
   })
-  it('keeps fonts local (no Google Fonts), so first paint never waits for another company\'s server', () => {
+  it('removes the Access-Control-Allow-Origin header Cloudflare adds by default (the site is not a public cross-origin API)', () => {
+    expect(all).toContain('! Access-Control-Allow-Origin')
+  })
+  it('never lets a browser or shared cache store private pages', () => {
+    for (const p of ['/admin*', '/chat/*', '/login', '/signup', '/post', '/my-requests', '/feed', '/dashboard', '/onboarding', '/notifications']) expect(val(blocks.get(p) ?? [], 'Cache-Control'), p).toBe('no-store')
+  })
+  it('keeps fonts local (no Google Fonts), so first paint never waits for another server', () => {
     for (const f of ['index.html', 'scripts/prerender.mjs']) expect(readFileSync(f, 'utf8'), f).not.toMatch(/fonts\.(googleapis|gstatic)\.com/)
-    expect(val(all, 'Content-Security-Policy-Report-Only')).toMatch(/font-src 'self'(;|$)/)
+  })
+  it('has no inline style attribute in the static HTML (the CSP blocks them); React sets styles through the CSSOM, which is allowed', () => {
+    for (const f of ['index.html', 'scripts/prerender.mjs']) expect(readFileSync(f, 'utf8'), f).not.toMatch(/\sstyle\s*=\s*["']/)
   })
   it('caches the ZIP lookup files for a day and never lists worker profiles in search', () => {
     expect(val(blocks.get('/zip/*') ?? [], 'Cache-Control')).toMatch(/max-age=86400/)
@@ -128,5 +131,27 @@ describe('quota guards in the source (they protect the free Firebase and Cloudfl
   })
   it('the build publishes no source maps', () => {
     expect(readFileSync('vite.config.ts', 'utf8')).toMatch(/sourcemap:\s*false/)
+  })
+})
+
+describe('Content-Security-Policy builder (scripts/csp.mjs)', () => {
+  const csp = buildCsp({ workerUrl: 'https://api.example.com/', authDomain: 'proj.firebaseapp.com', scriptHashes: ['AAA'], styleHashes: ['BBB'] })
+  it('defines every directive that has no fallback to default-src', () => {
+    for (const d of ["default-src 'self'", 'script-src', 'style-src', 'connect-src', 'font-src', 'frame-src', "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"]) expect(csp).toContain(d)
+  })
+  it('has no wildcard host, no unsafe-inline and no unsafe-eval', () => {
+    expect(csp).not.toMatch(/\*/)
+    expect(csp).not.toMatch(/unsafe-(inline|eval)/)
+  })
+  it('allows inline code only by hash, and names the Worker and sign-in hosts exactly', () => {
+    expect(csp).toMatch(/script-src [^;]*'sha256-AAA'/)
+    expect(csp).toMatch(/style-src 'self' 'sha256-BBB'(;|$)/)
+    expect(csp).toContain('https://api.example.com;')
+    expect(csp).toMatch(/frame-src [^;]*https:\/\/proj\.firebaseapp\.com/)
+  })
+  it('falls back to <project>.firebaseapp.com when no auth domain is set, and adds emulators only for the test build', () => {
+    expect(buildCsp({ projectId: 'p1' })).toContain('https://p1.firebaseapp.com')
+    expect(buildCsp({})).not.toContain('localhost')
+    expect(buildCsp({ useEmulators: true })).toContain('http://localhost:9099')
   })
 })
