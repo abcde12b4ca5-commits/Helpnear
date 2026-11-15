@@ -20,7 +20,7 @@ export default {
         danger: { bg: 'var(--danger-bg)', tx: 'var(--danger-tx)' },
       },
       fontFamily: {
-        display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
+        display: ['"Sora"', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
     },

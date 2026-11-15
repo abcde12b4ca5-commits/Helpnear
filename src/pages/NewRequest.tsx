@@ -8,7 +8,7 @@ import { useZipLookup } from '../lib/useZip'
 import { createRequests, getPostCooldownSeconds } from '../lib/requests'
 import { friendlyError } from '../lib/errors'
 import { auth } from '../lib/firebase'
-import { ErrorBox, Field, Spinner, btn, btnGhost, card, input } from '../components/ui'
+import { ErrorBox, Field, Pill, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { Category, ContactMethod, Urgency } from '../lib/types'
 
 const isPermissionDenied = (e: unknown) => typeof e === 'object' && e !== null && (e as { code?: string }).code === 'permission-denied'
@@ -83,39 +83,40 @@ export default function NewRequest() {
   }
 
   if (!cats) return error ? <ErrorBox message={error} /> : <Spinner />
+  const URG: [Urgency, string][] = [['asap', 'As soon as possible'], ['this_week', 'This week'], ['flexible', 'Flexible']]
   return (
-    <form onSubmit={submit} className="max-w-xl space-y-4">
-      <h1 className="text-2xl font-bold">Post a request</h1>
-      <Field label="ZIP code where the work is" htmlFor="zip" hint="Workers who cover this ZIP are notified. Anywhere in the United States.">
-        <input id="zip" required inputMode="numeric" maxLength={5} className={input} value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))} />
-      </Field>
-      {zipChecked && !zipInfo && <p role="alert" className="text-sm text-danger-tx">We could not find that ZIP code.</p>}
-      {zipInfo && <p className="text-sm text-mu" role="status">{zipInfo.city}, {zipInfo.state}</p>}
+    <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1fr_20rem]">
+    <form onSubmit={submit} className="space-y-5">
+      <div className="hn-in"><h1 className="text-4xl">Post a request</h1><p className="mt-2 text-mu">Takes about a minute. Workers who cover your ZIP are notified.</p></div>
+      <div className="hn-in max-w-xs" style={{ ['--i' as string]: 1 }}>
+        <Field label="ZIP code where the work is" htmlFor="zip" hint="Anywhere in the United States.">
+          <input id="zip" required inputMode="numeric" maxLength={5} className={input} value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))} />
+        </Field>
+        {zipChecked && !zipInfo && <p role="alert" className="mt-1 text-sm text-danger-tx">We could not find that ZIP code.</p>}
+        {zipInfo && <p className="mt-1 text-sm text-ok" style={{ color: 'var(--ok)' }} role="status">✓ {zipInfo.city}, {zipInfo.state}</p>}
+      </div>
 
       <section aria-labelledby="who" className="space-y-3">
-        <h2 id="who" className="font-semibold">Who do you need?</h2>
-        <p className="text-xs text-mu">
-          Need two people for the same job? Set the number of workers to 2 on one group. Need different jobs done (for example a cleaner and a painter)? Add another group, each with its own service and details.
+        <h2 id="who" className="text-2xl">Who do you need?</h2>
+        <p className="text-sm text-mu">
+          Need two people for the same job? Set the number of workers to 2 on one group. Need different jobs done (for example a cleaner and a painter)? Add another group.
           Workers accept with a price and you agree the price and the work with each worker before they start. Up to {MAX_POSITIONS} groups and {MAX_TOTAL_WORKERS} workers in total.
         </p>
         {positions.map((p, i) => {
           const c = catOf(p.categoryId)
           return (
-            <div key={p.key} className={`${card} space-y-3`}>
+            <div key={p.key} className={`${card} hn-in space-y-4`} style={{ ['--i' as string]: i + 2 }}>
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">{positions.length > 1 ? `Worker group ${i + 1}` : 'Your request'}</h3>
+                <h3 className="text-lg">{positions.length > 1 ? `Worker group ${i + 1}` : 'Your request'}</h3>
                 {positions.length > 1 && <button type="button" className={btnGhost} onClick={() => setPositions((l) => l.filter((x) => x.key !== p.key))}>Remove</button>}
               </div>
-              <Field label="Service" htmlFor={`cat-${p.key}`}>
-                <select id={`cat-${p.key}`} required className={input} value={p.categoryId} onChange={(e) => patch(p.key, { categoryId: e.target.value })}>
-                  <option value="">Choose a service</option>
-                  {cats.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-                </select>
-              </Field>
-              {c && <p className="rounded-xl bg-ln p-3 text-xs text-tx">Allowed: {c.allowedServices.join('; ')}.{c.notes ? ` ${c.notes}` : ''} Work that needs a license (electrical, plumbing, HVAC, gas) is not allowed.</p>}
+              <div role="group" aria-label="Service" className="grid max-h-72 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
+                {cats.map((x) => <button type="button" key={x.id} className="hn-tile" aria-pressed={p.categoryId === x.id} onClick={() => patch(p.key, { categoryId: x.id })}>{x.name}</button>)}
+              </div>
+              {c && <p className="rounded-xl bg-bg p-3 text-xs text-mu">Allowed: {c.allowedServices.join('; ')}.{c.notes ? ` ${c.notes}` : ''} Work that needs a license (electrical, plumbing, HVAC, gas) is not allowed.</p>}
               {c && off(p) && zipInfo && <p role="alert" className="text-sm text-danger-tx">{c.name} is not available in {zipInfo.state} yet.</p>}
               <Field label="How many workers for this job?" htmlFor={`wn-${p.key}`}>
-                <select id={`wn-${p.key}`} className={input} value={p.workersNeeded} onChange={(e) => patch(p.key, { workersNeeded: Number(e.target.value) })}>
+                <select id={`wn-${p.key}`} className={`${input} max-w-[8rem]`} value={p.workersNeeded} onChange={(e) => patch(p.key, { workersNeeded: Number(e.target.value) })}>
                   {Array.from({ length: maxWorkers }, (_, n) => n + 1).map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </Field>
@@ -126,31 +127,40 @@ export default function NewRequest() {
             </div>
           )
         })}
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className={btnGhost} disabled={positions.length >= MAX_POSITIONS || total >= MAX_TOTAL_WORKERS} onClick={addPosition}>Add another kind of worker</button>
-          <span className="text-sm text-mu">Total workers needed: <strong>{total}</strong></span>
-        </div>
+        <button type="button" className={btnGhost} disabled={positions.length >= MAX_POSITIONS || total >= MAX_TOTAL_WORKERS} onClick={addPosition}>+ Add another kind of worker</button>
       </section>
 
-      <Field label="How urgent?" htmlFor="urg">
-        <select id="urg" className={input} value={urgency} onChange={(e) => setUrgency(e.target.value as Urgency)}>
-          <option value="asap">As soon as possible</option><option value="this_week">This week</option><option value="flexible">Flexible</option>
-        </select>
-      </Field>
-      <Field label="Budget (optional)" htmlFor="budget"><input id="budget" maxLength={40} placeholder="e.g. $100-$150" className={input} value={budget} onChange={(e) => setBudget(e.target.value)} /></Field>
-      <fieldset className="space-y-3 rounded-xl border-2 border-ln p-3">
-        <legend className="px-1 text-sm font-medium">Your contact details</legend>
-        <p className="text-xs text-mu">Shown only to workers who accept your request.</p>
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-mu">How urgent?</legend>
+        <div className="flex flex-wrap gap-2">
+          {URG.map(([v, label]) => <button type="button" key={v} className="hn-tile" aria-pressed={urgency === v} onClick={() => setUrgency(v)}>{label}</button>)}
+        </div>
+      </fieldset>
+      <div className="max-w-xs"><Field label="Budget (optional)" htmlFor="budget"><input id="budget" maxLength={40} placeholder="e.g. $100-$150" className={input} value={budget} onChange={(e) => setBudget(e.target.value)} /></Field></div>
+      <fieldset className={`${card} grid gap-4 sm:grid-cols-2`}>
+        <legend className="sr-only">Your contact details</legend>
+        <div className="sm:col-span-2"><h3 className="text-lg">Your contact details</h3><p className="text-xs text-mu">Shown only to workers who accept your request.</p></div>
         <Field label="Phone" htmlFor="phone"><input id="phone" type="tel" maxLength={30} className={input} value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
         <Field label="Email" htmlFor="cemail"><input id="cemail" type="email" maxLength={120} className={input} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} /></Field>
-        <Field label="Preferred contact method" htmlFor="method">
-          <select id="method" className={input} value={method} onChange={(e) => setMethod(e.target.value as ContactMethod)}>
-            <option value="phone">Phone call</option><option value="text">Text message</option><option value="email">Email</option>
-          </select>
-        </Field>
+        <div className="sm:col-span-2">
+          <Field label="Preferred contact method" htmlFor="method">
+            <select id="method" className={`${input} max-w-xs`} value={method} onChange={(e) => setMethod(e.target.value as ContactMethod)}>
+              <option value="phone">Phone call</option><option value="text">Text message</option><option value="email">Email</option>
+            </select>
+          </Field>
+        </div>
       </fieldset>
       <ErrorBox message={error} />
-      <button className={btn} disabled={busy}>{busy ? 'Posting...' : positions.length > 1 ? `Post ${positions.length} worker groups` : 'Post request'}</button>
+      <button className={`${btn} hn-btn-lg`} disabled={busy}>{busy ? 'Posting...' : positions.length > 1 ? `Post ${positions.length} worker groups` : 'Post request'}</button>
     </form>
+    <aside className={`${card} hn-in h-max space-y-3 lg:sticky lg:top-24`} style={{ ['--i' as string]: 3 }} aria-label="Summary">
+      <Pill tone="y">Summary</Pill>
+      <h3 className="text-xl">{positions[0]?.title.trim() || 'Your request'}</h3>
+      {([['ZIP', zipInfo ? `${zip} · ${zipInfo.city}, ${zipInfo.state}` : zip || '-'], ['Groups', String(positions.length)], ['Total workers', String(total)], ['Urgency', URG.find(([v]) => v === urgency)?.[1] ?? ''], ['Fee', 'Free']] as const).map(([k, v]) => (
+        <div key={k} className="flex justify-between gap-3 text-sm"><span className="text-mu">{k}</span><b className="text-right">{v}</b></div>
+      ))}
+      <p className="flex items-center gap-2 pt-2 text-sm text-mu"><span className="hn-dot" aria-hidden="true" />{zipInfo ? `Workers who cover ${zip} are notified` : 'Workers near your ZIP are notified'}</p>
+    </aside>
+    </div>
   )
 }

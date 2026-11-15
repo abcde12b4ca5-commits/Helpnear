@@ -141,7 +141,7 @@ export function newFeedState(worker: WorkerDoc): FeedState {
 
 /** Next page for every chunk that still has results, merged newest first and filtered by exact distance and expiry. */
 export async function loadFeed(worker: WorkerDoc, state: FeedState): Promise<{ items: RequestDoc[]; state: FeedState; done: boolean }> {
-  const perChunk = Math.min(PAGE_SIZE, Math.max(5, Math.floor(40 / Math.max(1, state.chunks.length))))
+  const perChunk = Math.min(PAGE_SIZE, Math.max(4, Math.floor(24 / Math.max(1, state.chunks.length))))
   const next: FeedState = { chunks: state.chunks, cursors: [...state.cursors], ended: [...state.ended] }
   const pages = await Promise.all(state.chunks.map(async (keys, i) => {
     if (state.ended[i]) return []

@@ -30,7 +30,23 @@ function inlineCss(): Plugin {
   }
 }
 
+// Preloads the two fonts the first screen needs (body text and the Sora headline), so the browser fetches them in parallel with the script instead of after it.
+function preloadFonts(): Plugin {
+  return {
+    name: 'preload-fonts',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        const files = Object.keys(ctx.bundle ?? {}).filter((f) => /(inter-latin-400-normal|sora-latin-600-normal)-[\w-]+\.woff2$/.test(f))
+        const tags = files.map((f) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="/${f}" />`).join('\n    ')
+        return tags ? html.replace('</head>', `    ${tags}\n  </head>`) : html
+      },
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), brandHtml(), inlineCss()],
-  build: { sourcemap: true },
+  plugins: [react(), brandHtml(), inlineCss(), preloadFonts()],
+  build: { sourcemap: false }, // source maps would publish the original source to everyone
 })

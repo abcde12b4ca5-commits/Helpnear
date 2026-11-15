@@ -23,15 +23,19 @@ export default function Login() {
     try { await signInWithGoogle(); nav('/') } catch (err) { setError(friendlyError(err)) } finally { setBusy(false) }
   }
   return (
-    <form onSubmit={submit} className="mx-auto max-w-sm space-y-4">
-      <h1 className="text-2xl font-bold">Sign in</h1>
+    <div className="hn-auth">
+    <div className="hn-orb" style={{ width: 360, height: 360, background: 'var(--bl)', opacity: .4, left: '8%', top: '4%' }} aria-hidden="true" />
+    <div className="hn-orb" style={{ width: 260, height: 260, background: 'var(--ye)', opacity: .18, right: '10%', bottom: '2%', animationDelay: '-6s' }} aria-hidden="true" />
+    <form onSubmit={submit} className="hn-glass hn-in">
+      <div><h1 className="text-3xl">Sign in</h1><p className="mt-2 text-sm text-mu">Welcome back.</p></div>
       <Field label="Email" htmlFor="email"><input id="email" type="email" autoComplete="email" required className={input} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
       <Field label="Password" htmlFor="password"><input id="password" type="password" autoComplete="current-password" required className={input} value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
       <ErrorBox message={error} />
       <button className={`${btn} w-full`} disabled={busy}>{busy ? 'Signing in...' : 'Sign in'}</button>
       <OrDivider />
       <GoogleButton label="Sign in with Google" busy={busy} onClick={google} />
-      <p className="text-sm text-mu">New here? <Link to="/signup" className="underline">Create an account</Link></p>
+      <p className="text-sm text-mu">New here? <Link to="/signup" className="font-semibold text-tx underline">Create an account</Link></p>
     </form>
+    </div>
   )
 }

@@ -41,7 +41,7 @@ export default function Chat() {
   return (
     <div className="max-w-2xl space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Messages</h1>
+        <h1 className="text-4xl">Messages</h1>
         <div className="flex flex-wrap gap-2">
           <button className={btnGhost} onClick={toggleMute}>{muted ? 'Unmute' : 'Mute'}</button>
           {(!blocked || blockedByMe) && <button className={btnGhost} onClick={() => run(async () => { await setBlocked(threadId, user.uid, !blockedByMe); setThread({ ...thread, blockedBy: blockedByMe ? '' : user.uid }) })}>{blockedByMe ? 'Unblock' : 'Block'}</button>}

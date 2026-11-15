@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type * as React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { Spinner } from '../components/ui'
@@ -22,16 +23,16 @@ export default function Admin() {
   const [tab, setTab] = useState<string>('Dashboard')
   if (loading) return <Spinner />
   if (!user || !isAdmin) return <Navigate to="/" replace />
-  const Active = TABS.find(([n]) => n === tab)?.[1] ?? Dashboard
+  const Active = (TABS.find(([n]) => n === tab)?.[1] ?? Dashboard) as () => React.ReactElement
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Admin</h1>
-      <div role="tablist" aria-label="Admin sections" className="flex flex-wrap gap-2">
+      <h1 className="text-4xl">Admin</h1>
+      <div role="tablist" aria-label="Admin sections" className="hn-tabs">
         {TABS.map(([n]) => (
-          <button key={n} role="tab" aria-selected={tab === n} onClick={() => setTab(n)} className={`rounded-xl px-3 py-1 text-sm ${tab === n ? 'bg-bl text-white' : 'border-2 border-bd bg-sf text-tx'}`}>{n}</button>
+          <button key={n} role="tab" aria-selected={tab === n} onClick={() => setTab(n)} className="hn-tab">{n}</button>
         ))}
       </div>
-      <Active />
+      {tab === 'Dashboard' ? <Dashboard onGo={setTab} /> : <Active />}
     </div>
   )
 }

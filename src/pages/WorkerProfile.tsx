@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
 import { brand } from '../config/brand'
-import { db } from '../lib/firebase'
+import { db, ensureAppCheck } from '../lib/firebase'
 import { useAuth } from '../lib/auth'
 import { getCategories } from '../lib/catalog'
 import { createReview, getWorkerReviews } from '../lib/reviews'
@@ -25,6 +25,7 @@ export default function WorkerProfile() {
   const [done, setDone] = useState(false)
 
   useEffect(() => {
+    ensureAppCheck()
     getDoc(doc(db, `workers/${id}`)).then((s) => setWorker(s.exists() ? (s.data() as WorkerDoc) : null)).catch((e) => { setError(friendlyError(e)); setWorker(null) })
     getWorkerReviews(id).then(setReviews).catch(() => setReviews({ items: [], average: null }))
     getCategories().then((c) => setNames({ cats: Object.fromEntries(c.map((x) => [x.id, x.name])) })).catch(() => undefined)
@@ -44,7 +45,7 @@ export default function WorkerProfile() {
   if (!worker) return <p className="text-sm text-mu">Profile not found.</p>
   return (
     <div className="max-w-2xl space-y-4">
-      <h1 className="text-2xl font-bold">{worker.displayName}</h1>
+      <h1 className="text-4xl">{worker.displayName}</h1>
       <p className="text-sm text-mu">
         {reviews?.average != null ? `Rating ${reviews.average.toFixed(1)} from ${reviews.items.length} recent review(s)` : 'No reviews yet'}
       </p>
@@ -61,7 +62,7 @@ export default function WorkerProfile() {
       <ReportButton targetType="worker" targetId={id} />
       {profile?.role === 'client' && requestId && !done && (
         <form onSubmit={submit} className={`${card} space-y-3`}>
-          <h2 className="font-semibold">Leave a review</h2>
+          <h2 className="text-xl">Leave a review</h2>
           <Field label="Rating" htmlFor="rating">
             <select id="rating" className={input} value={rating} onChange={(e) => setRating(Number(e.target.value))}>
               {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
@@ -74,7 +75,7 @@ export default function WorkerProfile() {
       )}
       {done && <p className="text-sm text-ac" role="status">Thanks for your review.</p>}
       <section aria-labelledby="rv">
-        <h2 id="rv" className="font-semibold">Reviews</h2>
+        <h2 id="rv" className="text-xl">Reviews</h2>
         <ul className="mt-2 space-y-2">
           {reviews?.items.map((r) => <li key={r.id} className={`${card} text-sm`}>{'\u2605'.repeat(r.rating)} {r.text}</li>)}
         </ul>

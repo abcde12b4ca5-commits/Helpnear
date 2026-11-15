@@ -6,8 +6,8 @@ import { haversineMiles } from '../lib/geo'
 import { dollarsToCents } from '../lib/money'
 import { friendlyError } from '../lib/errors'
 import ReportButton from '../components/ReportButton'
-import RequestCard from '../components/RequestCard'
-import { Empty, ErrorBox, Field, Spinner, btn, btnGhost, input } from '../components/ui'
+import { URGENCY, urgencyTone } from '../components/RequestCard'
+import { Empty, ErrorBox, Field, Pill, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { RequestDoc } from '../lib/types'
 
 export default function Feed() {
@@ -23,6 +23,7 @@ export default function Feed() {
   const [price, setPrice] = useState('')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
+  const [selId, setSelId] = useState<string | null>(null)
 
   const fetchFirst = useCallback(async () => {
     if (!worker || !user) return null
@@ -78,41 +79,67 @@ export default function Feed() {
   }
 
   const visible = items.filter((r) => !declined.includes(r.id))
+  const sel = visible.find((r) => r.id === selId) ?? visible[0]
+  const dist = (r: RequestDoc) => (worker ? Math.max(1, Math.round(haversineMiles(worker.lat, worker.lng, r.lat, r.lng))) : null)
+  const accepted = sel ? mine.has(sel.id) : false
+  const full = sel ? sel.claimsCount >= (sel.workersNeeded ?? 1) : false
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Requests for you</h1>
-        <button className={btnGhost} onClick={start}>Refresh</button>
-      </div>
       {!verified && <p className="text-sm text-warn-tx">Verify your email to accept requests.</p>}
       <ErrorBox message={error} />
-      {visible.length === 0 && !loading && <Empty>No open requests match your services and area right now. Check back soon.</Empty>}
-      <ul className="space-y-3">
-        {visible.map((r) => {
-          const accepted = mine.has(r.id)
-          const full = r.claimsCount >= (r.workersNeeded ?? 1)
-          return (
-            <RequestCard key={r.id} r={r} distanceMiles={worker ? haversineMiles(worker.lat, worker.lng, r.lat, r.lng) : undefined}>
-              {accepted && <span className="text-sm font-medium text-ac">You accepted this. Manage it in <Link to="/dashboard" className="underline">My jobs</Link>.</span>}
-              {!accepted && accepting !== r.id && (<>
-                <button className={btn} disabled={!verified || full} onClick={() => { setAccepting(r.id); setPrice(''); setNote(''); setError(null) }}>{full ? 'All workers found' : 'Accept'}</button>
-                <button className={btnGhost} onClick={() => decline(r)}>Decline</button>
-              </>)}
-              <ReportButton targetType="request" targetId={r.id} />
-              {!accepted && accepting === r.id && (
-                <form onSubmit={(e) => accept(e, r)} className="mt-2 w-full space-y-3 rounded-xl border-2 border-ln p-3">
-                  <p className="text-xs text-mu">Your price and what it includes. The client sees this and agrees before you start. Your contact exchange happens after you accept.</p>
-                  <Field label="Your price (USD)" htmlFor={`p-${r.id}`}><input id={`p-${r.id}`} required inputMode="decimal" className={input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
-                  <Field label="What the price includes" htmlFor={`n-${r.id}`}><textarea id={`n-${r.id}`} required minLength={5} maxLength={500} rows={3} className={input} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
-                  <div className="flex gap-2"><button className={btn} disabled={busy}>{busy ? 'Accepting...' : 'Accept this request'}</button><button type="button" className={btnGhost} onClick={() => setAccepting(null)}>Cancel</button></div>
-                </form>
-              )}
-            </RequestCard>
-          )
-        })}
-      </ul>
-      {loading && <Spinner />}
-      {!loading && !done && <button className={btnGhost} onClick={() => void more()}>Load more</button>}
+      <div className="grid items-start gap-6 lg:grid-cols-[26rem_1fr]">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-3xl">Requests for you</h1>
+            <button className={btnGhost} onClick={start}>Refresh</button>
+          </div>
+          {visible.length === 0 && !loading && <Empty>No open requests match your services and area right now. Check back soon.</Empty>}
+          <ul className="space-y-2">
+            {visible.map((r, i) => (
+              <li key={r.id} className="hn-in" style={{ ['--i' as string]: i }}>
+                <button type="button" onClick={() => { setSelId(r.id); setAccepting(null) }} aria-current={sel?.id === r.id} className={`w-full rounded-2xl border p-4 text-left transition ${sel?.id === r.id ? 'border-ye bg-pl' : 'border-ln bg-sf hover:border-bd'}`}>
+                  <span className="flex justify-between gap-2"><b>{r.title}</b>{dist(r) != null && <span className="text-xs text-mu">{dist(r)} mi</span>}</span>
+                  <span className="mt-0.5 block text-sm text-mu">{r.categoryName} · {URGENCY[r.urgency] ?? r.urgency}{r.budgetRange ? ` · ${r.budgetRange}` : ''}{mine.has(r.id) ? ' · Accepted' : ''}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {loading && <Spinner />}
+          {!loading && !done && <button className={btnGhost} onClick={() => void more()}>Load more</button>}
+        </div>
+        {sel && (
+          <section key={sel.id} className={`${card} hn-in space-y-4 p-6 lg:sticky lg:top-24 lg:p-8`} aria-label="Request details">
+            <div className="flex flex-wrap gap-2">
+              <Pill tone={urgencyTone(sel.urgency)}>{URGENCY[sel.urgency] ?? sel.urgency}</Pill>
+              <Pill>{sel.categoryName}</Pill>
+              <Pill tone="g">Workers {sel.claimsCount} of {sel.workersNeeded ?? 1}</Pill>
+            </div>
+            <h2 className="text-3xl">{sel.title}</h2>
+            <p className="text-sm text-mu">{sel.city}, {sel.state} {sel.zip}{dist(sel) != null ? ` · ${dist(sel)} mi away` : ''}{sel.budgetRange ? ` · Budget ${sel.budgetRange}` : ''}</p>
+            <p className="whitespace-pre-line">{sel.description}</p>
+            <hr className="border-ln" />
+            {accepted ? (
+              <p className="font-semibold text-ac">You accepted this. Manage it in <Link to="/dashboard" className="underline">My jobs</Link>.</p>
+            ) : accepting === sel.id ? (
+              <form onSubmit={(e) => accept(e, sel)} className="space-y-4">
+                <h3 className="text-xl">Send your offer</h3>
+                <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
+                  <Field label="Your price (USD)" htmlFor={`p-${sel.id}`}><input id={`p-${sel.id}`} required inputMode="decimal" className={input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
+                  <Field label="What the price includes" htmlFor={`n-${sel.id}`}><input id={`n-${sel.id}`} required minLength={5} maxLength={500} className={input} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+                </div>
+                <p className="text-xs text-mu">The client sees your price and agrees before you start. Contact details are shared after you accept.</p>
+                <div className="flex gap-2"><button className={btn} disabled={busy}>{busy ? 'Accepting...' : 'Accept this request'}</button><button type="button" className={btnGhost} onClick={() => setAccepting(null)}>Cancel</button></div>
+              </form>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <button className={btn} disabled={!verified || full} onClick={() => { setAccepting(sel.id); setPrice(''); setNote(''); setError(null) }}>{full ? 'All workers found' : 'Accept'}</button>
+                <button className={btnGhost} onClick={() => decline(sel)}>Decline</button>
+                <ReportButton targetType="request" targetId={sel.id} />
+              </div>
+            )}
+          </section>
+        )}
+      </div>
     </div>
   )
 }

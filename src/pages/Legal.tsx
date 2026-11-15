@@ -16,7 +16,7 @@ function LegalBody({ id }: { id: string }) {
   if (!docu) return <p className="text-sm text-mu">This document is not available.</p>
   return (
     <article className="max-w-2xl">
-      <h1 className="text-2xl font-bold">{docu.title}</h1>
+      <h1 className="text-4xl">{docu.title}</h1>
       <p className="mt-1 text-xs text-mu">Version {docu.version}</p>
       <div className="mt-4 whitespace-pre-line text-sm leading-6 text-tx">{docu.body}</div>
     </article>

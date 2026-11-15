@@ -12,7 +12,7 @@ import {
   type User,
 } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
-import { auth, db } from './firebase'
+import { auth, db, ensureAppCheck } from './firebase'
 import { getAppConfig, getLegal } from './catalog'
 import type { Role, UserDoc, WorkerDoc } from './types'
 
@@ -36,6 +36,19 @@ interface AuthState {
 
 const Ctx = createContext<AuthState | null>(null)
 
+const ADMIN_HINT_TTL = 15 * 60_000
+function readAdminHint(uid: string): boolean | null {
+  try {
+    const raw = sessionStorage.getItem(`hn:isAdmin:${uid}`)
+    if (!raw) return null
+    const { at, v } = JSON.parse(raw) as { at: number; v: boolean }
+    return Date.now() - at < ADMIN_HINT_TTL && at <= Date.now() + 60_000 ? v : null
+  } catch { return null }
+}
+function writeAdminHint(uid: string, v: boolean) {
+  try { sessionStorage.setItem(`hn:isAdmin:${uid}`, JSON.stringify({ at: Date.now(), v })) } catch { /* storage unavailable */ }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserDoc | null>(null)
@@ -45,10 +58,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false)
 
   const load = useCallback(async (u: User | null) => {
+    if (u) ensureAppCheck() // a signed-in session reads Firestore, so bot protection starts first
     setUser(u)
     setVerified(!!u?.emailVerified)
     if (!u) { setProfile(null); setWorker(null); setIsAdmin(false); return }
-    getDoc(doc(db, `admins/${u.uid}`)).then((a) => setIsAdmin(a.exists())).catch(() => setIsAdmin(false))
+    // Only decides whether the Admin link is shown (the rules protect the data), so a 15 minute reuse saves one read on every page load.
+    const known = readAdminHint(u.uid)
+    if (known !== null) setIsAdmin(known)
+    else getDoc(doc(db, `admins/${u.uid}`)).then((a) => { setIsAdmin(a.exists()); writeAdminHint(u.uid, a.exists()) }).catch(() => setIsAdmin(false))
     const snap = await getDoc(doc(db, `users/${u.uid}`))
     const p = snap.exists() ? (snap.data() as UserDoc) : null
     setProfile(p)
@@ -68,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const terms = await getLegal('terms')
       const privacy = await getLegal('privacy')
       if (!terms || !privacy) throw new Error('Legal documents are not available yet. Please try again later.')
+      ensureAppCheck()
       const cred = await createUserWithEmailAndPassword(auth, email, password)
       try {
         await setDoc(doc(db, `users/${cred.user.uid}`), {
@@ -81,13 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await sendEmailVerification(cred.user)
       await load(cred.user)
     },
-    async signIn(email, password) { await signInWithEmailAndPassword(auth, email, password) },
+    async signIn(email, password) { ensureAppCheck(); await signInWithEmailAndPassword(auth, email, password) },
     async signUpWithGoogle({ role, displayName }) {
       const config = await getAppConfig()
       if (!config.signupOpen) throw new Error('Sign-ups are currently closed.')
       const terms = await getLegal('terms')
       const privacy = await getLegal('privacy')
       if (!terms || !privacy) throw new Error('Legal documents are not available yet. Please try again later.')
+      ensureAppCheck()
       const cred = await signInWithPopup(auth, new GoogleAuthProvider(), browserPopupRedirectResolver)
       const existing = await getDoc(doc(db, `users/${cred.user.uid}`))
       if (existing.exists()) { // already registered: just sign in
@@ -111,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return role
     },
     async signInWithGoogle() {
+      ensureAppCheck()
       const cred = await signInWithPopup(auth, new GoogleAuthProvider(), browserPopupRedirectResolver)
       const existing = await getDoc(doc(db, `users/${cred.user.uid}`))
       if (existing.exists()) { await load(cred.user); return }

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { brand } from '../config/brand'
 import { useAuth } from '../lib/auth'
+import { ensureAppCheck } from '../lib/firebase'
 import { getAppConfig } from '../lib/catalog'
 import { getUnreadCount } from '../lib/notifications'
 import { friendlyError } from '../lib/errors'
@@ -39,7 +40,11 @@ export default function Layout({ children }: { children: ReactNode }) {
     if (user && profile) getUnreadCount(user.uid).then(setUnread).catch(() => undefined)
   }, [user, profile])
   const [mountedAt] = useState(() => Date.now())
-  useEffect(() => { getAppConfig().then((c) => setMaintenance(c.maintenanceMode)).catch(() => undefined) }, [])
+  // A signed-out visitor reading public pages (home, how it works, services, legal) does not need the maintenance flag, so they cost NO Firestore read.
+  // It is loaded for signed-in users and on the sign-in / sign-up pages, and then reused from the browser cache for 5 minutes.
+  const needsConfig = Boolean(user) || pathname === '/login' || pathname === '/signup'
+  useEffect(() => { if (needsConfig) ensureAppCheck() }, [needsConfig]) // sign-in/up pages warm up bot protection while the person types
+  useEffect(() => { if (needsConfig) getAppConfig().then((c) => setMaintenance(c.maintenanceMode)).catch(() => undefined) }, [needsConfig])
   useEffect(() => {
     let ticking = false
     const onScroll = () => {
@@ -53,7 +58,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [])
 
   const link = ({ isActive }: { isActive: boolean }) => `hn-link${isActive ? ' active' : ''}`
-  const mobileLink = ({ isActive }: { isActive: boolean }) => `block rounded-xl px-3 py-2 text-base font-semibold ${isActive ? 'bg-ye text-ink' : 'text-tx hover:bg-ln'}`
+  const mobileLink = ({ isActive }: { isActive: boolean }) => `block rounded-xl px-3 py-2 text-base font-semibold ${isActive ? 'bg-ye text-ink' : 'text-tx hover:bg-sf'}`
   const solid = scrolled || !isHome || menuOpen
 
   const links = (cls: typeof link) => (<>
@@ -74,22 +79,22 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col bg-bg text-tx">
       <a href="#main" className="sr-only focus:not-sr-only focus:p-2">Skip to content</a>
       <header className={`hn-nav${solid ? ' solid' : ''}`}>
-        <nav className="hn-w flex h-16 items-center gap-5" aria-label="Main">
+        <nav className="hn-w flex h-16 items-center gap-2" aria-label="Main">
           <Link to="/" className="hn-logo" aria-label={`${brand.name} home`}><i aria-hidden="true">⌂</i>{brand.name}</Link>
-          <div className="hidden items-center gap-5 md:flex">
+          <div className="hidden items-center gap-1 md:flex">
             <a href="/services/" className="hn-link">Services</a>
             <NavLink to="/how-it-works" className={link}>How it works</NavLink>
             {links(link)}
             {user
-              ? <button className={btnGhost} onClick={() => signOut()}>Sign out</button>
+              ? <><span className="hn-av mx-2" aria-hidden="true">{(profile?.displayName ?? user.email ?? '?').charAt(0).toUpperCase()}</span><button className={btnGhost} onClick={() => signOut()}>Sign out</button></>
               : (<>
                 <NavLink to="/login" className={link}>Sign in</NavLink>
-                <Link to="/signup" className="hn-btn hn-y">Get started</Link>
+                <Link to="/signup" className="hn-btn hn-y ml-2">Get started</Link>
               </>)}
           </div>
           <button
             type="button"
-            className="grid h-10 w-10 place-items-center rounded-xl border-2 border-bd bg-sf text-xl md:hidden"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-bd bg-sf text-xl md:hidden"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
@@ -98,7 +103,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
         {menuOpen && (
           <div id="mobile-menu" className="hn-w space-y-1 pb-4 md:hidden">
-            <a href="/services/" className="block rounded-xl px-3 py-2 text-base font-semibold text-tx hover:bg-ln">Services</a>
+            <a href="/services/" className="block rounded-xl px-3 py-2 text-base font-semibold text-tx hover:bg-sf">Services</a>
             <NavLink to="/how-it-works" className={mobileLink}>How it works</NavLink>
             {links(mobileLink)}
             {user
@@ -119,10 +124,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       {maintenance && <div className="bg-danger-bg px-4 py-2 pt-20 text-center text-sm text-danger-tx" role="alert">{brand.name} is in maintenance mode. Some actions may be unavailable.</div>}
       {isHome
         ? <main id="main" className="w-full flex-1">{children}</main>
-        : <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-5 pb-10 pt-24">{children}</main>}
+        : <main id="main" className={`mx-auto w-full flex-1 px-5 pb-10 pt-24 ${pathname.startsWith('/admin') || pathname === '/feed' || pathname === '/dashboard' ? 'max-w-6xl' : 'max-w-4xl'}`}>{children}</main>}
       <footer className="hn-foot">
         <div className="hn-w">
-          <p className="font-display text-xl font-extrabold text-tx">{brand.name}</p>
+          <p className="font-display text-xl font-semibold text-tx">{brand.name}</p>
           <p>{brand.disclaimer} Licenses and insurance shown by workers are self-reported and not verified. Electrical, plumbing and HVAC aren’t offered because they require a license.</p>
           <p>
             <Link to="/legal/terms">Terms</Link> · <Link to="/legal/privacy">Privacy</Link> · <Link to="/legal/guidelines">Community Guidelines</Link> · <Link to="/legal/disclaimer">Disclaimer</Link>

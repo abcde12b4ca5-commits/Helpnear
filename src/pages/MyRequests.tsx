@@ -76,7 +76,7 @@ export default function MyRequests() {
             {claims[r.id]?.map((c) => {
               const k = `${r.id}_${c.workerId}`
               return (
-                <div key={k} className="mt-2 w-full rounded-xl border-2 border-ln p-3 text-sm">
+                <div key={k} className="mt-2 w-full rounded-xl border border-ln p-3 text-sm">
                   <p><Link className="font-semibold underline" to={`/worker/${c.workerId}?request=${r.id}`}>{c.workerName}</Link> &middot; Price: <strong>{formatCents(c.quotedCents)}</strong>{(c.status === 'done' || c.status === 'confirmed') && <> &middot; Final: <strong>{formatCents(c.finalCents)}</strong></>}</p>
                   <p className="text-mu">{c.note}</p>
                   <p className="mt-1 font-medium text-ac">{claimLabel(c, 'client')}</p>
@@ -100,7 +100,7 @@ export default function MyRequests() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My requests</h1>
+        <h1 className="text-4xl">My requests</h1>
         <div className="flex gap-2"><button className={btnGhost} onClick={() => { void load(null, true); reloadStats() }}>Refresh</button><Link to="/post" className={btn}>New request</Link></div>
       </div>
       <StatsGrid items={[

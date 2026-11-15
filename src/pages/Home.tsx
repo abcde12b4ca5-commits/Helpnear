@@ -18,7 +18,7 @@ const SERVICES = [
   { n: '04', title: 'TV mounting', label: 'tv mounting', text: 'Level, secure and cable-tidy mounting on any wall.', img: IMG.tv, alt: 'Two workers mounting a wall TV', bg: '#ff7a45', fg: '#0b1020' },
   { n: '05', title: 'Furniture assembly', label: 'furniture assembly', text: 'Beds, desks and shelving built right, with the boxes hauled away.', img: IMG.furn, alt: 'Man assembling a wooden shelf', bg: '#19c37d', fg: '#0b1020' },
 ]
-const MARQUEE = ['Handyman', 'Lawn care', 'Pressure washing', 'TV mounting', 'Furniture assembly', 'Cleaning', 'Painting', 'Gutters']
+const MARQUEE = ['Handyman', 'Lawn care', 'Pressure washing', 'TV mounting', 'Furniture assembly', 'Cleaning', 'Painting', 'Gutters', 'Dog walking', 'Pet sitting', 'Snow removal', 'Car detailing', 'Holiday lights', 'Organizing']
 const STEPS = [
   { n: '1', title: 'Post it', text: 'Choose the service, add your ZIP and a few details.' },
   { n: '2', title: 'Get prices', text: 'Only workers who cover your area see it, and send you an offer.' },
@@ -26,7 +26,7 @@ const STEPS = [
 ]
 const NUMBERS: { n: number; suffix?: string; prefix?: string; label: string }[] = [
   { n: 50, label: 'states covered' },
-  { n: 15, suffix: '+', label: 'services' },
+  { n: 24, suffix: '+', label: 'services' },
   { n: 5, label: 'workers per request, max' },
   { n: 0, prefix: '$', label: 'platform fee on jobs' },
 ]
@@ -145,7 +145,7 @@ export default function Home() {
               )
             })}
           </div>
-          <p className="hn-rv" style={{ marginTop: '1rem' }}><a className="hn-bt" href="/services/">Browse all 15 services →</a></p>
+          <p className="hn-rv" style={{ marginTop: '1rem' }}><a className="hn-bt" href="/services/">Browse all 24 services →</a></p>
         </div>
       </section>
 
@@ -173,7 +173,7 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="hn-fin hn-rv" role="img" aria-label="Two workers mounting a wall TV">
+      <div className="hn-fin hn-rv">
         <div>
           <h2 className="hn-h2">Your neighbor is ready.</h2>
           <Link className="hn-btn hn-btn-lg hn-y" style={{ marginTop: '1.5rem' }} to={finalCta.to}>{finalCta.label}</Link>

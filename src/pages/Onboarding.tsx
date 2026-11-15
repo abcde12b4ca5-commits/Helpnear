@@ -8,7 +8,7 @@ import { getAppConfig, getCategories, DEFAULT_CONFIG } from '../lib/catalog'
 import { MAX_MATCH_KEYS, RADIUS_OPTIONS, cellsCovering, matchKeysFor } from '../lib/geo'
 import { useZipLookup } from '../lib/useZip'
 import { friendlyError } from '../lib/errors'
-import { ErrorBox, Field, Spinner, btn, card, input } from '../components/ui'
+import { ErrorBox, Field, Spinner, btn, input } from '../components/ui'
 import type { AppConfig, Category } from '../lib/types'
 
 export default function Onboarding() {
@@ -64,26 +64,29 @@ export default function Onboarding() {
 
   if (!cats) return error ? <ErrorBox message={error} /> : <Spinner />
   return (
-    <form onSubmit={submit} className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Your worker profile</h1>
+    <form onSubmit={submit} className="max-w-4xl space-y-6">
+      <div><h1 className="text-4xl">Your worker profile</h1><p className="mt-2 text-mu">Pick the services you offer. When a request near you matches, you get notified and can accept or decline.</p></div>
       <section aria-labelledby="svc">
-        <h2 id="svc" className="font-semibold">Services you offer (up to {Math.min(config.maxCategoriesPerWorker, 5)})</h2>
-        <div className="mt-2 space-y-2">
-          {cats.filter((c) => !c.disabledStates?.includes(zipInfo?.state ?? '')).map((c) => (
-            <div key={c.id} className={card}>
-              <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={selCats.includes(c.id)} onChange={() => toggleCat(c.id)} /> {c.name}</label>
-              {selCats.includes(c.id) && (
-                <div className="mt-2 text-xs text-mu">
-                  <p>Allowed: {c.allowedServices.join('; ')}</p>
-                  <label className="mt-2 flex items-start gap-2"><input type="checkbox" className="mt-0.5" checked={confirmed.includes(c.id)} onChange={(e) => setConfirmed(e.target.checked ? [...confirmed, c.id] : confirmed.filter((x) => x !== c.id))} /> I will only perform the allowed services in this category.</label>
-                </div>
-              )}
-            </div>
-          ))}
+        <h2 id="svc" className="text-xl">Services you offer (up to {Math.min(config.maxCategoriesPerWorker, 5)})</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {cats.filter((c) => !c.disabledStates?.includes(zipInfo?.state ?? '')).map((c) => {
+            const on = selCats.includes(c.id)
+            return (
+              <div key={c.id} className={`hn-tile${on ? ' on' : ''} ${on ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={on} onChange={() => toggleCat(c.id)} /> {c.name}</label>
+                {on && (
+                  <div className="mt-2 text-xs font-normal text-mu">
+                    <p>Allowed: {c.allowedServices.join('; ')}</p>
+                    <label className="mt-2 flex items-start gap-2"><input type="checkbox" className="mt-0.5" checked={confirmed.includes(c.id)} onChange={(e) => setConfirmed(e.target.checked ? [...confirmed, c.id] : confirmed.filter((x) => x !== c.id))} /> I will only perform the allowed services in this category.</label>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </section>
       <section aria-labelledby="areas" className="space-y-3">
-        <h2 id="areas" className="font-semibold">Where you work</h2>
+        <h2 id="areas" className="text-xl">Where you work</h2>
         <Field label="Your base ZIP code" htmlFor="bzip" hint="Requests inside your radius around this ZIP are sent to you. Anywhere in the United States.">
           <input id="bzip" required inputMode="numeric" maxLength={5} className={input} value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))} />
         </Field>

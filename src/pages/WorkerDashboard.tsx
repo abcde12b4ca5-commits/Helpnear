@@ -9,7 +9,7 @@ import { claimLabel } from '../lib/labels'
 import { friendlyError } from '../lib/errors'
 import ReportButton from '../components/ReportButton'
 import { CancelForm, DisputeForm, StatsGrid, StrikeNotice } from '../components/ClaimBits'
-import { Empty, ErrorBox, Field, Spinner, btn, btnGhost, card, input } from '../components/ui'
+import { Empty, ErrorBox, Field, Pill, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { ClaimDoc, ClaimStatus, ContactDoc } from '../lib/types'
 
 const TABS: [string, ClaimStatus | null][] = [['All', null], ['In progress', 'accepted'], ['Waiting for client', 'done'], ['Completed', 'confirmed'], ['Disputed', 'disputed'], ['Cancelled', 'cancelled']]
@@ -74,35 +74,20 @@ export default function WorkerDashboard() {
     try { setContacts({ ...contacts, [id]: await getContact(id) }) } catch (e) { setError(friendlyError(e)) }
   }
 
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">My jobs</h1>
-      <StatsGrid items={[
-        ['In progress', stats?.active ?? dots], ['Waiting for client', stats?.waitingConfirmation ?? dots],
-        ['Completed jobs', stats?.completed ?? dots], ['Total earned', stats ? formatCents(stats.totalCents) : dots],
-      ]} />
-      <p className="text-xs text-mu">Earnings count only jobs the client confirmed, using the final amount you entered. Payments are arranged directly with the client for now.</p>
-      <div role="tablist" aria-label="Job status" className="flex flex-wrap gap-2">
-        {TABS.map(([name, st]) => (
-          <button key={name} role="tab" aria-selected={tab === st} onClick={() => { setLoading(true); setTab(st) }} className={`rounded-xl px-3 py-1 text-sm ${tab === st ? 'bg-bl text-white' : 'border-2 border-bd bg-sf text-tx'}`}>{name}</button>
-        ))}
-      </div>
-      {user && <StrikeNotice uid={user.uid} role="worker" />}
-      <ErrorBox message={error} />
-      {items.length === 0 && !loading && <Empty>No jobs here yet. Accept a request from the Requests page.</Empty>}
-      <ul className="space-y-3">
-        {items.map((c) => {
+  const STEP: Record<string, number> = { accepted: 1, done: 3, confirmed: 4 }
+  const renderJob = (c: ClaimDoc, i: number) => {
           const p = panel?.key === key(c) ? panel.kind : null
           const contact = contacts[c.requestId]
           return (
-            <li key={key(c)} className={card}>
+            <li key={key(c)} className={`${card} hn-lift hn-in`} style={{ ['--i' as string]: i }}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="font-semibold">{c.title}</h3>
+                <h3 className="text-lg">{c.title}</h3>
                 <span className="text-xs text-mu">{c.categoryName}</span>
               </div>
               <p className="mt-1 text-sm">Your price: <strong>{formatCents(c.quotedCents)}</strong>{c.status === 'confirmed' || c.status === 'done' ? <> &middot; Final: <strong>{formatCents(c.finalCents)}</strong></> : null}</p>
               <p className="text-sm text-mu">{c.note}</p>
-              <p className="mt-1 text-sm font-medium text-ac">{claimLabel(c, 'worker')}</p>
+              {STEP[c.status] && <div className="hn-bar mt-3" role="img" aria-label={`Progress ${STEP[c.status]} of 4`}><i style={{ width: `${(STEP[c.status] / 4) * 100}%` }} /></div>}
+              <p className="mt-2 text-sm font-medium text-ac">{claimLabel(c, 'worker')}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 {c.status !== 'cancelled' && (contact
                   ? <p className="text-sm">Contact ({contact.preferredContactMethod}): {contact.phone || '-'} &middot; {contact.email || '-'}</p>
@@ -115,7 +100,7 @@ export default function WorkerDashboard() {
                 <ReportButton targetType="request" targetId={c.requestId} />
               </div>
               {p === 'quote' && (
-                <form onSubmit={(e) => submitQuote(e, c)} className="mt-3 space-y-3 rounded-xl border-2 border-ln p-3">
+                <form onSubmit={(e) => submitQuote(e, c)} className="mt-3 space-y-3 rounded-xl border border-ln p-3">
                   <Field label="Price (USD)" htmlFor={`q-${c.requestId}`}><input id={`q-${c.requestId}`} required inputMode="decimal" className={input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
                   <Field label="What it includes" htmlFor={`qn-${c.requestId}`}><textarea id={`qn-${c.requestId}`} required minLength={5} maxLength={500} rows={3} className={input} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
                   <p className="text-xs text-mu">The client will be asked to agree again.</p>
@@ -123,7 +108,7 @@ export default function WorkerDashboard() {
                 </form>
               )}
               {p === 'done' && (
-                <form onSubmit={(e) => submitDone(e, c)} className="mt-3 space-y-3 rounded-xl border-2 border-ln p-3">
+                <form onSubmit={(e) => submitDone(e, c)} className="mt-3 space-y-3 rounded-xl border border-ln p-3">
                   <Field label="Final amount for the work (USD)" htmlFor={`f-${c.requestId}`} hint="The client will be asked to confirm that the service was done."><input id={`f-${c.requestId}`} required inputMode="decimal" className={input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
                   <div className="flex gap-2"><button className={btn}>Mark as done</button><button type="button" className={btnGhost} onClick={() => setPanel(null)}>Close</button></div>
                 </form>
@@ -132,8 +117,44 @@ export default function WorkerDashboard() {
               {p === 'cancel' && <CancelForm onCancel={(r) => act(() => cancelClaim(c, 'worker', r))} onClose={() => setPanel(null)} />}
             </li>
           )
-        })}
-      </ul>
+  }
+  return (
+    <div className="space-y-4">
+      <h1 className="text-4xl">My jobs</h1>
+      <StatsGrid items={[
+        ['In progress', stats?.active ?? dots], ['Waiting for client', stats?.waitingConfirmation ?? dots],
+        ['Completed jobs', stats?.completed ?? dots], ['Total earned', stats ? formatCents(stats.totalCents) : dots],
+      ]} />
+      <p className="text-xs text-mu">Earnings count only jobs the client confirmed, using the final amount you entered. Payments are arranged directly with the client for now.</p>
+      <div role="tablist" aria-label="Job status" className="hn-tabs">
+        {TABS.map(([name, st]) => (
+          <button key={name} role="tab" aria-selected={tab === st} onClick={() => { setLoading(true); setTab(st) }} className="hn-tab">{name}</button>
+        ))}
+      </div>
+      {user && <StrikeNotice uid={user.uid} role="worker" />}
+      <ErrorBox message={error} />
+      {items.length === 0 && !loading && <Empty>No jobs here yet. Accept a request from the Requests page.</Empty>}
+      {tab === null ? (
+        <div className="grid gap-5 lg:grid-cols-3">
+          {([['In progress', 'accepted'], ['Waiting for client', 'done'], ['Completed', 'confirmed']] as const).map(([name, st]) => {
+            const col = items.filter((c) => c.status === st)
+            return (
+              <section key={st} className="space-y-3" aria-label={name}>
+                <div className="flex items-center justify-between"><h2 className="text-lg">{name}</h2><Pill>{col.length}</Pill></div>
+                <ul className="space-y-3">{col.map(renderJob)}</ul>
+              </section>
+            )
+          })}
+          {items.some((c) => !['accepted', 'done', 'confirmed'].includes(c.status)) && (
+            <section className="space-y-3 lg:col-span-3" aria-label="Other">
+              <h2 className="text-lg">Disputed and cancelled</h2>
+              <ul className="grid gap-3 lg:grid-cols-3">{items.filter((c) => !['accepted', 'done', 'confirmed'].includes(c.status)).map(renderJob)}</ul>
+            </section>
+          )}
+        </div>
+      ) : (
+      <ul className="grid gap-3 lg:grid-cols-2">{items.map(renderJob)}</ul>
+      )}
       {loading && <Spinner />}
       {!loading && !done && <button className={btnGhost} onClick={() => void load(tab, cursor, false)}>Load more</button>}
     </div>

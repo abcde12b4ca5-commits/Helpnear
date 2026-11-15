@@ -27,7 +27,7 @@ export default function Notifications() {
   if (!items) return <Spinner />
   return (
     <div className="max-w-2xl space-y-4">
-      <h1 className="text-2xl font-bold">Notifications</h1>
+      <h1 className="text-4xl">Notifications</h1>
       <ErrorBox message={error} />
       {canPush && (
         <p className="text-sm">

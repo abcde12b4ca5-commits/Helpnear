@@ -40,13 +40,16 @@ export default function Signup() {
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto max-w-sm space-y-4">
-      <h1 className="text-2xl font-bold">Create your account</h1>
+    <div className="hn-auth">
+    <div className="hn-orb" style={{ width: 380, height: 380, background: 'var(--bl)', opacity: .4, left: '6%', top: '2%' }} aria-hidden="true" />
+    <div className="hn-orb" style={{ width: 280, height: 280, background: 'var(--ye)', opacity: .18, right: '8%', bottom: '2%', animationDelay: '-6s' }} aria-hidden="true" />
+    <form onSubmit={submit} className="hn-glass hn-in">
+      <div><h1 className="text-3xl">Create your account</h1><p className="mt-2 text-sm text-mu">Hire local help, or find nearby work.</p></div>
       <fieldset>
-        <legend className="mb-1 text-sm font-medium">I want to</legend>
-        <div className="flex gap-4 text-sm">
-          <label className="flex items-center gap-2"><input type="radio" name="role" checked={role === 'client'} onChange={() => setRole('client')} /> Hire someone</label>
-          <label className="flex items-center gap-2"><input type="radio" name="role" checked={role === 'worker'} onChange={() => setRole('worker')} /> Find work</label>
+        <legend className="sr-only">I want to</legend>
+        <div className="hn-seg">
+          <label><input type="radio" name="role" className="sr-only" checked={role === 'client'} onChange={() => setRole('client')} />Hire someone</label>
+          <label><input type="radio" name="role" className="sr-only" checked={role === 'worker'} onChange={() => setRole('worker')} />Find work</label>
         </div>
       </fieldset>
       <Field label="Name" htmlFor="name" hint="First name and last initial is fine."><input id="name" required maxLength={60} className={input} value={displayName} onChange={(e) => setDisplayName(e.target.value)} /></Field>
@@ -61,7 +64,8 @@ export default function Signup() {
       <button className={`${btn} w-full`} disabled={busy}>{busy ? 'Creating account...' : 'Create account'}</button>
       <OrDivider />
       <GoogleButton label="Sign up with Google" busy={busy} onClick={google} />
-      <p className="text-sm text-mu">Already have an account? <Link to="/login" className="underline">Sign in</Link></p>
+      <p className="text-sm text-mu">Already have an account? <Link to="/login" className="font-semibold text-tx underline">Sign in</Link></p>
     </form>
+    </div>
   )
 }
