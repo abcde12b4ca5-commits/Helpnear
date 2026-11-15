@@ -26,12 +26,18 @@ export const categories = [
   cat('gutter-cleaning', 'Gutter cleaning', true, 'low', ['Gutter cleaning and debris removal']),
   cat('lawn-care', 'Lawn mowing and yard maintenance', true, 'low', ['Mowing, edging, trimming']),
   cat('yard-cleanup', 'Yard cleanup', true, 'low', ['Leaves, brush, general cleanup. No tree removal.']),
-  // Proposed additions: DISABLED until legality is verified (Texas official sources + attorney).
-  cat('garage-cleanout', 'Garage cleanout and organizing', false, 'low', ['Sorting and organizing'], 'Proposed. Verify scope: hauling/disposal may be regulated.'),
-  cat('pet-sitting', 'Pet sitting and dog walking', false, 'low', ['Pet sitting', 'Dog walking'], 'Proposed. Verify local rules and liability.'),
-  cat('car-detailing', 'Mobile car detailing', false, 'low', ['Washing, interior cleaning'], 'Proposed.'),
-  cat('holiday-lights', 'Holiday light installation', false, 'low', ['Hanging decorative lights'], 'Proposed. Ladder safety and liability to review.'),
-  cat('moving-labor', 'Moving help (labor only)', false, 'regulated', ['Loading and unloading only'], 'Proposed. Household-goods mover rules NOT verified; keep disabled.'),
+  // Added services (enabled). Workers pick the ones they offer; requests reach workers within their travel distance.
+  cat('move-out-cleaning', 'Move-out and Airbnb cleaning', true, 'low', ['Move-in/move-out cleaning', 'Airbnb turnover cleaning']),
+  cat('garage-cleanout', 'Garage cleanout and organizing', true, 'low', ['Sorting and organizing', 'Cleanout of items you already own'], 'Hauling away waste is not included.', ['hazardous', 'asbestos', 'chemicals']),
+  cat('home-organizing', 'Home organizing', true, 'low', ['Closets, pantries and rooms']),
+  cat('pet-sitting', 'Pet sitting', true, 'low', ['In-home pet sitting', 'Drop-in visits'], 'Local rules and liability apply. Not verified by ' + BRAND + '.'),
+  cat('dog-walking', 'Dog walking', true, 'low', ['Dog walking'], 'Follow local leash rules. Not verified by ' + BRAND + '.'),
+  cat('car-detailing', 'Mobile car detailing', true, 'low', ['Washing, interior cleaning']),
+  cat('holiday-lights', 'Holiday light installation', true, 'low', ['Hanging decorative lights'], 'Ladder safety and liability apply.', GENERAL_BLOCKED),
+  cat('landscaping-mulching', 'Landscaping and mulching', true, 'low', ['Mulching, planting, bed edging'], '', ['irrigation', 'sprinkler', 'tree removal']),
+  cat('snow-removal', 'Snow removal', true, 'low', ['Shoveling driveways and walks']),
+  // Still disabled: the app locks regulated categories until a license/legality check exists.
+  cat('moving-labor', 'Moving help (labor only)', false, 'regulated', ['Loading and unloading only'], 'Household-goods mover rules NOT verified; keep disabled.'),
   // Regulated / high risk: keep disabled until a license-verification feature exists.
   cat('plumbing', 'Plumbing', false, 'regulated', [], 'State-licensed trade in Texas (per secondary sources).', [], true),
   cat('electrical', 'Electrical', false, 'regulated', [], 'Licensed trade in Texas (TDLR, per secondary sources).', [], true),

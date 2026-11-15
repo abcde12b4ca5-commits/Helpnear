@@ -2,13 +2,24 @@
 // Runs after `vite build`. Data comes from Firestore public-read REST (config/categories) when
 // VITE_FIREBASE_PROJECT_ID is set, otherwise from the seed file. Set SITE_URL to your real domain.
 // Coverage is nationwide, so there are no per-area pages: one hub plus one page per service.
-import { mkdir, writeFile, readFile } from 'node:fs/promises'
+import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises'
 import { categories as seedCats } from '../firebase/seed/data.mjs'
 
 const SITE = (process.env.SITE_URL || 'https://example.pages.dev').replace(/\/$/, '')
 const BRAND = process.env.BRAND_NAME || JSON.parse(await readFile(new URL('../src/config/brand.json', import.meta.url), 'utf8')).name
 const PROJECT = process.env.VITE_FIREBASE_PROJECT_ID
 const OUT = 'dist'
+
+// Self-hosted fonts: the build already emitted them into dist/assets (see src/main.tsx). Static pages inline the @font-face rules and preload the two critical files.
+const assetFiles = await readdir(`${OUT}/assets`).catch(() => [])
+const fontFile = (re) => assetFiles.find((f) => re.test(f))
+const FONTS = [
+  ['Inter', 400, fontFile(/^inter-latin-400-normal-.*\.woff2$/)],
+  ['Inter', 600, fontFile(/^inter-latin-600-normal-.*\.woff2$/)],
+  ['Sora', 600, fontFile(/^sora-latin-600-normal-.*\.woff2$/)],
+].filter((f) => f[2])
+const FONT_FACE = FONTS.map(([fam, w, f]) => `@font-face{font-family:${fam};font-style:normal;font-display:swap;font-weight:${w};src:url(/assets/${f}) format('woff2')}`).join('')
+const FONT_PRELOAD = FONTS.filter((f) => /inter-latin-400|sora-latin-600/.test(f[2])).map(([, , f]) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/${f}">`).join('')
 const DISCLAIMER = `${BRAND} is a platform that connects people. We are not a contractor or an employer. Licenses and insurance shown by workers are self-reported and not verified by ${BRAND}.`
 
 // Helpful, non-numeric guidance per category (no invented prices). Extend over time: richer content ranks better.
@@ -28,6 +39,15 @@ const GUIDE = {
   'gutter-cleaning': ['Give the number of stories and the rough length of gutters.', 'Ask whether they also flush the downspouts and check for sagging.'],
   'lawn-care': ['Share the lawn size, how often you want service, and gate access.', 'Ask whether trimming, edging, and cleanup after mowing are included.'],
   'yard-cleanup': ['List what needs to go (leaves, brush, small branches) and how much.', 'Tree removal is not covered here; ask about bagging versus hauling away.'],
+  'garage-cleanout': ['List what needs sorting, the rough size of the garage, and whether you want shelving or labeling.', 'Hauling away waste is not included. Ask about hazardous items before the visit.'],
+  'home-organizing': ['Say which rooms or closets, and how you want things grouped.', 'Ask whether they bring containers and labels, or work with what you already own.'],
+  'move-out-cleaning': ['Share the home size and whether it is empty, plus any appliances to clean inside.', 'Ask about timing for a move-out deadline or a same-day Airbnb turnover.'],
+  'pet-sitting': ['Describe your pets, feeding and medication routine, and the dates you need.', 'Ask about a meet-and-greet first and what happens in an emergency.'],
+  'dog-walking': ['Share your dog size, temperament, walk length and how often you want walks.', 'Ask how they handle leash rules and the weather.'],
+  'car-detailing': ['Say the vehicle type and whether you need interior, exterior or both.', 'Ask whether they bring water and power or need access to yours.'],
+  'holiday-lights': ['Describe the roofline or trees, the lights you have, and the date to switch on.', 'Ask about ladder safety and when they take the lights down.'],
+  'landscaping-mulching': ['Give the bed sizes, the mulch or plants you want, and any edging work.', 'Ask who buys materials and who hauls away leftovers.'],
+  'snow-removal': ['List the driveway, walks and steps, and whether you want visits during or after storms.', 'Ask how they handle de-icing and what they charge for repeat visits.'],
 }
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -53,28 +73,27 @@ async function loadData() {
 }
 
 // Static pages share the site's editorial design tokens (kept in sync with src/index.css).
-const css = `:root{--bg:#f6f4ee;--sf:#fff;--tx:#0b1020;--mu:#5a6075;--ln:#dedbd0;--bl:#1f4bff;--ye:#ffd23f;--ac:#1f4bff}
-@media(prefers-color-scheme:dark){:root{--bg:#0a0e1a;--sf:#131a2e;--tx:#f1f2f8;--mu:#9aa1ba;--ln:#232c48;--ac:#ffd23f}}
+const css = `:root{--bg:#0a0e1a;--sf:#131a2e;--tx:#f1f2f8;--mu:#9aa1ba;--ln:#232c48;--bl:#4d7cff;--ye:#ffd23f;--ac:#ffd23f;color-scheme:dark}
 *{box-sizing:border-box;margin:0}html{scroll-behavior:smooth;background:var(--bg)}
 body{font:400 1rem/1.6 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)}
-h1,h2,h3,.f{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.035em;line-height:1.02}
+h1,h2,h3,.f{font-family:'Sora',system-ui,sans-serif;letter-spacing:-.035em;line-height:1.02}
 a{color:inherit}
 .w{max-width:76rem;margin:0 auto;padding:0 1.25rem}
 nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln)}
 nav .w{display:flex;align-items:center;gap:1.4rem;height:4rem}
-.logo{display:flex;align-items:center;gap:.55rem;font:800 1.45rem 'Bricolage Grotesque',sans-serif;letter-spacing:-.04em;margin-right:auto;text-decoration:none}
-.logo i{display:grid;place-items:center;width:2rem;height:2rem;border-radius:.6rem;background:var(--bl);color:var(--ye);font-style:normal;font-size:1.1rem;transform:rotate(-8deg)}
+.logo{display:flex;align-items:center;gap:.55rem;font:600 1.45rem 'Sora',sans-serif;letter-spacing:-.04em;margin-right:auto;text-decoration:none}
+.logo i{display:grid;place-items:center;width:2rem;height:2rem;border-radius:.6rem;background:var(--ye);color:#0a0e1a;font-style:normal;font-size:1.1rem}
 nav a.l{font-size:.9rem;font-weight:600;color:var(--mu);text-decoration:none}nav a.l:hover{color:var(--tx)}
 @media(max-width:39.99rem){nav a.l{display:none}}
 main{max-width:46rem;margin:0 auto;padding:3rem 1.25rem 2rem}
-h1{font-size:clamp(2.4rem,7vw,4rem);font-weight:800;margin-bottom:1rem}
-h2{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:800;margin:2rem 0 .6rem}
-h3{font-size:1.2rem;font-weight:800;margin:1.2rem 0 .3rem}
+h1{font-size:clamp(2.4rem,7vw,4rem);font-weight:600;margin-bottom:1rem}
+h2{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:600;margin:2rem 0 .6rem}
+h3{font-size:1.2rem;font-weight:600;margin:1.2rem 0 .3rem}
 p,li{color:var(--mu)}p{margin:.6rem 0}ul{padding-left:1.2rem;margin:.6rem 0}
 main a:not(.cta){color:var(--ac);text-decoration:underline;text-underline-offset:3px}
-.cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.9rem;font:800 .95rem 'Bricolage Grotesque',sans-serif;background:var(--bl);color:#fff;text-decoration:none;box-shadow:0 8px 0 -2px rgba(11,16,32,.9)}
-.cta:hover{transform:translateY(3px);box-shadow:0 4px 0 -2px rgba(11,16,32,.9)}
-.cta.y{background:var(--ye);color:#0b1020}
+.cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.8rem;font:600 .95rem Inter,sans-serif;background:var(--ye);color:#0a0e1a;text-decoration:none;transition:.2s}
+.cta:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.cta.y{background:var(--ye);color:#0a0e1a}
 footer{padding:3rem 1.25rem 2.5rem;font-size:.8rem;color:var(--mu);text-align:center}footer p{max-width:42rem;margin:.6rem auto}footer a{text-decoration:underline;text-underline-offset:3px}`
 
 function page({ title, description, path, robots, body, jsonld }) {
@@ -84,14 +103,13 @@ function page({ title, description, path, robots, body, jsonld }) {
 <title>${esc(title)}</title><meta name="description" content="${esc(description)}">
 <meta name="robots" content="${robots},max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${url}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:image" content="${SITE}/img/handy.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f4bff">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<meta name="color-scheme" content="light dark">
-<style>${css}</style>
+${FONT_PRELOAD}
+<meta name="color-scheme" content="dark">
+<style>${FONT_FACE}${css}</style>
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script></head>
 <body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">⌂</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/login">Sign in</a><a class="cta y" style="margin:0;padding:.6rem 1.1rem;box-shadow:none" href="/signup">Get started</a></div></nav>
 <main>${body}</main>
-<footer><p class="f" style="font-size:1.3rem;color:var(--tx);font-weight:800">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer></body></html>`
+<footer><p class="f" style="font-size:1.3rem;color:var(--tx);font-weight:600">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer></body></html>`
 }
 
 const crumbs = (items) => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: `${SITE}${path}` })) })
