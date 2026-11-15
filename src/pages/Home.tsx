@@ -2,13 +2,20 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
-const IMG = {
-  handy: '/img/handy.jpg',
-  lawn: '/img/lawn.jpg',
-  pressure: '/img/pressure.jpg',
-  tv: '/img/tv.jpg',
-  furn: '/img/furn.jpg',
-}
+// Imported (not hard-coded paths) so Vite gives each file a content hash: they are cached for a year and never go stale.
+import handy from '../assets/img/handy.webp'
+import lawn from '../assets/img/lawn.webp'
+import pressure from '../assets/img/pressure.webp'
+import tv from '../assets/img/tv.webp'
+import furn from '../assets/img/furn.webp'
+import handyS from '../assets/img/handy-s.webp'
+import lawnS from '../assets/img/lawn-s.webp'
+import pressureS from '../assets/img/pressure-s.webp'
+import tvS from '../assets/img/tv-s.webp'
+import furnS from '../assets/img/furn-s.webp'
+const IMG = { handy, lawn, pressure, tv, furn }
+// Small versions for the hero tiles (shown about 280px wide), so the first screen downloads far fewer bytes than the full cards below.
+const TILE = { handy: handyS, lawn: lawnS, pressure: pressureS, tv: tvS, furn: furnS }
 const bg = (src: string) => ({ backgroundImage: `url(${src})` })
 
 const SERVICES = [
@@ -106,14 +113,14 @@ export default function Home() {
             <span className="hn-stk a">4 workers nearby</span>
             <span className="hn-stk b">✓ Job accepted</span>
             <div className="hn-pc" data-s="-.07">
-              <div className="hn-pi" role="img" aria-label="Handyman fitting a kitchen cabinet" style={bg(IMG.handy)} />
-              <div className="hn-pi" role="img" aria-label="Man pressure washing a driveway" style={bg(IMG.pressure)} />
-              <div className="hn-pi" role="img" aria-label="Man assembling a wooden shelf" style={bg(IMG.furn)} />
+              <div className="hn-pi" role="img" aria-label="Handyman fitting a kitchen cabinet" style={bg(TILE.handy)} />
+              <div className="hn-pi" role="img" aria-label="Man pressure washing a driveway" style={bg(TILE.pressure)} />
+              <div className="hn-pi" role="img" aria-label="Man assembling a wooden shelf" style={bg(TILE.furn)} />
             </div>
             <div className="hn-pc b2" data-s=".07">
-              <div className="hn-pi" role="img" aria-label="Man mowing a green lawn" style={bg(IMG.lawn)} />
-              <div className="hn-pi" role="img" aria-label="Two workers mounting a wall TV" style={bg(IMG.tv)} />
-              <div className="hn-pi" role="img" aria-label="Handyman fitting a kitchen cabinet" style={bg(IMG.handy)} />
+              <div className="hn-pi" role="img" aria-label="Man mowing a green lawn" style={bg(TILE.lawn)} />
+              <div className="hn-pi" role="img" aria-label="Two workers mounting a wall TV" style={bg(TILE.tv)} />
+              <div className="hn-pi" role="img" aria-label="Handyman fitting a kitchen cabinet" style={bg(TILE.handy)} />
             </div>
           </div>
         </div>

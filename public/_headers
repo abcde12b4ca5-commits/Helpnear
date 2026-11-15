@@ -1,14 +1,14 @@
-# The full Content-Security-Policy below is REPORT-ONLY: it blocks nothing, it only lists in the browser console (F12) what it WOULD block.
-# Switch it to enforcing after a clean week (see docs/hardening.md).
+# Security headers for every page. The Content-Security-Policy line below is a PLACEHOLDER: `npm run build` runs scripts/headers.mjs, which replaces it with the
+# real policy (built by scripts/csp.mjs from your build variables, with SHA-256 hashes of the few inline scripts/styles). Edit the policy in scripts/csp.mjs, not here.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
-  Content-Security-Policy: frame-ancestors 'none'
+  Content-Security-Policy: __CSP__
   Strict-Transport-Security: max-age=31536000
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-G+RMI8mwfEeeHXABHak9ncHzxzA8tzUlgaXA6qqsGaw=' https://challenges.cloudflare.com https://apis.google.com https://www.gstatic.com/firebasejs/ https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com https://www.google.com/images/cleardot.gif; font-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://firebaseappcheck.googleapis.com https://www.googleapis.com https://*.workers.dev; frame-src https://challenges.cloudflare.com https://*.firebaseapp.com https://accounts.google.com https://www.google.com/recaptcha/; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  ! Access-Control-Allow-Origin
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
@@ -26,21 +26,31 @@
 
 /admin*
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /chat/*
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /login
   X-Robots-Tag: noindex
+  Cache-Control: no-store
 /signup
   X-Robots-Tag: noindex
+  Cache-Control: no-store
 /post
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /my-requests
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /feed
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /dashboard
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /onboarding
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /notifications
   X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store

@@ -154,7 +154,7 @@
   @media (min-width: 50rem) { .hn-nm { grid-template-columns: repeat(4, 1fr); } }
   .hn-nm b { display: block; font: 600 clamp(3.2rem, 7vw, 5.5rem) Sora, sans-serif; letter-spacing: -.05em; color: var(--ye); }
   .hn-nm span { color: var(--mu); font-size: .9rem; }
-  .hn-fin { position: relative; margin: 6rem 1.25rem 0; border-radius: 1.6rem; overflow: hidden; min-height: 30rem; display: grid; place-items: center; text-align: center; color: #fff; padding: 4rem 1.5rem; background: center/cover url(/img/tv.jpg); }
+  .hn-fin { position: relative; margin: 6rem 1.25rem 0; border-radius: 1.6rem; overflow: hidden; min-height: 30rem; display: grid; place-items: center; text-align: center; color: #fff; padding: 4rem 1.5rem; background: center/cover url(../assets/img/tv.webp); }
   .hn-fin:before { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(5,7,15,.65), rgba(31,75,255,.6)); }
   .hn-fin > * { position: relative; }
   .hn-fin .hn-h2 { margin-inline: auto; font-size: clamp(2.6rem, 7vw, 5.5rem); }
@@ -165,6 +165,9 @@
   .hn-foot { padding: 3rem 0 2.5rem; font-size: .8rem; color: var(--mu); text-align: center; }
   .hn-foot p { max-width: 42rem; margin: .6rem auto; }
   .hn-foot a { text-decoration: underline; text-underline-offset: 3px; }
+  .hn-svcnav { padding-bottom: 3rem; }
+  /* The footer in the static HTML shell is hidden until React replaces the shell, so it cannot jump when the real page renders (layout shift). Crawlers still read it; no-JS visitors get it back via <noscript> in index.html. */
+  .hn-shell { visibility: hidden; }
 }
 
 @keyframes hn-ul { to { transform: scaleX(1); } }
