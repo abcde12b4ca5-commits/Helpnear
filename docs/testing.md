@@ -31,6 +31,18 @@ See `docs/hardening.md` for the Cloudflare/Firebase quota protection and what to
 `tests/perf/run.mjs` refuses to run against `*.googleapis.com`, `*.firebaseio.com`, `*.workers.dev`. Load on those uses your free daily quota
 (Firestore Spark = 50,000 reads/day) and would take the site down. Against a remote site it needs `I_OWN_THIS_SITE=yes` and uses lower rates.
 
+## CI (`.github/workflows/ci.yml`) is an alarm, not a gate
+Every push and pull request runs: quality (lint, types, unit, worker, audit, build, bundle-size guard), rules + integration, browser E2E, k6.
+Cloudflare Pages deploys by itself on every push to `main`, so a red job does NOT stop the release: fix it or revert the commit.
+To check the live site after a deploy: GitHub > Actions > "Live site check" > Run workflow (read-only).
+To turn the CI into a real gate later: pause Cloudflare's automatic deployments and trigger a Pages Deploy Hook from a job that `needs` the test jobs (a Git-connected Pages project cannot use `wrangler` uploads).
+
+See `docs/hardening.md` for the Cloudflare/Firebase quota protection and what to switch on in the consoles.
+
+## Performance test safety
+`tests/perf/run.mjs` refuses to run against `*.googleapis.com`, `*.firebaseio.com`, `*.workers.dev`. Load on those uses your free daily quota
+(Firestore Spark = 50,000 reads/day) and would take the site down. Against a remote site it needs `I_OWN_THIS_SITE=yes` and uses lower rates.
+
 ## CI/CD (`.github/workflows/ci.yml`)
 Every push and pull request runs: quality (lint, types, unit, worker, audit, build, bundle-size guard), rules + integration, browser E2E, k6.
 **Deploy** runs only on `main`, only if all four passed, and only when the repository variable `DEPLOY_ENABLED` is `true`. Then a read-only smoke test hits the live site.
