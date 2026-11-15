@@ -99,8 +99,8 @@ describe('Firestore rules file that gets deployed', () => {
     expect(found).toEqual(allowed) // anything new here must be a conscious decision
     expect(rules.join('\n')).not.toMatch(/match\s+\/\{document=\*\*\}\s*\{\s*allow[^}]*if\s+(true|request\.time\s*<)/)
   })
-  it('there is no stale copy of the rules in the project root (deploying the wrong file by hand is the risk)', () => {
-    expect(existsSync('firestore.rules')).toBe(false)
+  it('a copy of the rules in the project root, if it exists, is identical to the deployed one (an old copy there could be deployed by mistake)', () => {
+    if (existsSync('firestore.rules')) expect(readFileSync('firestore.rules', 'utf8')).toBe(readFileSync('firebase/firestore.rules', 'utf8'))
   })
 })
 

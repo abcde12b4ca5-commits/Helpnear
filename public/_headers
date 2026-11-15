@@ -1,3 +1,5 @@
+# The full Content-Security-Policy below is REPORT-ONLY: it blocks nothing, it only lists in the browser console (F12) what it WOULD block.
+# Switch it to enforcing after a clean week (see docs/hardening.md).
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -5,9 +7,22 @@
   Content-Security-Policy: frame-ancestors 'none'
   Strict-Transport-Security: max-age=31536000
   Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-G+RMI8mwfEeeHXABHak9ncHzxzA8tzUlgaXA6qqsGaw=' https://challenges.cloudflare.com https://apis.google.com https://www.gstatic.com/firebasejs/ https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com https://www.google.com/images/cleardot.gif; font-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://firebaseappcheck.googleapis.com https://www.googleapis.com https://*.workers.dev; frame-src https://challenges.cloudflare.com https://*.firebaseapp.com https://accounts.google.com https://www.google.com/recaptcha/; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# ZIP lookup files only change when the site is rebuilt: one day in the browser means a returning visitor never downloads them twice
+/zip/*
+  Cache-Control: public, max-age=86400
+
+/img/*
+  Cache-Control: public, max-age=604800
+
+# Public worker profiles stay out of search results (privacy)
+/worker/*
+  X-Robots-Tag: noindex, nofollow
 
 /admin*
   X-Robots-Tag: noindex, nofollow
