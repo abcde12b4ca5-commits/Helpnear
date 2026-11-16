@@ -155,3 +155,19 @@ describe('Content-Security-Policy builder (scripts/csp.mjs)', () => {
     expect(buildCsp({ useEmulators: true })).toContain('http://localhost:9099')
   })
 })
+
+describe('public service pages have their own guidance (thin, copy-pasted pages do not rank)', () => {
+  it('every enabled low-risk service has three distinct sections of at least two points each', async () => {
+    const { categories } = await import('../../firebase/seed/data.mjs')
+    const { DETAIL } = await import('../../scripts/service-guides.mjs')
+    const enabled = (categories as { id: string; enabled: boolean; riskLevel: string }[]).filter((c) => c.enabled && c.riskLevel === 'low')
+    for (const c of enabled) {
+      const d = (DETAIL as Record<string, string[][]>)[c.id]
+      expect(d, `add guidance for ${c.id} in scripts/service-guides.mjs`).toBeDefined()
+      expect(d).toHaveLength(3)
+      for (const items of d) expect(items.length).toBeGreaterThanOrEqual(2)
+    }
+    const all = Object.values(DETAIL as Record<string, string[][]>).flat(2)
+    expect(new Set(all).size).toBe(all.length) // no sentence reused between services
+  })
+})

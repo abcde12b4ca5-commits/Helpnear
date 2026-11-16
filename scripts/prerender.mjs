@@ -4,6 +4,7 @@
 // Coverage is nationwide, so there are no per-area pages: one hub plus one page per service.
 import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises'
 import { categories as seedCats } from '../firebase/seed/data.mjs'
+import { DETAIL, SECTION_TITLES } from './service-guides.mjs'
 
 const SITE = (process.env.SITE_URL || 'https://example.pages.dev').replace(/\/$/, '')
 const BRAND = process.env.BRAND_NAME || JSON.parse(await readFile(new URL('../src/config/brand.json', import.meta.url), 'utf8')).name
@@ -104,7 +105,7 @@ function page({ title, description, path, robots, body, jsonld }) {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(description)}">
 <meta name="robots" content="${robots},max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${url}">
-<meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:image" content="${SITE}/img/handy.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f4bff">
+<meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:image" content="${SITE}/img/handy.jpg"><meta property="og:image:width" content="900"><meta property="og:image:height" content="735"><meta property="og:image:alt" content="${esc(BRAND)}: local help for your home"><meta property="og:locale" content="en_US"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${SITE}/img/handy.jpg"><meta name="theme-color" content="#1f4bff">
 ${FONT_PRELOAD}
 <meta name="color-scheme" content="dark">
 <style>${FONT_FACE}${css}</style>
@@ -176,10 +177,11 @@ for (const cat of enabledCats) {
     title: `${cat.name} near you | ${BRAND}`,
     description: `Post a ${cat.name.toLowerCase()} request and let local workers reach out. See what to include and what to ask. Free to use.`,
     path: `/services/${cat.id}/`, robots: 'index,follow',
-    jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/'], [cat.name, `/services/${cat.id}/`]]), faqLd(faq)] },
+    jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/'], [cat.name, `/services/${cat.id}/`]]), faqLd(faq), { '@type': 'Service', name: cat.name, serviceType: cat.name, description: `Post a ${cat.name.toLowerCase()} request and local workers near you can accept it and send a price.`, url: `${SITE}/services/${cat.id}/`, areaServed: { '@type': 'Country', name: 'United States' }, provider: { '@type': 'Organization', name: BRAND, url: `${SITE}/` } }] },
     body: `<h1>${esc(cat.name)} near you</h1>
 <p>${esc(BRAND)} connects you with local workers who offer ${esc(cat.name.toLowerCase())}. Post what you need and workers near you can accept your request.</p>
 <h2>What this covers</h2><ul>${cat.allowedServices.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>${cat.notes ? `<p><em>${esc(cat.notes)}</em></p>` : ''}
+${(DETAIL[cat.id] ?? []).map((items, i) => `<h2>${SECTION_TITLES[i]}</h2><ul>${items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`).join('\n')}
 <h2>Frequently asked questions</h2>${faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')}
 <h2>Other services</h2><ul>${enabledCats.filter((o) => o.id !== cat.id).map((o) => `<li><a href="/services/${o.id}/">${esc(o.name)}</a></li>`).join('')}</ul>
 <p><a class="cta" href="/signup">Post a ${esc(cat.name.toLowerCase())} request</a></p>`,
