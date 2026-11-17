@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { nearestPlace, placeKey, searchCities, type Place } from '../../src/lib/geo'
 import { buildCsp } from '../../scripts/csp.mjs'
 
 // The _headers file is the ONLY place security headers are set for the live site (Cloudflare Pages reads it). A typo here silently removes protection,
@@ -35,9 +36,10 @@ describe('security headers (public/_headers)', () => {
     for (const l of rules) if (l.startsWith(' ')) expect(l.trim().startsWith('#'), `indented comment would be read as a header: ${l.slice(0, 60)}`).toBe(false)
     for (const l of rules) if (l.startsWith(' ') && l.trim()) expect(l.trim(), l.slice(0, 60)).toMatch(/^(!\s?[A-Za-z][\w-]*|[A-Za-z][\w-]*:\s?.+)$/) // a header, or "! Header" which removes one
   })
-  it('sends a Permissions-Policy that switches off camera, microphone and location (the site uses none of them)', () => {
+  it('sends a Permissions-Policy that switches off camera and microphone and allows location for this site only', () => {
     const pp = val(all, 'Permissions-Policy')
-    for (const f of ['camera', 'microphone', 'geolocation']) expect(pp).toContain(`${f}=()`)
+    for (const f of ['camera', 'microphone']) expect(pp).toContain(`${f}=()`)
+    expect(pp).toContain('geolocation=(self)') // only for the "Use my location" button, never for other sites
   })
   it('sends the Content-Security-Policy as a placeholder that the build fills in (scripts/headers.mjs), with no report-only copy left', () => {
     expect(val(all, 'Content-Security-Policy')).toBe('__CSP__')
@@ -47,7 +49,7 @@ describe('security headers (public/_headers)', () => {
     expect(all).toContain('! Access-Control-Allow-Origin')
   })
   it('never lets a browser or shared cache store private pages', () => {
-    for (const p of ['/admin*', '/chat/*', '/login', '/signup', '/post', '/my-requests', '/feed', '/dashboard', '/onboarding', '/notifications']) expect(val(blocks.get(p) ?? [], 'Cache-Control'), p).toBe('no-store')
+    for (const p of ['/admin*', '/chat/*', '/login', '/signup', '/post', '/my-requests', '/profile', '/feed', '/dashboard', '/onboarding', '/notifications']) expect(val(blocks.get(p) ?? [], 'Cache-Control'), p).toBe('no-store')
   })
   it('keeps fonts local (no Google Fonts), so first paint never waits for another server', () => {
     for (const f of ['index.html', 'scripts/prerender.mjs']) expect(readFileSync(f, 'utf8'), f).not.toMatch(/fonts\.(googleapis|gstatic)\.com/)
@@ -169,5 +171,39 @@ describe('public service pages have their own guidance (thin, copy-pasted pages 
     }
     const all = Object.values(DETAIL as Record<string, string[][]>).flat(2)
     expect(new Set(all).size).toBe(all.length) // no sentence reused between services
+  })
+})
+
+describe('home page trade list', () => {
+  it('lists exactly the enabled services (same ids and names as the seed), so no tile points to a missing page', async () => {
+    const { categories } = await import('../../firebase/seed/data.mjs')
+    const { TRADES } = await import('../../src/lib/trades')
+    const enabled = categories.filter((c) => c.enabled).map((c) => [c.id, c.name])
+    expect(TRADES).toEqual(enabled)
+  })
+})
+
+describe('places (city picker and "use my location")', () => {
+  const list: Place[] = [
+    { city: 'Austin', state: 'TX', lat: 30.27, lng: -97.74, zip: '78701' },
+    { city: 'Austin', state: 'MN', lat: 43.67, lng: -92.97, zip: '55912' },
+    { city: 'Dallas', state: 'TX', lat: 32.78, lng: -96.8, zip: '75201' },
+    { city: 'Round Rock', state: 'TX', lat: 30.51, lng: -97.68, zip: '78664' },
+    { city: 'East Austin Park', state: 'TX', lat: 30.26, lng: -97.7, zip: '78702' },
+  ]
+  it('finds a city by name, with or without the state, names that start with the text first', () => {
+    expect(searchCities(list, 'austin').map((p) => `${p.city}, ${p.state}`)).toEqual(['Austin, TX', 'Austin, MN', 'East Austin Park, TX'])
+    expect(searchCities(list, 'austin, mn')).toHaveLength(1)
+    expect(searchCities(list, 'dallas tx')[0].city).toBe('Dallas')
+    expect(searchCities(list, 'a')).toEqual([])
+  })
+  it('picks the nearest listed city to a point', () => {
+    expect(nearestPlace(list, 30.28, -97.75)?.city).toBe('Austin')
+    expect(nearestPlace(list, 32.9, -96.9)?.city).toBe('Dallas')
+    expect(nearestPlace([], 1, 1)).toBeNull()
+  })
+  it('uses the same key for a request and a worker, so cities match exactly', () => {
+    expect(placeKey(list[0])).toBe('TX|Austin')
+    expect(placeKey(list[0])).not.toBe(placeKey(list[1]))
   })
 })

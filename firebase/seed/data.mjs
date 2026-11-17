@@ -36,6 +36,19 @@ export const categories = [
   cat('holiday-lights', 'Holiday light installation', true, 'low', ['Hanging decorative lights'], 'Ladder safety and liability apply.', GENERAL_BLOCKED),
   cat('landscaping-mulching', 'Landscaping and mulching', true, 'low', ['Mulching, planting, bed edging'], '', ['irrigation', 'sprinkler', 'tree removal']),
   cat('snow-removal', 'Snow removal', true, 'low', ['Shoveling driveways and walks']),
+  // More everyday services that need no trade license in most states. Workers still follow their own state and city rules; see each note.
+  cat('errand-running', 'Errands and personal shopping', true, 'low', ['Grocery pickup and shopping', 'Picking up and dropping off items'], 'Workers use their own vehicle. Not verified by ' + BRAND + '.', ['alcohol', 'prescription', 'cash withdrawal']),
+  cat('laundry-help', 'Laundry, folding and ironing', true, 'low', ['Washing, folding and ironing clothes']),
+  cat('trash-bin-cleaning', 'Trash bin cleaning', true, 'low', ['Washing and sanitizing trash and recycling bins']),
+  cat('event-setup-help', 'Event setup and party help', true, 'low', ['Setting up tables, chairs and decorations', 'Cleanup after the event'], 'No alcohol service or childcare. Not verified by ' + BRAND + '.', ['alcohol', 'bartend', 'childcare']),
+  cat('photography', 'Photography for events and portraits', true, 'low', ['Event, family and product photography']),
+  cat('home-tech-help', 'Home tech help', true, 'low', ['Wi-Fi, printer, TV and smart-device setup', 'Teaching how to use phones and computers'], 'No new in-wall wiring.', GENERAL_BLOCKED),
+  cat('furniture-refinishing', 'Furniture painting and refinishing', true, 'low', ['Sanding, painting, staining and sealing furniture']),
+  cat('bike-help', 'Bike assembly and tune-ups', true, 'low', ['Assembling and adjusting bicycles', 'Basic tune-ups and flat repair']),
+  cat('house-sitting', 'House sitting and plant care', true, 'low', ['Plant watering, mail pickup and home check-ins'], 'Share keys only with people you trust. Not verified by ' + BRAND + '.'),
+  cat('gardening-planting', 'Gardening and planting', true, 'low', ['Planting, weeding and garden bed care'], '', ['pesticide', 'herbicide', 'tree removal', 'irrigation', 'sprinkler']),
+  cat('sewing-alterations', 'Sewing and clothing alterations', true, 'low', ['Hemming, repairs and clothing alterations']),
+  cat('blinds-curtains', 'Blinds and curtain installation', true, 'low', ['Hanging curtain rods, blinds and shades'], '', GENERAL_BLOCKED),
   // Still disabled: the app locks regulated categories until a license/legality check exists.
   cat('moving-labor', 'Moving help (labor only)', false, 'regulated', ['Loading and unloading only'], 'Household-goods mover rules NOT verified; keep disabled.'),
   // Regulated / high risk: keep disabled until a license-verification feature exists.

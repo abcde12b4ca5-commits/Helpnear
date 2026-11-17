@@ -11,8 +11,8 @@ test.describe('public pages', () => {
     page.on('console', (m) => { if (m.type() === 'error' && !NOISE.test(m.text())) errors.push(m.text()) })
     await page.goto('/')
     await expect(page).toHaveTitle(/Helpnear/)
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Hire local')
-    await expect(page.getByRole('link', { name: /Post a request/ }).first()).toHaveAttribute('href', '/signup')
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Find work. Find help.')
+    await expect(page.getByRole('link', { name: /I need help/ }).first()).toHaveAttribute('href', '/signup')
     await expect(page.getByRole('link', { name: /I.m a worker/ }).first()).toHaveAttribute('href', '/signup?role=worker')
     await expect(page.getByRole('contentinfo')).toContainText('not a contractor or an employer') // legal disclaimer must always be visible
     expect(errors, errors.join('\n')).toEqual([])

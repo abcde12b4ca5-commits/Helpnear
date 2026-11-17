@@ -8,7 +8,7 @@ test('home page answers 200 over HTTPS and renders', async ({ page, baseURL }) =
   expect(baseURL).toMatch(/^https:\/\//)
   const res = await page.goto('/')
   expect(res?.status()).toBe(200)
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Hire local')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Find work. Find help.')
 })
 
 test('HTTP is redirected to HTTPS', async ({ request, baseURL }) => {

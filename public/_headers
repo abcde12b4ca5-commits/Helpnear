@@ -7,7 +7,7 @@
   Content-Security-Policy: __CSP__
   Strict-Transport-Security: max-age=31536000
   Cross-Origin-Opener-Policy: same-origin-allow-popups
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self), payment=(), usb=(), interest-cohort=()
   ! Access-Control-Allow-Origin
 
 /assets/*
@@ -15,6 +15,9 @@
 
 # ZIP lookup files only change when the site is rebuilt: one day in the browser means a returning visitor never downloads them twice
 /zip/*
+  Cache-Control: public, max-age=86400
+
+/cities.json
   Cache-Control: public, max-age=86400
 
 /img/*
@@ -40,6 +43,9 @@
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
 /my-requests
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+/profile
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
 /feed

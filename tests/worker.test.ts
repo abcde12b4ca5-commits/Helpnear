@@ -145,10 +145,10 @@ describe('POST /push', () => {
     expect(((await res.json()) as { sent: number }).sent).toBe(0)
     expect(m.sent).toEqual([])
   })
-  it('rejects unverified emails and malformed request ids', async () => {
+  it('rejects unverified emails (when REQUIRE_VERIFIED_EMAIL=true) and malformed request ids', async () => {
     mockCloud()
     const unverified = { authorization: `Bearer ${await idToken({ email_verified: false })}` }
-    expect((await worker.fetch(post('/push', { requestId: REQ }, unverified), env())).status).toBe(403)
+    expect((await worker.fetch(post('/push', { requestId: REQ }, unverified), { ...env(), REQUIRE_VERIFIED_EMAIL: 'true' })).status).toBe(403)
     expect((await worker.fetch(post('/push', { requestId: '../x' }, await authed()), env())).status).toBe(400)
   })
 })
@@ -241,6 +241,6 @@ describe('POST /push (client-side events) and /push-new', () => {
   it('/push-new requires a verified token', async () => {
     mock()
     expect((await worker.fetch(post('/push-new', { requestId: REQ }), env())).status).toBe(401)
-    expect((await worker.fetch(post('/push-new', { requestId: REQ }, await authed({ email_verified: false })), env())).status).toBe(403)
+    expect((await worker.fetch(post('/push-new', { requestId: REQ }, await authed({ email_verified: false })), { ...env(), REQUIRE_VERIFIED_EMAIL: 'true' })).status).toBe(403)
   })
 })

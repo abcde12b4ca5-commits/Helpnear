@@ -17,10 +17,10 @@ const fontFile = (re) => assetFiles.find((f) => re.test(f))
 const FONTS = [
   ['Inter', 400, fontFile(/^inter-latin-400-normal-.*\.woff2$/)],
   ['Inter', 600, fontFile(/^inter-latin-600-normal-.*\.woff2$/)],
-  ['Sora', 600, fontFile(/^sora-latin-600-normal-.*\.woff2$/)],
+  ['Plus Jakarta Sans', 800, fontFile(/^plus-jakarta-sans-latin-800-normal-.*\.woff2$/)],
 ].filter((f) => f[2])
 const FONT_FACE = FONTS.map(([fam, w, f]) => `@font-face{font-family:${fam};font-style:normal;font-display:swap;font-weight:${w};src:url(/assets/${f}) format('woff2')}`).join('')
-const FONT_PRELOAD = FONTS.filter((f) => /inter-latin-400|sora-latin-600/.test(f[2])).map(([, , f]) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/${f}">`).join('')
+const FONT_PRELOAD = FONTS.filter((f) => /inter-latin-400|plus-jakarta-sans-latin-800/.test(f[2])).map(([, , f]) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/${f}">`).join('')
 const DISCLAIMER = `${BRAND} is a platform that connects people. We are not a contractor or an employer. Licenses and insurance shown by workers are self-reported and not verified by ${BRAND}.`
 
 // Helpful, non-numeric guidance per category (no invented prices). Extend over time: richer content ranks better.
@@ -74,30 +74,31 @@ async function loadData() {
 }
 
 // Static pages share the site's editorial design tokens (kept in sync with src/index.css).
-const css = `:root{--bg:#0a0e1a;--sf:#131a2e;--tx:#f1f2f8;--mu:#9aa1ba;--ln:#232c48;--bl:#4d7cff;--ye:#ffd23f;--ac:#ffd23f;color-scheme:dark}
+const LOGO = '<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 18.5L20 7L34 18.5" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.5 17.5V26.5C10.5 31.2 20 35.5 20 35.5C20 35.5 29.5 31.2 29.5 26.5V17.5" fill="#10B981" fill-opacity="0.18" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 23.5L18.7 26.7L25 20" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+const css = `:root{--bg:#f8fafc;--sf:#fff;--tx:#0f172a;--mu:#556176;--ln:#e2e8f0;--ye:#047857;--ac:#065f46;--am:#f59e0b;color-scheme:light}
 *{box-sizing:border-box;margin:0}html{scroll-behavior:smooth;background:var(--bg)}
 body{font:400 1rem/1.6 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)}
-h1,h2,h3,.f{font-family:'Sora',system-ui,sans-serif;letter-spacing:-.035em;line-height:1.02}
+h1,h2,h3,.f{font-family:'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-.035em;line-height:1.05;font-weight:800}
 a{color:inherit}
 .w{max-width:76rem;margin:0 auto;padding:0 1.25rem}
-nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln)}
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--ln);box-shadow:0 1px 2px rgba(15,23,42,.06)}
 nav .w{display:flex;align-items:center;gap:1.4rem;height:4rem}
-.logo{display:flex;align-items:center;gap:.55rem;font:600 1.45rem 'Sora',sans-serif;letter-spacing:-.04em;margin-right:auto;text-decoration:none}
-.logo i{display:grid;place-items:center;width:2rem;height:2rem;border-radius:.6rem;background:var(--ye);color:#0a0e1a;font-style:normal;font-size:1.1rem}
+.logo{display:flex;align-items:center;gap:.6rem;font:800 1.3rem 'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em;margin-right:auto;text-decoration:none}
+.logo i{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:.9rem;background:#0f172a;box-shadow:0 1px 2px rgba(15,23,42,.1)}.logo i svg{width:1.5rem;height:1.5rem}
 nav a.l{font-size:.9rem;font-weight:600;color:var(--mu);text-decoration:none}nav a.l:hover{color:var(--tx)}
 @media(max-width:39.99rem){nav a.l{display:none}}
 main{max-width:46rem;margin:0 auto;padding:3rem 1.25rem 2rem}
-h1{font-size:clamp(2.4rem,7vw,4rem);font-weight:600;margin-bottom:1rem}
-h2{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:600;margin:2rem 0 .6rem}
-h3{font-size:1.2rem;font-weight:600;margin:1.2rem 0 .3rem}
+h1{font-size:clamp(2.4rem,7vw,4rem);margin-bottom:1rem}
+h2{font-size:clamp(1.6rem,4vw,2.2rem);margin:2rem 0 .6rem}
+h3{font-size:1.2rem;margin:1.2rem 0 .3rem}
 p,li{color:var(--mu)}p{margin:.6rem 0}ul{padding-left:1.2rem;margin:.6rem 0}
 main a:not(.cta){color:var(--ac);text-decoration:underline;text-underline-offset:3px}
-.cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.8rem;font:600 .95rem Inter,sans-serif;background:var(--ye);color:#0a0e1a;text-decoration:none;transition:.2s}
-.cta:hover{transform:translateY(-1px);filter:brightness(1.08)}
-.cta.y{background:var(--ye);color:#0a0e1a}
+.cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.9rem;font:600 .95rem Inter,sans-serif;background:#0f172a;color:#fff;text-decoration:none;transition:.2s;box-shadow:0 1px 2px rgba(15,23,42,.1)}
+.cta:hover{transform:translateY(-1px);background:#1e293b}
+.cta.y{background:var(--am);color:#0f172a}.cta.y:hover{background:#fbbf24}
 .cta.sm{margin:0;padding:.6rem 1.1rem;box-shadow:none}
-footer .fb{font-size:1.3rem;color:var(--tx);font-weight:600}
-footer{padding:3rem 1.25rem 2.5rem;font-size:.8rem;color:var(--mu);text-align:center}footer p{max-width:42rem;margin:.6rem auto}footer a{text-decoration:underline;text-underline-offset:3px}`
+footer .fb{font-size:1.3rem;color:#fff}
+footer{padding:3rem 1.25rem 2.5rem;margin-top:3rem;background:#0f172a;border-top:1px solid #1e293b;font-size:.8rem;color:#94a3b8;text-align:center}footer p{max-width:42rem;margin:.6rem auto;color:#94a3b8}footer a{text-decoration:underline;text-underline-offset:3px}footer a:hover{color:#fff}`
 
 function page({ title, description, path, robots, body, jsonld }) {
   const url = `${SITE}${path}`
@@ -107,10 +108,10 @@ function page({ title, description, path, robots, body, jsonld }) {
 <meta name="robots" content="${robots},max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${url}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:image" content="${SITE}/img/handy.jpg"><meta property="og:image:width" content="900"><meta property="og:image:height" content="735"><meta property="og:image:alt" content="${esc(BRAND)}: local help for your home"><meta property="og:locale" content="en_US"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${SITE}/img/handy.jpg"><meta name="theme-color" content="#1f4bff">
 ${FONT_PRELOAD}
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light">
 <style>${FONT_FACE}${css}</style>
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script></head>
-<body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">⌂</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/login">Sign in</a><a class="cta y sm" href="/signup">Get started</a></div></nav>
+<body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">${LOGO}</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/login">Sign in</a><a class="cta y sm" href="/signup">Get started</a></div></nav>
 <main>${body}</main>
 <footer><p class="f fb">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer></body></html>`
 }
@@ -121,7 +122,7 @@ const faqLd = (faq) => ({ '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({
 function faqFor(cat, where) {
   const guide = GUIDE[cat.id] ?? [`Describe the job clearly and say when you need it done.`, `Ask what is included before you agree on the work.`]
   return [
-    [`How does ${BRAND} work for ${cat.name.toLowerCase()}${where ? ` in ${where}` : ''}?`, `You post a request with the details and your ZIP code. Workers who offer this service near you can accept it with a price and contact you. You agree on the work and the price directly. ${BRAND} does not handle job payments.`],
+    [`How does ${BRAND} work for ${cat.name.toLowerCase()}${where ? ` in ${where}` : ''}?`, `You post a request with the details and the city where the work is. Workers who offer this service near you can accept it with a price and contact you. You agree on the work and the price directly. ${BRAND} does not handle job payments.`],
     [`What should I include in my request?`, guide[0]],
     [`What should I ask a worker?`, guide[1]],
     [`Does ${BRAND} verify licenses or insurance?`, `No. ${DISCLAIMER} Always confirm any license, permit or insurance you need yourself.`],
@@ -147,13 +148,13 @@ await write('/how-it-works', page({
   jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['How it works', '/how-it-works']]), {
     '@type': 'HowTo', name: `How ${BRAND} works`,
     step: [
-      { '@type': 'HowToStep', name: 'Post it', text: 'Choose the service, add your ZIP code, details, urgency and how many workers you need.' },
-      { '@type': 'HowToStep', name: 'Get prices', text: 'Workers who cover your ZIP code see the request and can accept it with a price.' },
+      { '@type': 'HowToStep', name: 'Post it', text: 'Choose the service, pick your city, details, urgency and how many workers you need.' },
+      { '@type': 'HowToStep', name: 'Get prices', text: 'Workers who cover your city see the request and can accept it with a price.' },
       { '@type': 'HowToStep', name: 'Done and rated', text: 'Agree on the work, pay the worker directly, then confirm the job and leave a review.' },
     ] }] },
   body: `<h1>How ${esc(BRAND)} works</h1>
-<ol><li><strong>Clients</strong> post a request: the service, the ZIP code, details, how urgent it is and how many workers they need.</li>
-<li><strong>Workers</strong> who offer that service within their travel distance of that ZIP see the request and can accept it with a price, or decline it.</li>
+<ol><li><strong>Clients</strong> post a request: the service, the city, details, how urgent it is and how many workers they need.</li>
+<li><strong>Workers</strong> who offer that service and cover that city see the request and can accept it with a price, or decline it.</li>
 <li>When a worker accepts, they can see your contact details and reach out. You agree on the price and the work, then confirm the agreement in the app.</li>
 <li>After the work, the worker marks the service as done and you confirm it. Confirmed jobs appear in both dashboards, and you can rate the worker.</li>
 <li>Payment is handled directly between you and the worker. ${esc(BRAND)} never handles job payments.</li></ol>
@@ -189,7 +190,7 @@ ${(DETAIL[cat.id] ?? []).map((items, i) => `<h2>${SECTION_TITLES[i]}</h2><ul>${i
 }
 
 await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
-await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nAgentmap: ${SITE}/.well-known/ard.json\n`)
+await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /profile\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nAgentmap: ${SITE}/.well-known/ard.json\n`)
 await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers anywhere in the United States.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
 // Agent discovery (ARD): the site has no MCP server or API, so the only honest entry is the llms.txt index above. Without these files the single-page-app
 // fallback answers /.well-known/ai-catalog.json with the HTML home page, which Lighthouse reports as "Malformed JSON".

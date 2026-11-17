@@ -28,7 +28,7 @@ const raw = async <T>(path: string) => { let d: T | undefined; await env.withSec
 const LAT = 29.7604, LNG = -95.3698
 const CELL = encodeGeohash(LAT, LNG)
 const worker = (cats: string[], over: Partial<WorkerDoc> = {}) => ({
-  displayName: 'Worker', bio: '', categories: cats, baseZip: '77002', city: 'Houston', state: 'TX', lat: LAT, lng: LNG, radiusMiles: 25,
+  displayName: 'Worker', bio: '', categories: cats, baseZip: '77002', city: 'Houston', state: 'TX', lat: LAT, lng: LNG, radiusMiles: 25, workMode: 'radius', cities: [],
   matchKeys: matchKeysFor(cats, cellsCovering(LAT, LNG, 25)), confirmedCategories: cats, licenseNote: '', insuranceNote: '',
   ratingCount: 0, ratingAverage: 0, isListed: true, createdAt: Timestamp.now(), ...over,
 })
@@ -96,8 +96,7 @@ describe('posting a request (createRequests)', () => {
     await expect(createRequests(input())).rejects.toThrow()
   })
 
-  it('rejects unverified e-mail, suspended users, workers, and a service switched off in that state', async () => {
-    as('client1', false); await expect(createRequests(input())).rejects.toThrow()
+  it('rejects suspended users, workers, and a service switched off in that state', async () => {
     as('badclient'); await expect(createRequests(input({ clientId: 'badclient' }))).rejects.toThrow()
     as('w1'); await expect(createRequests(input({ clientId: 'w1' }))).rejects.toThrow()
     as('client2'); await expect(createRequests(input({ clientId: 'client2', state: 'NY' }))).rejects.toThrow() // cleaning is off in NY

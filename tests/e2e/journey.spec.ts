@@ -135,14 +135,6 @@ test.describe('things that must be refused', () => {
     await user.ctx.close()
   })
 
-  test('a client with an unverified e-mail cannot post', async ({ browser }) => {
-    const u = await newUser(browser, 'client', 'unverified')
-    await post(u.page, { service: 'House cleaning', title: 'Should not be posted', details: 'This must be refused' })
-    await expect(u.page.getByRole('alert')).toContainText('verify your email first')
-    await expect(u.page).toHaveURL(/\/post$/)
-    await u.ctx.close()
-  })
-
   test('regulated work (electrical) is blocked on the form, before anything is saved', async ({ browser }) => {
     const u = await newUser(browser, 'client', 'regulated')
     await verifyEmail(u.email)

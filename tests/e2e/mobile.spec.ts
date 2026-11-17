@@ -28,7 +28,7 @@ test('the phone menu opens, shows the sign-in and sign-up links, and closes', as
   await page.getByRole('button', { name: 'Open menu' }).click()
   const menu = page.locator('#mobile-menu')
   await expect(menu.getByRole('link', { name: 'Sign in' })).toBeVisible()
-  await expect(menu.getByRole('link', { name: 'Get started' })).toBeVisible()
+  await expect(menu.getByRole('link', { name: 'Join as a worker' })).toBeVisible()
   await page.getByRole('button', { name: 'Close menu' }).click()
   await expect(menu).toBeHidden()
 })

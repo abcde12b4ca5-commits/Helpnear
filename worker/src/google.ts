@@ -2,6 +2,8 @@ import { JwtError, importJwk, signJwt, verifyJwt, type Jwk } from './jwt'
 
 export interface ServiceAccount { client_email: string; private_key: string }
 export interface Env {
+  /** Optional. Set to 'true' (wrangler var) to require a verified e-mail again. Off by default. */
+  REQUIRE_VERIFIED_EMAIL?: string
   FIREBASE_SA_JSON: string
   TURNSTILE_SECRET: string
   FIREBASE_PROJECT_ID: string

@@ -18,7 +18,7 @@ describe('friendlyError', () => {
     ['auth/popup-blocked', 'pop-ups'],
     ['auth/unauthorized-domain', 'not authorized'],
     ['auth/network-request-failed', 'Network error'],
-    ['permission-denied', 'verified'],
+    ['permission-denied', 'Wait a minute'],
     ['resource-exhausted', 'busy'],
     ['unavailable', 'temporarily unavailable'],
   ])('%s gives a readable message', (code, fragment) => {

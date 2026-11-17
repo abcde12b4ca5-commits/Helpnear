@@ -95,7 +95,7 @@ async function handlePush(req: Request, env: Env, cors: Record<string, string>):
   if (!auth.startsWith('Bearer ')) return json({ error: 'unauthorized' }, 401, cors)
   let user
   try { user = await verifyIdToken(auth.slice(7), env.FIREBASE_PROJECT_ID) } catch { return json({ error: 'unauthorized' }, 401, cors) }
-  if (!user.emailVerified) return json({ error: 'email not verified' }, 403, cors)
+  if (env.REQUIRE_VERIFIED_EMAIL === 'true' && !user.emailVerified) return json({ error: 'email not verified' }, 403, cors)
 
   const b = (await req.json().catch(() => ({}))) as { requestId?: string; event?: string; workerId?: string }
   if (!b.requestId || !REQUEST_ID.test(b.requestId)) return json({ error: 'bad request id' }, 400, cors)
@@ -142,7 +142,7 @@ async function handlePushNew(req: Request, env: Env, cors: Record<string, string
   if (!auth.startsWith('Bearer ')) return json({ error: 'unauthorized' }, 401, cors)
   let user
   try { user = await verifyIdToken(auth.slice(7), env.FIREBASE_PROJECT_ID) } catch { return json({ error: 'unauthorized' }, 401, cors) }
-  if (!user.emailVerified) return json({ error: 'email not verified' }, 403, cors)
+  if (env.REQUIRE_VERIFIED_EMAIL === 'true' && !user.emailVerified) return json({ error: 'email not verified' }, 403, cors)
 
   const { requestId } = (await req.json().catch(() => ({}))) as { requestId?: string }
   if (!requestId || !REQUEST_ID.test(requestId)) return json({ error: 'bad request id' }, 400, cors)

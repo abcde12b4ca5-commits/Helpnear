@@ -116,6 +116,66 @@ export const DETAIL = {
     ['Measure the beds and decide the type and color of mulch.', 'Agree who buys the materials and who takes away what is left over.', 'Mark sprinklers, lights and plants to keep.'],
     ['Piling mulch against tree trunks and the house, which can hold moisture and attract pests.', 'Spreading it too thick, which can stop water and air getting to the roots.'],
   ],
+  'errand-running': [
+    ['The number of stops, the distance driven and how long the shopping takes.', 'Whether the worker buys the items with their own money first and you repay them.', 'Heavy or bulky loads and deliveries to an upper floor.'],
+    ['Write a clear list with brands, sizes and acceptable substitutes.', 'Agree how the worker will be repaid for purchases and how receipts are shown.', 'Tell the worker the delivery time window and where to leave the items.'],
+    ['Sending cash or cards without agreeing in advance how receipts and change are handled.', 'Asking for items that need an age check or a prescription: those are not allowed here.'],
+  ],
+  'laundry-help': [
+    ['The number of loads, whether you want washing, drying, folding or ironing, and the types of fabric.', 'Delicate or dry-clean-only clothes need different handling.', 'Whether the work is at your home or the worker takes the laundry away.'],
+    ['Separate colors and delicate items and point out stains.', 'Say which detergent to use if you have allergies or sensitive skin.', 'Check the care labels and tell the worker about anything that must not go in a dryer.'],
+    ['Handing over dry-clean-only items without saying so.', 'Not agreeing how long the laundry may be away from your home.'],
+  ],
+  'trash-bin-cleaning': [
+    ['The number of bins, how dirty they are and how often you want them cleaned.', 'Whether the worker brings water and the wash equipment.', 'Local rules about where wash water may drain.'],
+    ['Empty the bins on collection day and leave them in an open space.', 'Show where an outside tap is if the worker needs yours.', 'Mention any bins with a broken lid or wheel.'],
+    ['Cleaning bins on a day when they are still full.', 'Letting dirty wash water run into a storm drain: ask the worker how it will be handled.'],
+  ],
+  'event-setup-help': [
+    ['The number of guests, the amount of furniture and decorations, and the hours needed.', 'Whether there is also teardown and cleanup afterwards.', 'The venue: stairs, distance to carry items and parking.'],
+    ['Send a simple layout or photo of how you want the space set up.', 'Agree start time, end time and who provides the equipment.', 'Tell the worker who the on-site contact is.'],
+    ['Booking setup without leaving time before guests arrive.', 'Expecting bartending or childcare: those are not offered here.'],
+  ],
+  'photography': [
+    ['The type of event or session, its length and the number of final edited photos you want.', 'Travel distance and the number of locations.', 'How fast you need the photos delivered.'],
+    ['Make a short list of the shots and the people you must have.', 'Check the light and the location before the day, and plan for bad weather.', 'Agree how the photos will be delivered and who owns the rights to use them.'],
+    ['Not agreeing in writing on usage rights and how many edited photos you get.', 'Booking only an hour for an event that needs more coverage.'],
+  ],
+  'home-tech-help': [
+    ['The number of devices and whether the job is setup, fixing a problem or teaching.', 'Older or unusual equipment takes longer.', 'Whether new parts, like a router or cables, must be bought.'],
+    ['Write down what is not working and what you want to be able to do.', 'Have your Wi-Fi name, passwords and account logins ready, and change them after if you wish.', 'Back up important files before anyone works on a computer.'],
+    ['Sharing passwords or giving remote access to a person you do not know well.', 'Asking for new wiring inside walls: that needs a licensed professional and is not allowed here.'],
+  ],
+  'furniture-refinishing': [
+    ['The size and number of pieces, the material and the condition of the old finish.', 'The paint or stain you choose and the number of coats.', 'Repairs to loose joints or damaged surfaces.'],
+    ['Decide the color and finish and test it on a hidden spot first.', 'Agree whether the piece is worked on at your home or taken to the worker.', 'Take photos of the piece before you start, and note any damage.'],
+    ['Painting over a dirty or glossy surface without sanding.', 'Not leaving enough drying time before using the furniture.'],
+  ],
+  'bike-help': [
+    ['Whether it is a new bike to assemble, a tune-up or a repair, and the type of bike.', 'Parts that need to be replaced and who buys them.', 'Electric bikes with batteries and motors are more complex.'],
+    ['Bring all the parts and the manual for a new bike, and note your height.', 'Describe the problem: noises, gears that skip or brakes that feel weak.', 'Say which parts you want replaced and which you want to keep.'],
+    ['Riding a bike after assembly without checking the brakes and the tires first.', 'Asking for work on electric motors or batteries unless the worker has said they do it.'],
+  ],
+  'house-sitting': [
+    ['The number of visits, how many plants and any pets or mail to handle.', 'Length of the trip and whether someone stays overnight.', 'How far the worker lives from your home.'],
+    ['Leave clear written notes: watering amounts, where things are and who to call.', 'Share keys or codes only after you have met the person and agreed the plan.', 'Tell neighbors that someone will be visiting.'],
+    ['Giving a lockbox code without any trial visit or check-in plan.', 'Not asking the worker to send a short update after each visit.'],
+  ],
+  'gardening-planting': [
+    ['The size of the beds, the number of plants and how much weeding or soil work is needed.', 'Whether plants and soil are bought by you or by the worker.', 'Local climate and the time of year.'],
+    ['Mark where you want each plant and how much sun the spot gets.', 'Agree who buys the plants, soil and mulch.', 'Point out buried lines and sprinkler heads.'],
+    ['Planting the wrong plants for the amount of sun and water in that spot.', 'Asking for pesticide or herbicide spraying: those can need a license and are not allowed here.'],
+  ],
+  'sewing-alterations': [
+    ['The type of garment and the work needed: hemming, resizing or repair.', 'Delicate or lined fabrics take more time.', 'Whether the worker comes to you or takes the clothes away.'],
+    ['Try the garment on and mark the places that need changing, using pins or tape.', 'Bring the shoes you plan to wear for a hem.', 'Agree the date when the clothes will be ready.'],
+    ['Cutting or washing before a fitting.', 'Ordering alterations for an event without leaving spare days for corrections.'],
+  ],
+  'blinds-curtains': [
+    ['The number of windows, their width and height, and the wall type for the brackets.', 'Heavy curtains and wide windows need stronger supports.', 'Whether you or the worker buys the rods and blinds.'],
+    ['Measure the windows and buy the hardware before the visit, or agree a measuring visit.', 'Decide how high above the window you want the rod.', 'Clear furniture from under the windows.'],
+    ['Skipping studs or the right anchors for a heavy curtain rod.', 'Measuring only the glass and not the full window frame.'],
+  ],
   'snow-removal': [
     ['The size of the driveway, walks and steps and the depth of the snow.', 'Whether you want visits during or after the storm.', 'De-icing and how many visits are needed.'],
     ['Say which areas must be cleared first and where the snow can be piled.', 'Mark edges, steps and anything buried that could be damaged.', 'Agree on the price for repeated visits before the storm.'],

@@ -7,7 +7,9 @@ service cloud.firestore {
     // ---------- helpers ----------
     function signedIn() { return request.auth != null; }
     function uid() { return request.auth.uid; }
-    function verified() { return signedIn() && request.auth.token.email_verified == true; }
+    // E-mail verification is switched OFF on purpose (the owner wants accounts active immediately). To require it again, use:
+    //   return signedIn() && request.auth.token.email_verified == true;
+    function verified() { return signedIn(); }
     function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
     function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
@@ -93,6 +95,8 @@ service cloud.firestore {
         && d.lat is number && d.lat >= -90 && d.lat <= 90
         && d.lng is number && d.lng >= -180 && d.lng <= 180
         && d.radiusMiles in [10, 25, 50]
+        && d.workMode in ['radius', 'cities']
+        && d.cities is list && d.cities.size() <= 10 && (d.workMode == 'radius' || d.cities.size() >= 1)
         && d.matchKeys is list && d.matchKeys.size() >= 1 && d.matchKeys.size() <= 500
         && d.confirmedCategories is list && d.confirmedCategories.hasAll(d.categories)
         && str(d.licenseNote, 0, 200)
@@ -103,14 +107,14 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if signedIn() && uid() == workerId
         && userDoc().role == 'worker'
-        && allKeys(['displayName','bio','categories','baseZip','city','state','lat','lng','radiusMiles','matchKeys','confirmedCategories','licenseNote','insuranceNote','ratingCount','ratingAverage','isListed','createdAt'])
+        && allKeys(['displayName','bio','categories','baseZip','city','state','lat','lng','radiusMiles','workMode','cities','matchKeys','confirmedCategories','licenseNote','insuranceNote','ratingCount','ratingAverage','isListed','createdAt'])
         && validWorker(request.resource.data)
         && request.resource.data.ratingCount == 0
         && request.resource.data.ratingAverage == 0
         && request.resource.data.isListed == true
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && uid() == workerId
-        && changed().hasOnly(['displayName','bio','categories','baseZip','city','state','lat','lng','radiusMiles','matchKeys','confirmedCategories','licenseNote','insuranceNote'])
+        && changed().hasOnly(['displayName','bio','categories','baseZip','city','state','lat','lng','radiusMiles','workMode','cities','matchKeys','confirmedCategories','licenseNote','insuranceNote'])
         && validWorker(request.resource.data);
       allow update: if isAdmin() && changed().hasOnly(['isListed']);
       allow delete: if false;

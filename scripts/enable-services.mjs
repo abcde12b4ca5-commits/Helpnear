@@ -5,7 +5,7 @@ import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import { categories } from '../firebase/seed/data.mjs'
 
-const IDS = ['move-out-cleaning', 'garage-cleanout', 'home-organizing', 'pet-sitting', 'dog-walking', 'car-detailing', 'holiday-lights', 'landscaping-mulching', 'snow-removal']
+const IDS = ['move-out-cleaning', 'garage-cleanout', 'home-organizing', 'pet-sitting', 'dog-walking', 'car-detailing', 'holiday-lights', 'landscaping-mulching', 'snow-removal', 'errand-running', 'laundry-help', 'trash-bin-cleaning', 'event-setup-help', 'photography', 'home-tech-help', 'furniture-refinishing', 'bike-help', 'house-sitting', 'gardening-planting', 'sewing-alterations', 'blinds-curtains']
 const projectId = process.env.GCLOUD_PROJECT
 if (!projectId) throw new Error('Set GCLOUD_PROJECT')
 initializeApp({ projectId })

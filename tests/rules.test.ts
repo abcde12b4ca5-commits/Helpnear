@@ -33,7 +33,7 @@ const ctx = (uid: string, verified = true) =>
 
 const CELL = '9vk1'
 const workerDoc = (categories: string[], cells: string[] = [CELL]) => ({
-  displayName: 'W', bio: '', categories, baseZip: '77002', city: 'Houston', state: 'TX', lat: 29.76, lng: -95.36, radiusMiles: 25,
+  displayName: 'W', bio: '', categories, baseZip: '77002', city: 'Houston', state: 'TX', lat: 29.76, lng: -95.36, radiusMiles: 25, workMode: 'radius', cities: [],
   matchKeys: categories.flatMap((c) => cells.map((cell) => `${c}|${cell}`)), confirmedCategories: categories,
   licenseNote: '', insuranceNote: '', ratingCount: 0, ratingAverage: 0, isListed: true, createdAt: Timestamp.now(),
 })
@@ -209,8 +209,8 @@ describe('requests', () => {
   it('lets a verified client post (request + contact + cooldown in one batch)', async () => {
     await assertSucceeds(post('client1'))
   })
-  it('blocks unverified email, suspended users, and workers from posting', async () => {
-    await assertFails(post('client1', false))
+  it('blocks suspended users and workers from posting (e-mail verification is off)', async () => {
+    await assertSucceeds(post('client1', false))
     await assertFails(post('badclient'))
     await assertFails(post('w1'))
   })
