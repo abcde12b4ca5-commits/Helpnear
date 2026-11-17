@@ -24,7 +24,7 @@ export default function Login() {
   }
   return (
     <div className="hn-auth">
-    <div className="hn-orb" style={{ width: 360, height: 360, background: 'var(--bl)', opacity: .4, left: '8%', top: '4%' }} aria-hidden="true" />
+    <div className="hn-orb" style={{ width: 360, height: 360, background: 'var(--ye)', opacity: .4, left: '8%', top: '4%' }} aria-hidden="true" />
     <div className="hn-orb" style={{ width: 260, height: 260, background: 'var(--ye)', opacity: .18, right: '10%', bottom: '2%', animationDelay: '-6s' }} aria-hidden="true" />
     <form onSubmit={submit} className="hn-glass hn-in">
       <div><h1 className="text-3xl">Sign in</h1><p className="mt-2 text-sm text-mu">Welcome back.</p></div>

@@ -12,7 +12,7 @@ export default function RequestCard({ r, distanceMiles, children }: { r: Request
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-xl">{r.title}</h3>
         <span className="text-sm text-mu">
-          {r.categoryName}{r.city ? <> &middot; {r.city}, {r.state} {r.zip}</> : r.zip ? <> &middot; {r.zip}</> : null}{distanceMiles != null ? ` \u00b7 ${Math.max(1, Math.round(distanceMiles))} mi away` : ''}
+          {r.categoryName}{r.city ? <> &middot; {r.city}, {r.state}</> : null}{distanceMiles != null ? ` \u00b7 ${Math.max(1, Math.round(distanceMiles))} mi away` : ''}
         </span>
       </div>
       <p className="mt-2 whitespace-pre-line text-sm">{r.description}</p>

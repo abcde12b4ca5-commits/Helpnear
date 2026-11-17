@@ -9,6 +9,7 @@ const Legal = lazy(() => import('./pages/Legal'))
 const Login = lazy(() => import('./pages/Login'))
 const Signup = lazy(() => import('./pages/Signup'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
+const MyProfile = lazy(() => import('./pages/MyProfile'))
 const NewRequest = lazy(() => import('./pages/NewRequest'))
 const MyRequests = lazy(() => import('./pages/MyRequests'))
 const Feed = lazy(() => import('./pages/Feed'))
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/onboarding" element={<RequireWorkerOnboarding><Onboarding /></RequireWorkerOnboarding>} />
+        <Route path="/profile" element={<RequireRole role="worker"><MyProfile /></RequireRole>} />
         <Route path="/post" element={<RequireRole role="client"><NewRequest /></RequireRole>} />
         <Route path="/my-requests" element={<RequireRole role="client"><MyRequests /></RequireRole>} />
         <Route path="/feed" element={<RequireRole role="worker"><Feed /></RequireRole>} />

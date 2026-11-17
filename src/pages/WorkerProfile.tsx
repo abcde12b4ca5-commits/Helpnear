@@ -51,7 +51,7 @@ export default function WorkerProfile() {
       </p>
       {worker.bio && <p className="whitespace-pre-line text-sm">{worker.bio}</p>}
       <p className="text-sm">Services: {worker.categories.map((c) => names.cats[c] ?? c).join(', ')}</p>
-      <p className="text-sm">Works around {worker.city}, {worker.state} (within {worker.radiusMiles} miles)</p>
+      <p className="text-sm">{worker.workMode === 'cities' ? `Works in: ${(worker.cities ?? []).map((k) => k.split('|').reverse().join(', ')).join('; ')}` : `Works around ${worker.city}, ${worker.state} (within ${worker.radiusMiles} miles)`}</p>
       {(worker.licenseNote || worker.insuranceNote) && (
         <div className={`${card} text-sm`}>
           {worker.licenseNote && <p>License: {worker.licenseNote}</p>}

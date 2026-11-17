@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import { db } from './firebase'
 import type { ReviewDoc } from './types'
 
@@ -12,4 +12,20 @@ export async function getWorkerReviews(workerId: string): Promise<{ items: Revie
 
 export async function createReview(args: { requestId: string; workerId: string; clientId: string; rating: number; text: string }) {
   await setDoc(doc(db, `reviews/${args.requestId}_${args.workerId}`), { ...args, createdAt: serverTimestamp() })
+}
+
+/** The review a client already left for this job, or null. */
+export async function getMyReview(requestId: string, workerId: string): Promise<ReviewDoc | null> {
+  const snap = await getDoc(doc(db, `reviews/${requestId}_${workerId}`))
+  return snap.exists() ? ({ ...(snap.data() as Omit<ReviewDoc, 'id'>), id: snap.id }) : null
+}
+
+/** Rating of several workers at once (last 20 reviews each, read live so it cannot be forged). Workers without reviews get count 0. */
+export async function getRatings(workerIds: string[]): Promise<Record<string, { average: number; count: number }>> {
+  const unique = [...new Set(workerIds)]
+  const out: Record<string, { average: number; count: number }> = {}
+  await Promise.all(unique.map(async (id) => {
+    try { const { items, average } = await getWorkerReviews(id); out[id] = { average: average ?? 0, count: items.length } } catch { out[id] = { average: 0, count: 0 } }
+  }))
+  return out
 }

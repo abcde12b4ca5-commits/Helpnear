@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const load = useCallback(async (u: User | null) => {
     if (u) ensureAppCheck() // a signed-in session reads Firestore, so bot protection starts first
     setUser(u)
-    setVerified(!!u?.emailVerified)
+    setVerified(!!u) // e-mail verification is off: a signed-in account can post and accept straight away
     if (!u) { setProfile(null); setWorker(null); setIsAdmin(false); return }
     // Only decides whether the Admin link is shown (the rules protect the data), so a 15 minute reuse saves one read on every page load.
     const known = readAdminHint(u.uid)
@@ -96,7 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await cred.user.delete().catch(() => undefined) // avoid an orphan account without a profile
         throw e
       }
-      await sendEmailVerification(cred.user)
       await load(cred.user)
     },
     async signIn(email, password) { ensureAppCheck(); await signInWithEmailAndPassword(auth, email, password) },

@@ -41,7 +41,7 @@ export default function Signup() {
 
   return (
     <div className="hn-auth">
-    <div className="hn-orb" style={{ width: 380, height: 380, background: 'var(--bl)', opacity: .4, left: '6%', top: '2%' }} aria-hidden="true" />
+    <div className="hn-orb" style={{ width: 380, height: 380, background: 'var(--ye)', opacity: .4, left: '6%', top: '2%' }} aria-hidden="true" />
     <div className="hn-orb" style={{ width: 280, height: 280, background: 'var(--ye)', opacity: .18, right: '8%', bottom: '2%', animationDelay: '-6s' }} aria-hidden="true" />
     <form onSubmit={submit} className="hn-glass hn-in">
       <div><h1 className="text-3xl">Create your account</h1><p className="mt-2 text-sm text-mu">Hire local help, or find nearby work.</p></div>

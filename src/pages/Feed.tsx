@@ -80,7 +80,7 @@ export default function Feed() {
 
   const visible = items.filter((r) => !declined.includes(r.id))
   const sel = visible.find((r) => r.id === selId) ?? visible[0]
-  const dist = (r: RequestDoc) => (worker ? Math.max(1, Math.round(haversineMiles(worker.lat, worker.lng, r.lat, r.lng))) : null)
+  const dist = (r: RequestDoc) => (worker && worker.workMode !== 'cities' ? Math.max(1, Math.round(haversineMiles(worker.lat, worker.lng, r.lat, r.lng))) : null)
   const accepted = sel ? mine.has(sel.id) : false
   const full = sel ? sel.claimsCount >= (sel.workersNeeded ?? 1) : false
   return (
@@ -115,7 +115,7 @@ export default function Feed() {
               <Pill tone="g">Workers {sel.claimsCount} of {sel.workersNeeded ?? 1}</Pill>
             </div>
             <h2 className="text-3xl">{sel.title}</h2>
-            <p className="text-sm text-mu">{sel.city}, {sel.state} {sel.zip}{dist(sel) != null ? ` · ${dist(sel)} mi away` : ''}{sel.budgetRange ? ` · Budget ${sel.budgetRange}` : ''}</p>
+            <p className="text-sm text-mu">{sel.city}, {sel.state}{dist(sel) != null ? ` · ${dist(sel)} mi away` : ''}{sel.budgetRange ? ` · Budget ${sel.budgetRange}` : ''}</p>
             <p className="whitespace-pre-line">{sel.description}</p>
             <hr className="border-ln" />
             {accepted ? (

@@ -3,37 +3,29 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
 // Imported (not hard-coded paths) so Vite gives each file a content hash: they are cached for a year and never go stale.
-import handy from '../assets/img/handy.webp'
-import lawn from '../assets/img/lawn.webp'
-import pressure from '../assets/img/pressure.webp'
-import tv from '../assets/img/tv.webp'
-import furn from '../assets/img/furn.webp'
 import handyS from '../assets/img/handy-s.webp'
 import lawnS from '../assets/img/lawn-s.webp'
 import pressureS from '../assets/img/pressure-s.webp'
 import tvS from '../assets/img/tv-s.webp'
 import furnS from '../assets/img/furn-s.webp'
-const IMG = { handy, lawn, pressure, tv, furn }
-// Small versions for the hero tiles (shown about 280px wide), so the first screen downloads far fewer bytes than the full cards below.
+// Small tiles for the hero (shown about 280px wide), so the first screen downloads few bytes.
 const TILE = { handy: handyS, lawn: lawnS, pressure: pressureS, tv: tvS, furn: furnS }
 const bg = (src: string) => ({ backgroundImage: `url(${src})` })
 
-const SERVICES = [
-  { n: '01', title: 'Handyman', label: 'handyman', text: 'Cabinets, shelves, doors and small fixes. Describe it once and get quotes from people nearby.', img: IMG.handy, alt: 'Handyman fitting a kitchen cabinet', bg: '#ffd23f', fg: '#0b1020' },
-  { n: '02', title: 'Lawn care', label: 'lawn care', text: 'Mowing, edging and full yard cleanups, one-time or every week.', img: IMG.lawn, alt: 'Man mowing a green lawn', bg: '#1f4bff', fg: '#fff' },
-  { n: '03', title: 'Pressure washing', label: 'pressure washing', text: 'Driveways, patios, fences and siding, washed back to new.', img: IMG.pressure, alt: 'Man pressure washing a driveway', bg: '#0b1020', fg: '#fff' },
-  { n: '04', title: 'TV mounting', label: 'tv mounting', text: 'Level, secure and cable-tidy mounting on any wall.', img: IMG.tv, alt: 'Two workers mounting a wall TV', bg: '#ff7a45', fg: '#0b1020' },
-  { n: '05', title: 'Furniture assembly', label: 'furniture assembly', text: 'Beds, desks and shelving built right, with the boxes hauled away.', img: IMG.furn, alt: 'Man assembling a wooden shelf', bg: '#19c37d', fg: '#0b1020' },
+import { TRADES } from '../lib/trades'
+const MARQUEE = TRADES.map(([, n]) => n)
+const SIDES = [
+  { k: 'For workers', title: 'Want more work?', cls: 'w', points: ['Choose your trades, then your area: around your location, or the cities you pick.', 'See new requests near you and send your price.', 'No platform fee on jobs, and every review builds your name.'] },
+  { k: 'For neighbors', title: 'Need a hand?', cls: 'c', points: ['Post the job in a minute and pick your city.', 'Workers who cover your area send you a price.', 'Pick one, pay them directly, and leave a review.'] },
 ]
-const MARQUEE = ['Handyman', 'Lawn care', 'Pressure washing', 'TV mounting', 'Furniture assembly', 'Cleaning', 'Painting', 'Gutters', 'Dog walking', 'Pet sitting', 'Snow removal', 'Car detailing', 'Holiday lights', 'Organizing']
 const STEPS = [
-  { n: '1', title: 'Post it', text: 'Choose the service, add your ZIP and a few details.' },
-  { n: '2', title: 'Get prices', text: 'Only workers who cover your area see it, and send you an offer.' },
-  { n: '3', title: 'Done & rated', text: 'Pay the worker directly, then leave a review for your neighbors.' },
+  { n: '1', title: 'Post it or join', text: 'Neighbors describe the job. Workers pick their trades and the areas they cover.' },
+  { n: '2', title: 'Get prices', text: 'Only workers who cover that city see the request, and they send an offer.' },
+  { n: '3', title: 'Done & rated', text: 'They agree the details and the worker is paid directly. Then both leave a review.' },
 ]
 const NUMBERS: { n: number; suffix?: string; prefix?: string; label: string }[] = [
   { n: 50, label: 'states covered' },
-  { n: 24, suffix: '+', label: 'services' },
+  { n: TRADES.length, label: 'trades open' },
   { n: 5, label: 'workers per request, max' },
   { n: 0, prefix: '$', label: 'platform fee on jobs' },
 ]
@@ -91,10 +83,10 @@ export default function Home() {
 
   const isWorker = Boolean(user && profile?.role === 'worker')
   const isClient = Boolean(user && profile?.role === 'client')
-  const primary = isWorker ? { to: '/feed', label: 'See requests →' } : isClient ? { to: '/post', label: 'Post a request →' } : { to: '/signup', label: 'Post a request →' }
-  const secondary = isWorker ? { to: '/dashboard', label: 'My jobs' } : isClient ? { to: '/my-requests', label: 'My requests' } : { to: '/signup?role=worker', label: 'I’m a worker' }
-  const finalCta = user ? primary : { to: '/signup', label: 'Get started free →' }
-  const serviceLink = (label: string) => isWorker ? { to: '/feed', text: `See ${label} requests →` } : { to: isClient ? '/post' : '/signup', text: `Post a ${label} job →` }
+  // Signed-out visitors get two equally strong buttons; signed-in users get their own dashboard first.
+  const hireBtn = isClient ? { to: '/post', label: 'Post a request →' } : { to: '/signup', label: 'I need help →' }
+  const workBtn = isWorker ? { to: '/feed', label: 'See requests →' } : { to: '/signup?role=worker', label: 'I’m a worker →' }
+  const finalCta = isWorker ? workBtn : isClient ? hireBtn : null
 
   return (
     <div ref={root}>
@@ -102,11 +94,11 @@ export default function Home() {
         <div className="hn-w hn-hg">
           <div>
             <span className="hn-chip">Now open across the U.S.</span>
-            <h1 className="hn-h1">Hire local. <u>Get it done.</u></h1>
-            <p className="hn-lead">Post your home job in a minute. Workers who cover your ZIP code see it and send you a price. Free to use, and you pay them directly.</p>
+            <h1 className="hn-h1">Find work. Find help. <u>Next door.</u></h1>
+            <p className="hn-lead">Neighbors post a job in a minute. Workers who cover that city see it and send a price. Free to use, and you deal with each other directly.</p>
             <div className="hn-cta">
-              <Link className="hn-btn hn-btn-lg" to={primary.to}>{primary.label}</Link>
-              <Link className="hn-btn hn-btn-lg hn-y" to={secondary.to}>{secondary.label}</Link>
+              <Link className="hn-btn hn-btn-lg hn-y" to={workBtn.to}>{workBtn.label}</Link>
+              <Link className="hn-btn-ghost hn-btn-lg" to={hireBtn.to}>{isClient ? hireBtn.label : 'Need a worker? Post a job →'}</Link>
             </div>
           </div>
           <div className="hn-px" aria-label="Local workers at work">
@@ -132,27 +124,29 @@ export default function Home() {
         </div>
       </div>
 
-      <section id="services" className="hn-sec">
+      <section className="hn-sec" aria-label="Who it is for">
+        <div className="hn-w hn-two">
+          {SIDES.map((x) => (
+            <article key={x.k} className={`hn-side ${x.cls} hn-rv`}>
+              <p className="hn-k">{x.k}</p>
+              <h2>{x.title}</h2>
+              <ul>{x.points.map((t) => <li key={t}>{t}</li>)}</ul>
+              <Link className="hn-btn hn-btn-lg" to={x.cls === 'c' ? hireBtn.to : workBtn.to}>{x.cls === 'c' ? hireBtn.label : workBtn.label}</Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="services" className="hn-sec" style={{ paddingTop: '1rem' }}>
         <div className="hn-w">
-          <p className="hn-k hn-rv">Services</p>
+          <p className="hn-k hn-rv">Trades</p>
           <h2 className="hn-h2 hn-rv">Pick a job. We’ll bring the neighbors.</h2>
-          <div className="hn-stack">
-            {SERVICES.map((s, i) => {
-              const l = serviceLink(s.label)
-              return (
-                <article key={s.n} className="hn-sk" style={{ ['--i' as string]: i, background: s.bg, color: s.fg }}>
-                  <div className="hn-st">
-                    <span className="hn-no">{s.n}</span>
-                    <h3>{s.title}</h3>
-                    <p>{s.text}</p>
-                    <Link className="hn-bt" to={l.to}>{l.text}</Link>
-                  </div>
-                  <div className="hn-im" role="img" aria-label={s.alt} style={bg(s.img)} />
-                </article>
-              )
-            })}
-          </div>
-          <p className="hn-rv" style={{ marginTop: '1rem' }}><a className="hn-bt" href="/services/">Browse all 24 services →</a></p>
+          <ul className="hn-tg hn-rv">
+            {TRADES.map(([id, name], i) => (
+              <li key={id}><a href={`/services/${id}/`}><span>{String(i + 1).padStart(2, '0')}</span>{name}</a></li>
+            ))}
+          </ul>
+          <p className="hn-rv hn-fine">More trades open over time. Trades that need a license, like electrical, plumbing and HVAC, open once we can verify licenses. <a className="hn-bt" href="/services/">See every service →</a></p>
         </div>
       </section>
 
@@ -183,7 +177,12 @@ export default function Home() {
       <div className="hn-fin hn-rv">
         <div>
           <h2 className="hn-h2">Your neighbor is ready.</h2>
-          <Link className="hn-btn hn-btn-lg hn-y" style={{ marginTop: '1.5rem' }} to={finalCta.to}>{finalCta.label}</Link>
+          <div className="hn-cta" style={{ justifyContent: 'center' }}>
+            {finalCta ? <Link className="hn-btn hn-btn-lg hn-y" to={finalCta.to}>{finalCta.label}</Link> : (<>
+              <Link className="hn-btn hn-btn-lg hn-y" to={workBtn.to}>{workBtn.label}</Link>
+              <Link className="hn-btn-ghost hn-btn-lg" to={hireBtn.to}>{hireBtn.label}</Link>
+            </>)}
+          </div>
         </div>
       </div>
     </div>

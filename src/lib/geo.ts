@@ -76,3 +76,49 @@ export async function lookupZip(zip: string): Promise<ZipInfo | null> {
   const v = zipCache.get(prefix)?.[zip]
   return v ? { zip, lat: v[0], lng: v[1], city: v[2], state: v[3] } : null
 }
+
+// ---- Places: people choose a city or use their location, never a ZIP code ----
+/** A place the user picked. `zip` is the ZIP closest to the city centre; it is stored for compatibility only and never shown. */
+export interface Place { city: string; state: string; lat: number; lng: number; zip: string }
+export const MAX_WORK_CITIES = 10
+export const placeKey = (p: { city: string; state: string }): string => `${p.state}|${p.city}`
+
+let citiesCache: Place[] | null = null
+let citiesLoading: Promise<Place[]> | null = null
+/** Loads the city list once (about 480 KB compressed, only when a picker is opened). */
+export function loadCities(): Promise<Place[]> {
+  if (citiesCache) return Promise.resolve(citiesCache)
+  citiesLoading ??= fetch('/cities.json')
+    .then((r) => { if (!r.ok || !(r.headers.get('content-type') ?? '').includes('json')) throw new Error('cities unavailable'); return r.json() as Promise<[string, string, number, number, string][]> })
+    .then((rows) => (citiesCache = rows.map(([city, state, lat, lng, zip]) => ({ city, state, lat, lng, zip }))))
+    .catch((e) => { citiesLoading = null; throw e })
+  return citiesLoading
+}
+
+/** Matches "austin", "austin, tx" or "austin tx": names that start with the text first, then names that contain it. Up to `limit` results. */
+export function searchCities(list: Place[], text: string, limit = 8): Place[] {
+  const t = text.trim().toLowerCase().replace(/\s+/g, ' ')
+  if (t.length < 2) return []
+  const m = /^(.*?)[, ]+([a-z]{2})$/.exec(t)
+  const name = m ? m[1].trim() : t
+  const st = m ? m[2].toUpperCase() : ''
+  const starts: Place[] = [], inside: Place[] = []
+  for (const p of list) {
+    if (st && p.state !== st) continue
+    const n = p.city.toLowerCase()
+    if (n.startsWith(name)) starts.push(p); else if (!st && n.includes(name)) inside.push(p)
+    if (starts.length >= limit * 3) break
+  }
+  return [...starts.sort((a, b) => a.city.length - b.city.length), ...inside].slice(0, limit)
+}
+
+/** The listed city closest to a point (brute force over about 30,000 cities, a few milliseconds). Null if the list is empty. */
+export function nearestPlace(list: Place[], lat: number, lng: number): Place | null {
+  let best: Place | null = null, bestD = Infinity
+  const k = Math.cos((lat * Math.PI) / 180)
+  for (const p of list) {
+    const dy = p.lat - lat, dx = (p.lng - lng) * k, d = dy * dy + dx * dx
+    if (d < bestD) { bestD = d; best = p }
+  }
+  return best
+}

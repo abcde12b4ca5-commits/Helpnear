@@ -1,8 +1,8 @@
 import { brand } from '../config/brand'
 
 const STEPS: [string, string][] = [
-  ['Clients post a request', 'The service, the ZIP code, details, how urgent it is and how many workers they need.'],
-  ['Workers get notified', 'Workers who offer that service within their travel distance of that ZIP see the request and can accept it with a price, or decline it.'],
+  ['Clients post a request', 'The service, the city, details, how urgent it is and how many workers they need.'],
+  ['Workers get notified', 'Workers who offer that service and cover that city (around their location or in the cities they chose) see the request and can accept it with a price, or decline it.'],
   ['You agree on the work', 'When a worker accepts, they can see your contact details and reach out. You agree on the price and the work, then confirm the agreement in the app.'],
   ['Done and rated', 'After the work, the worker marks the service as done and you confirm it. Confirmed jobs appear in both dashboards, and you can rate the worker.'],
   ['Pay directly', `Payment is handled directly between you and the worker. ${brand.name} never handles job payments.`],

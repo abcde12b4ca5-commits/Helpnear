@@ -23,7 +23,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { getAppConfig } from './catalog'
-import { haversineMiles } from './geo'
+import { haversineMiles, placeKey } from './geo'
 import { sendNotification } from './notifications'
 import { notifyEvent, notifyNewRequest } from './push'
 import type { ClaimDoc, ClaimStatus, ContactDoc, RequestDoc, StrikeDoc, Urgency, WorkerDoc } from './types'
@@ -153,7 +153,7 @@ export async function loadFeed(worker: WorkerDoc, state: FeedState): Promise<{ i
   }))
   const now = Date.now()
   const items = pages.flat()
-    .filter((r) => r.expiresAt.toMillis() > now && haversineMiles(worker.lat, worker.lng, r.lat, r.lng) <= worker.radiusMiles)
+    .filter((r) => r.expiresAt.toMillis() > now && (worker.workMode === 'cities' ? Boolean(worker.cities?.includes(placeKey(r))) : haversineMiles(worker.lat, worker.lng, r.lat, r.lng) <= worker.radiusMiles))
     .sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0))
   return { items, state: next, done: next.ended.every(Boolean) }
 }
@@ -286,15 +286,26 @@ export async function getWorkerClaims(workerId: string, status: ClaimStatus | nu
 
 export interface Stats { active: number; waitingConfirmation: number; completed: number; totalCents: number; requests?: number }
 
-/** Counts and sums are computed by Firestore aggregation queries (about 1 read per 1000 matching docs), so they cannot be forged. */
+/** Counts and sums are computed by Firestore aggregation queries (about 1 read per 1000 matching docs), so they cannot be forged.
+ *  Each figure is read on its own: if an aggregation fails (for example an index is still building), that figure falls back to a plain query
+ *  (capped at 500 jobs) instead of blanking the whole dashboard. */
 async function claimStats(field: 'workerId' | 'clientId', uid: string): Promise<Stats> {
   const q = (status: ClaimStatus) => query(collectionGroup(db, 'claims'), where(field, '==', uid), where('status', '==', status))
-  const [active, waiting, done] = await Promise.all([
-    getAggregateFromServer(q('accepted'), { n: count() }),
-    getAggregateFromServer(q('done'), { n: count() }),
-    getAggregateFromServer(q('confirmed'), { n: count(), total: sum('finalCents') }),
-  ])
-  return { active: active.data().n, waitingConfirmation: waiting.data().n, completed: done.data().n, totalCents: done.data().total ?? 0 }
+  const countOf = async (status: ClaimStatus): Promise<number> => {
+    try { return (await getAggregateFromServer(q(status), { n: count() })).data().n } catch (e) {
+      console.warn('count aggregation failed, using a plain query', status, e)
+      return (await getDocs(query(q(status), limit(500)))).size
+    }
+  }
+  const confirmed = async (): Promise<{ n: number; total: number }> => {
+    try { const d = (await getAggregateFromServer(q('confirmed'), { n: count(), total: sum('finalCents') })).data(); return { n: d.n, total: d.total ?? 0 } } catch (e) {
+      console.warn('sum aggregation failed, using a plain query', e)
+      const snap = await getDocs(query(q('confirmed'), limit(500)))
+      return { n: snap.size, total: snap.docs.reduce((acc, d) => acc + (Number(d.data().finalCents) || 0), 0) }
+    }
+  }
+  const [active, waiting, done] = await Promise.all([countOf('accepted'), countOf('done'), confirmed()])
+  return { active, waitingConfirmation: waiting, completed: done.n, totalCents: done.total }
 }
 
 export const getWorkerStats = (uid: string) => claimStats('workerId', uid)

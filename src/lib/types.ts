@@ -74,6 +74,9 @@ export interface WorkerDoc {
   lat: number
   lng: number
   radiusMiles: number
+  /** 'radius': requests within radiusMiles of the base point. 'cities': requests posted in the cities listed in `cities` (keys like 'TX|Austin'). Older profiles have neither field: radius. */
+  workMode?: 'radius' | 'cities'
+  cities?: string[]
   /** `${categoryId}|${cell}` for every service x covered cell. Used for feed queries and push matching. */
   matchKeys: string[]
   confirmedCategories: string[]

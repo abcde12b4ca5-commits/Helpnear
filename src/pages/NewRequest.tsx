@@ -4,10 +4,10 @@ import { brand } from '../config/brand'
 import { useAuth } from '../lib/auth'
 import { findBlockedKeyword, getAppConfig, getCategories } from '../lib/catalog'
 import { CELL_PRECISION, encodeGeohash } from '../lib/geo'
-import { useZipLookup } from '../lib/useZip'
+import PlacePicker from '../components/PlacePicker'
+import type { Place } from '../lib/geo'
 import { createRequests, getPostCooldownSeconds } from '../lib/requests'
 import { friendlyError } from '../lib/errors'
-import { auth } from '../lib/firebase'
 import { ErrorBox, Field, Pill, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { Category, ContactMethod, Urgency } from '../lib/types'
 
@@ -20,14 +20,13 @@ interface Position { key: number; categoryId: string; workersNeeded: number; tit
 const blankPosition = (key: number): Position => ({ key, categoryId: '', workersNeeded: 1, title: '', description: '' })
 
 export default function NewRequest() {
-  const { user, refresh } = useAuth()
+  const { user } = useAuth()
   const nav = useNavigate()
   const [cats, setCats] = useState<Category[] | null>(null)
   const [maxWorkers, setMaxWorkers] = useState(5)
   const [positions, setPositions] = useState<Position[]>([blankPosition(1)])
   const [nextKey, setNextKey] = useState(2)
-  const [zip, setZip] = useState('')
-  const { info: zipInfo, checked: zipChecked } = useZipLookup(zip)
+  const [place, setPlace] = useState<Place | null>(null)
   const [urgency, setUrgency] = useState<Urgency>('this_week')
   const [budget, setBudget] = useState('')
   const [phone, setPhone] = useState('')
@@ -44,34 +43,31 @@ export default function NewRequest() {
 
   const total = positions.reduce((n, p) => n + p.workersNeeded, 0)
   const catOf = (id: string) => cats?.find((c) => c.id === id)
-  const off = (p: Position) => Boolean(zipInfo && catOf(p.categoryId)?.disabledStates?.includes(zipInfo.state))
+  const off = (p: Position) => Boolean(place && catOf(p.categoryId)?.disabledStates?.includes(place.state))
   const patch = (key: number, over: Partial<Position>) => setPositions((list) => list.map((p) => (p.key === key ? { ...p, ...over } : p)))
   const addPosition = () => { setPositions((l) => [...l, blankPosition(nextKey)]); setNextKey(nextKey + 1) }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     if (!user) return
-    if (!zipInfo) { setError('Enter a valid US ZIP code for where the work is.'); return }
+    if (!place) { setError('Choose the city where the work is, or tap "Use my location".'); return }
     if (!phone.trim() && !contactEmail.trim()) { setError('Add a phone number or an email so workers can reach you.'); return }
     if (total > MAX_TOTAL_WORKERS) { setError(`You can ask for at most ${MAX_TOTAL_WORKERS} workers in one post.`); return }
     for (const [i, p] of positions.entries()) {
       const c = catOf(p.categoryId)
       const label = positions.length > 1 ? `Worker group ${i + 1}: ` : ''
       if (!c) { setError(`${label}choose a service.`); return }
-      if (off(p)) { setError(`${label}${c.name} is not available in ${zipInfo.state} yet.`); return }
+      if (off(p)) { setError(`${label}${c.name} is not available in ${place.state} yet.`); return }
       const blocked = findBlockedKeyword(`${p.title} ${p.description}`, c.blockedKeywords)
       if (blocked) { setError(`${label}this service isn't available on ${brand.name} (mentions "${blocked}"). Regulated work needs a licensed professional.`); return }
     }
     setBusy(true); setError(null)
     try {
-      // Refresh the sign-in token first: verifying the email in another tab does not reach this page until the token is renewed.
-      await refresh().catch(() => undefined)
-      if (!auth.currentUser?.emailVerified) { setError('Please verify your email first. Open the link we sent you, then press "I have verified" in the yellow banner at the top.'); return }
       const wait = await getPostCooldownSeconds(user.uid)
       if (wait > 0) { setError(`Please wait ${wait} more second${wait === 1 ? '' : 's'} before posting again.`); return }
       await createRequests({
-        clientId: user.uid, zip: zipInfo.zip, city: zipInfo.city, state: zipInfo.state, lat: zipInfo.lat, lng: zipInfo.lng,
-        cell: encodeGeohash(zipInfo.lat, zipInfo.lng, CELL_PRECISION), urgency, budgetRange: budget.trim(),
+        clientId: user.uid, zip: place.zip, city: place.city, state: place.state, lat: place.lat, lng: place.lng,
+        cell: encodeGeohash(place.lat, place.lng, CELL_PRECISION), urgency, budgetRange: budget.trim(),
         contact: { phone: phone.trim(), email: contactEmail.trim(), preferredContactMethod: method },
         positions: positions.map((p) => ({ categoryId: p.categoryId, categoryName: catOf(p.categoryId)?.name ?? '', workersNeeded: p.workersNeeded, title: p.title.trim(), description: p.description.trim() })),
       })
@@ -87,13 +83,10 @@ export default function NewRequest() {
   return (
     <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1fr_20rem]">
     <form onSubmit={submit} className="space-y-5">
-      <div className="hn-in"><h1 className="text-4xl">Post a request</h1><p className="mt-2 text-mu">Takes about a minute. Workers who cover your ZIP are notified.</p></div>
-      <div className="hn-in max-w-xs" style={{ ['--i' as string]: 1 }}>
-        <Field label="ZIP code where the work is" htmlFor="zip" hint="Anywhere in the United States.">
-          <input id="zip" required inputMode="numeric" maxLength={5} className={input} value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))} />
-        </Field>
-        {zipChecked && !zipInfo && <p role="alert" className="mt-1 text-sm text-danger-tx">We could not find that ZIP code.</p>}
-        {zipInfo && <p className="mt-1 text-sm text-ok" style={{ color: 'var(--ok)' }} role="status">✓ {zipInfo.city}, {zipInfo.state}</p>}
+      <div className="hn-in"><h1 className="text-4xl">Post a request</h1><p className="mt-2 text-mu">Takes about a minute. Workers who cover your city are notified.</p></div>
+      <div className="hn-in max-w-xl" style={{ ['--i' as string]: 1 }}>
+        <PlacePicker id="place" label="Where is the work?" hint="Pick the city, or let us find it from your location. We never show your exact address: you share it with the worker you choose." onPick={setPlace} />
+        {place && <p className="mt-1 text-sm text-ok" style={{ color: 'var(--ok)' }} role="status">✓ {place.city}, {place.state}</p>}
       </div>
 
       <section aria-labelledby="who" className="space-y-3">
@@ -114,7 +107,7 @@ export default function NewRequest() {
                 {cats.map((x) => <button type="button" key={x.id} className="hn-tile" aria-pressed={p.categoryId === x.id} onClick={() => patch(p.key, { categoryId: x.id })}>{x.name}</button>)}
               </div>
               {c && <p className="rounded-xl bg-bg p-3 text-xs text-mu">Allowed: {c.allowedServices.join('; ')}.{c.notes ? ` ${c.notes}` : ''} Work that needs a license (electrical, plumbing, HVAC, gas) is not allowed.</p>}
-              {c && off(p) && zipInfo && <p role="alert" className="text-sm text-danger-tx">{c.name} is not available in {zipInfo.state} yet.</p>}
+              {c && off(p) && place && <p role="alert" className="text-sm text-danger-tx">{c.name} is not available in {place.state} yet.</p>}
               <Field label="How many workers for this job?" htmlFor={`wn-${p.key}`}>
                 <select id={`wn-${p.key}`} className={`${input} max-w-[8rem]`} value={p.workersNeeded} onChange={(e) => patch(p.key, { workersNeeded: Number(e.target.value) })}>
                   {Array.from({ length: maxWorkers }, (_, n) => n + 1).map((n) => <option key={n} value={n}>{n}</option>)}
@@ -156,10 +149,10 @@ export default function NewRequest() {
     <aside className={`${card} hn-in h-max space-y-3 lg:sticky lg:top-24`} style={{ ['--i' as string]: 3 }} aria-label="Summary">
       <Pill tone="y">Summary</Pill>
       <h3 className="text-xl">{positions[0]?.title.trim() || 'Your request'}</h3>
-      {([['ZIP', zipInfo ? `${zip} · ${zipInfo.city}, ${zipInfo.state}` : zip || '-'], ['Groups', String(positions.length)], ['Total workers', String(total)], ['Urgency', URG.find(([v]) => v === urgency)?.[1] ?? ''], ['Fee', 'Free']] as const).map(([k, v]) => (
+      {([['Where', place ? `${place.city}, ${place.state}` : '-'], ['Groups', String(positions.length)], ['Total workers', String(total)], ['Urgency', URG.find(([v]) => v === urgency)?.[1] ?? ''], ['Fee', 'Free']] as const).map(([k, v]) => (
         <div key={k} className="flex justify-between gap-3 text-sm"><span className="text-mu">{k}</span><b className="text-right">{v}</b></div>
       ))}
-      <p className="flex items-center gap-2 pt-2 text-sm text-mu"><span className="hn-dot" aria-hidden="true" />{zipInfo ? `Workers who cover ${zip} are notified` : 'Workers near your ZIP are notified'}</p>
+      <p className="flex items-center gap-2 pt-2 text-sm text-mu"><span className="hn-dot" aria-hidden="true" />{place ? `Workers who cover ${place.city} are notified` : 'Workers who cover your city are notified'}</p>
     </aside>
     </div>
   )

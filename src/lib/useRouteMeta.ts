@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { brand } from '../config/brand'
 
 const PUBLIC: Record<string, { title: string; description: string }> = {
-  '/': { title: `${brand.name} | Hire local. Get it done.`, description: 'Post your home job in a minute. Workers who cover your ZIP code send you a price. Free to use, across the United States.' },
+  '/': { title: `${brand.name} | Find work. Find help. Next door.`, description: 'Neighbors post a job in a minute and workers who cover that city send a price. Workers find jobs near them. Free to use, across the United States.' },
   '/how-it-works': { title: `How ${brand.name} works | Post a job, get prices, pay directly`, description: `See how ${brand.name} works: post a request, local workers send prices, you pay the worker directly. Free to use.` },
 }
 const PUBLIC_PREFIX = ['/legal/', '/worker/']

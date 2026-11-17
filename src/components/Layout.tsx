@@ -1,3 +1,5 @@
+import LogoMark from './LogoMark'
+import { useScrollFx } from '../lib/useScrollFx'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { brand } from '../config/brand'
@@ -60,6 +62,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const link = ({ isActive }: { isActive: boolean }) => `hn-link${isActive ? ' active' : ''}`
   const mobileLink = ({ isActive }: { isActive: boolean }) => `block rounded-xl px-3 py-2 text-base font-semibold ${isActive ? 'bg-ye text-ink' : 'text-tx hover:bg-sf'}`
   const solid = scrolled || !isHome || menuOpen
+  useScrollFx(pathname)
 
   const links = (cls: typeof link) => (<>
     {user && profile?.role === 'client' && (<>
@@ -69,7 +72,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     {user && profile?.role === 'worker' && (<>
       <NavLink to="/feed" className={cls}>Requests</NavLink>
       <NavLink to="/dashboard" className={cls}>My jobs</NavLink>
-      <NavLink to="/onboarding" className={cls}>Profile</NavLink>
+      <NavLink to="/profile" className={cls}>Profile</NavLink>
     </>)}
     {user && profile && <NavLink to="/notifications" className={cls}>Notifications{unread > 0 ? ` (${unread})` : ''}</NavLink>}
     {isAdmin && <NavLink to="/admin" className={cls}>Admin</NavLink>}
@@ -78,9 +81,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-bg text-tx">
       <a href="#main" className="sr-only focus:not-sr-only focus:p-2">Skip to content</a>
+      <div id="hn-progress" aria-hidden="true" />
       <header className={`hn-nav${solid ? ' solid' : ''}`}>
+        {!solid && <p className="hn-trust">Free to use · No platform fee on jobs · Workers and neighbors across the U.S.</p>}
         <nav className="hn-w flex h-16 items-center gap-2" aria-label="Main">
-          <Link to="/" className="hn-logo" aria-label={`${brand.name} home`}><i aria-hidden="true">⌂</i>{brand.name}</Link>
+          <Link to="/" className="hn-logo" aria-label={`${brand.name} home`}><i aria-hidden="true"><LogoMark /></i>{brand.name}</Link>
           <div className="hidden items-center gap-1 md:flex">
             <a href="/services/" className="hn-link">Services</a>
             <NavLink to="/how-it-works" className={link}>How it works</NavLink>
@@ -89,7 +94,8 @@ export default function Layout({ children }: { children: ReactNode }) {
               ? <><span className="hn-av mx-2" aria-hidden="true">{(profile?.displayName ?? user.email ?? '?').charAt(0).toUpperCase()}</span><button className={btnGhost} onClick={() => signOut()}>Sign out</button></>
               : (<>
                 <NavLink to="/login" className={link}>Sign in</NavLink>
-                <Link to="/signup" className="hn-btn hn-y ml-2">Get started</Link>
+                <Link to="/signup" className="hn-link">Hire a worker</Link>
+                <Link to="/signup?role=worker" className="hn-btn hn-y ml-2">Join as a worker</Link>
               </>)}
           </div>
           <button
@@ -110,7 +116,8 @@ export default function Layout({ children }: { children: ReactNode }) {
               ? <button className={`${btnGhost} mt-2 w-full`} onClick={() => signOut()}>Sign out</button>
               : (<>
                 <NavLink to="/login" className={mobileLink}>Sign in</NavLink>
-                <Link to="/signup" className="hn-btn hn-y mt-2 w-full">Get started</Link>
+                <Link to="/signup" className="block rounded-xl px-3 py-2 text-base font-semibold text-tx hover:bg-sf">Hire a worker</Link>
+                <Link to="/signup?role=worker" className="hn-btn hn-y mt-2 w-full">Join as a worker</Link>
               </>)}
           </div>
         )}
@@ -127,10 +134,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         : <main id="main" className={`mx-auto w-full flex-1 px-5 pb-10 pt-24 ${pathname.startsWith('/admin') || pathname === '/feed' || pathname === '/dashboard' ? 'max-w-6xl' : 'max-w-4xl'}`}>{children}</main>}
       <footer className="hn-foot">
         <div className="hn-w">
-          <p className="font-display text-xl font-semibold text-tx">{brand.name}</p>
+          <p className="hn-fname font-display text-xl font-extrabold">{brand.name}</p>
           <p>{brand.disclaimer} Licenses and insurance shown by workers are self-reported and not verified. Electrical, plumbing and HVAC aren’t offered because they require a license.</p>
           <p>
-            <Link to="/legal/terms">Terms</Link> · <Link to="/legal/privacy">Privacy</Link> · <Link to="/legal/guidelines">Community Guidelines</Link> · <Link to="/legal/disclaimer">Disclaimer</Link>
+            {!user && <><Link to="/signup">Need a worker? Post a job</Link> · </>}<Link to="/legal/terms">Terms</Link> · <Link to="/legal/privacy">Privacy</Link> · <Link to="/legal/guidelines">Community Guidelines</Link> · <Link to="/legal/disclaimer">Disclaimer</Link>
           </p>
         </div>
       </footer>

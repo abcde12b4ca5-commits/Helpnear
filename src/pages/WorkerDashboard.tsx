@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { getAppConfig } from '../lib/catalog'
+import { getAppConfig, getCategories } from '../lib/catalog'
 import { ensureThread } from '../lib/chat'
 import { cancelClaim, editQuote, getContact, getWorkerClaims, getWorkerStats, markDone, openDispute, type Cursor, type Stats } from '../lib/requests'
 import { dollarsToCents, formatCents } from '../lib/money'
 import { claimLabel } from '../lib/labels'
 import { friendlyError } from '../lib/errors'
 import ReportButton from '../components/ReportButton'
+import WorkerSummary from '../components/WorkerSummary'
 import { CancelForm, DisputeForm, StatsGrid, StrikeNotice } from '../components/ClaimBits'
 import { Empty, ErrorBox, Field, Pill, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { ClaimDoc, ClaimStatus, ContactDoc } from '../lib/types'
@@ -15,7 +16,8 @@ import type { ClaimDoc, ClaimStatus, ContactDoc } from '../lib/types'
 const TABS: [string, ClaimStatus | null][] = [['All', null], ['In progress', 'accepted'], ['Waiting for client', 'done'], ['Completed', 'confirmed'], ['Disputed', 'disputed'], ['Cancelled', 'cancelled']]
 
 export default function WorkerDashboard() {
-  const { user } = useAuth()
+  const { user, worker } = useAuth()
+  const [names, setNames] = useState<Record<string, string>>({})
   const nav = useNavigate()
   const [tab, setTab] = useState<ClaimStatus | null>(null)
   const [items, setItems] = useState<ClaimDoc[]>([])
@@ -32,6 +34,7 @@ export default function WorkerDashboard() {
   const [note, setNote] = useState('')
 
   useEffect(() => { getAppConfig().then((c) => setChatEnabled(c.chatEnabled)).catch(() => undefined) }, [])
+  useEffect(() => { getCategories().then((cs) => setNames(Object.fromEntries(cs.map((c) => [c.id, c.name])))).catch(() => undefined) }, [])
 
   const apply = useCallback((page: { items: ClaimDoc[]; cursor: Cursor; done: boolean }, reset: boolean) => {
     setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
@@ -121,6 +124,8 @@ export default function WorkerDashboard() {
   return (
     <div className="space-y-4">
       <h1 className="text-4xl">My jobs</h1>
+      {user && worker && <WorkerSummary uid={user.uid} worker={worker} names={names} compact />}
+      <p className="rounded-xl border border-ln p-3 text-sm" role="note"><strong>Better reviews, more jobs.</strong> Clients see the best-rated workers first, so great work gets you chosen more often.</p>
       <StatsGrid items={[
         ['In progress', stats?.active ?? dots], ['Waiting for client', stats?.waitingConfirmation ?? dots],
         ['Completed jobs', stats?.completed ?? dots], ['Total earned', stats ? formatCents(stats.totalCents) : dots],

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { getAppConfig } from '../lib/catalog'
 import { ensureThread } from '../lib/chat'
+import RateWorker from '../components/RateWorker'
+import { getRatings } from '../lib/reviews'
 import { agreeClaim, cancelClaim, cancelRequest, closeRequest, confirmDone, getClientStats, getMyRequests, getRequestClaims, openDispute, reopenClaim, type Cursor, type Stats } from '../lib/requests'
 import { formatCents } from '../lib/money'
 import { claimLabel } from '../lib/labels'
@@ -24,6 +26,8 @@ export default function MyRequests() {
   const [statsFailed, setStatsFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [chatEnabled, setChatEnabled] = useState(false)
+  const [ratings, setRatings] = useState<Record<string, { average: number; count: number }>>({})
+  useEffect(() => { const ids = Object.values(claims).flat().map((c) => c.workerId); if (ids.length) getRatings(ids).then((r) => setRatings((prev) => ({ ...prev, ...r }))).catch(() => undefined) }, [claims])
   const [cancelling, setCancelling] = useState<string | null>(null)
   const [disputing, setDisputing] = useState<string | null>(null)
   useEffect(() => { getAppConfig().then((c) => setChatEnabled(c.chatEnabled)).catch(() => undefined) }, [])
@@ -73,22 +77,22 @@ export default function MyRequests() {
                 <CancelForm onCancel={(reason) => act(() => cancelRequest(r.id, claims[r.id] ?? [], reason))} onClose={() => setCancelling(null)} />
               </div>
             )}
-            {claims[r.id]?.map((c) => {
+            {[...(claims[r.id] ?? [])].sort((x, y) => (ratings[y.workerId]?.average ?? 0) - (ratings[x.workerId]?.average ?? 0)).map((c) => {
               const k = `${r.id}_${c.workerId}`
               return (
                 <div key={k} className="mt-2 w-full rounded-xl border border-ln p-3 text-sm">
-                  <p><Link className="font-semibold underline" to={`/worker/${c.workerId}?request=${r.id}`}>{c.workerName}</Link> &middot; Price: <strong>{formatCents(c.quotedCents)}</strong>{(c.status === 'done' || c.status === 'confirmed') && <> &middot; Final: <strong>{formatCents(c.finalCents)}</strong></>}</p>
+                  <p><Link className="font-semibold underline" to={`/worker/${c.workerId}?request=${r.id}`}>{c.workerName}</Link> {ratings[c.workerId]?.count ? <span title="Average of the latest reviews">{ratings[c.workerId].average.toFixed(1)} ★ ({ratings[c.workerId].count})</span> : <span className="text-mu">New</span>} &middot; Price: <strong>{formatCents(c.quotedCents)}</strong>{(c.status === 'done' || c.status === 'confirmed') && <> &middot; Final: <strong>{formatCents(c.finalCents)}</strong></>}</p>
                   <p className="text-mu">{c.note}</p>
                   <p className="mt-1 font-medium text-ac">{claimLabel(c, 'client')}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {c.status === 'accepted' && !c.clientAgreed && <button className={btn} onClick={() => act(() => agreeClaim(c))}>Agree to price and work</button>}
                     {c.status === 'done' && <button className={btn} onClick={() => act(() => confirmDone(c))}>Confirm service was done</button>}
                     {c.status === 'done' && <button className={btnGhost} onClick={() => act(async () => { await reopenClaim(c) })}>Not done yet</button>}
-                    {c.status === 'confirmed' && <Link className={btnGhost} to={`/worker/${c.workerId}?request=${r.id}`}>Rate this worker</Link>}
-                    {c.status === 'accepted' && <button className={btnGhost} onClick={() => setCancelling(k)}>Cancel this worker</button>}
+                                        {c.status === 'accepted' && <button className={btnGhost} onClick={() => setCancelling(k)}>Cancel this worker</button>}
                     {((c.status === 'accepted' && c.clientAgreed) || c.status === 'done') && <button className={btnGhost} onClick={() => setDisputing(k)}>Report a problem</button>}
                     {chatEnabled && c.status !== 'cancelled' && user && <button className={btnGhost} onClick={async () => { try { nav(`/chat/${await ensureThread({ requestId: r.id, workerId: c.workerId, clientId: user.uid })}`) } catch (e) { setError(friendlyError(e)) } }}>Message</button>}
                   </div>
+                  {c.status === 'confirmed' && user && <RateWorker requestId={r.id} workerId={c.workerId} clientId={user.uid} workerName={c.workerName} />}
                   {disputing === k && user && <DisputeForm onSubmit={(reason) => act(async () => { await openDispute(c, 'client', reason); setDisputing(null) })} onClose={() => setDisputing(null)} />}
                   {cancelling === k && <CancelForm onCancel={(reason) => act(() => cancelClaim(c, 'client', reason))} onClose={() => setCancelling(null)} />}
                 </div>
