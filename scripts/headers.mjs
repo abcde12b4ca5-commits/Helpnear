@@ -12,7 +12,7 @@ async function htmlFiles(dir) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
     const p = join(dir, e.name)
     if (e.isDirectory()) out.push(...(await htmlFiles(p)))
-    else if (e.name.endsWith('.html')) out.push(p)
+    else if (e.name.endsWith('.html') || e.name.endsWith('.tpl')) out.push(p)
   }
   return out
 }

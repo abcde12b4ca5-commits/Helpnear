@@ -27,6 +27,20 @@ service cloud.firestore {
       allow get, list: if true;
       allow write: if isAdmin();
     }
+    // ---------- blog articles: the public sees only published ones; admins manage all (the AI worker writes with the service account) ----------
+    match /articles/{articleId} {
+      allow get, list: if resource.data.status == 'published' || isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.title is string && request.resource.data.title.size() <= 140
+        && request.resource.data.slug is string && request.resource.data.slug.matches('^[a-z0-9-]{3,70}$')
+        && request.resource.data.status in ['draft', 'published']
+        && request.resource.data.body is string && request.resource.data.body.size() <= 60000;
+      allow delete: if isAdmin();
+    }
+    match /articleSettings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     match /legal/{docId} {
       allow get, list: if true;
       allow write: if isAdmin();

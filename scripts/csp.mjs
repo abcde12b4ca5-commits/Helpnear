@@ -17,12 +17,12 @@ export function buildCsp({ workerUrl = '', authDomain = '', projectId = '', useE
     worker,
     ...(useEmulators ? ['http://localhost:8080', 'http://localhost:9099', 'ws://localhost:8080'] : []),
   ].filter(Boolean)
-  const frames = ['https://challenges.cloudflare.com', auth, 'https://accounts.google.com', 'https://www.google.com/recaptcha/'].filter(Boolean)
+  const frames = ['https://challenges.cloudflare.com', 'https://www.youtube-nocookie.com', auth, 'https://accounts.google.com', 'https://www.google.com/recaptcha/'].filter(Boolean)
   const d = [
     ["default-src", "'self'"],
     ['script-src', ["'self'", ...scriptHashes.map(hash), 'https://challenges.cloudflare.com', 'https://apis.google.com', 'https://www.gstatic.com/firebasejs/', 'https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/'].join(' ')],
     ['style-src', ["'self'", ...styleHashes.map(hash)].join(' ')],
-    ['img-src', "'self' data: https://www.google.com/images/cleardot.gif"],
+    ['img-src', "'self' data: https://www.google.com/images/cleardot.gif https://images.pexels.com"],
     ['font-src', "'self'"],
     ['connect-src', connect.join(' ')],
     ['frame-src', frames.join(' ')],

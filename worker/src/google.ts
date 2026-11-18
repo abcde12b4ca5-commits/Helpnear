@@ -2,6 +2,16 @@ import { JwtError, importJwk, signJwt, verifyJwt, type Jwk } from './jwt'
 
 export interface ServiceAccount { client_email: string; private_key: string }
 export interface Env {
+  /** Cloudflare Workers AI binding (add [ai] binding = "AI" in wrangler.toml). Used for blog drafts. */
+  AI?: { run(model: string, input: unknown): Promise<unknown> }
+  /** Optional: another Workers AI text model id. Default is Llama 3.3 70B (fast). */
+  AI_MODEL?: string
+  /** Optional secret: free Pexels API key for stock photos in articles. */
+  PEXELS_API_KEY?: string
+  /** Optional: the IndexNow key (the same one as the key file in /public) so new articles are announced to Bing right away. */
+  INDEXNOW_KEY?: string
+  /** Optional: site name used in prompts. Default Helpnear. */
+  SITE_NAME?: string
   /** Optional. Set to 'true' (wrangler var) to require a verified e-mail again. Off by default. */
   REQUIRE_VERIFIED_EMAIL?: string
   FIREBASE_SA_JSON: string

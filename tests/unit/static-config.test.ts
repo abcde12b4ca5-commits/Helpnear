@@ -207,3 +207,32 @@ describe('places (city picker and "use my location")', () => {
     expect(placeKey(list[0])).not.toBe(placeKey(list[1]))
   })
 })
+
+describe('day and night mode', () => {
+  it('defines both palettes, applies the saved choice before first paint, and offers a switch', () => {
+    const css = readFileSync('src/index.css', 'utf8')
+    expect(css).toMatch(/:root\[data-theme='dark'\]/)
+    expect(readFileSync('index.html', 'utf8')).toMatch(/localStorage\.getItem\('hn-theme'\)/)
+    expect(readFileSync('scripts/prerender.mjs', 'utf8')).toMatch(/localStorage\.getItem\('hn-theme'\)/)
+    expect(readFileSync('src/components/Layout.tsx', 'utf8')).toContain('<ThemeToggle />')
+  })
+  it('keeps text readable in both themes: no hard-coded light-only colors on shared components', () => {
+    const css = readFileSync('src/index.css', 'utf8').split('@layer components')[1] // component rules only: the palettes at the top may use any color
+    for (const bad of ['rgba(255, 255, 255, .72)', 'rgba(255, 255, 255, .92)', 'color: #065f46']) expect(css, bad).not.toContain(bad)
+  })
+})
+
+describe('blog', () => {
+  it('lets the policy show Pexels pictures and YouTube (privacy mode) and nothing else new', () => {
+    const csp = buildCsp({})
+    expect(csp).toMatch(/img-src [^;]*https:\/\/images\.pexels\.com/)
+    expect(csp).toMatch(/frame-src [^;]*https:\/\/www\.youtube-nocookie\.com/)
+  })
+  it('keeps the page template out of search results, lists the blog sitemap in robots.txt, and only published articles are public in the rules', () => {
+    expect(readFileSync('public/_headers', 'utf8')).toMatch(/\/_blog-shell\.tpl\n\s+X-Robots-Tag: noindex/)
+    expect(readFileSync('scripts/prerender.mjs', 'utf8')).toContain('sitemap-blog.xml')
+    const rules = readFileSync('firebase/firestore.rules', 'utf8')
+    expect(rules).toMatch(/match \/articles\/\{articleId\} \{\s+allow get, list: if resource\.data\.status == 'published' \|\| isAdmin\(\);/)
+    expect(rules).toMatch(/match \/articleSettings\/\{docId\} \{\s+allow read, write: if isAdmin\(\);/)
+  })
+})

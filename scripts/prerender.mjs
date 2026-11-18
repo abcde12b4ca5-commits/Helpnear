@@ -76,12 +76,13 @@ async function loadData() {
 // Static pages share the site's editorial design tokens (kept in sync with src/index.css).
 const LOGO = '<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 18.5L20 7L34 18.5" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.5 17.5V26.5C10.5 31.2 20 35.5 20 35.5C20 35.5 29.5 31.2 29.5 26.5V17.5" fill="#10B981" fill-opacity="0.18" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 23.5L18.7 26.7L25 20" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 const css = `:root{--bg:#f8fafc;--sf:#fff;--tx:#0f172a;--mu:#556176;--ln:#e2e8f0;--ye:#047857;--ac:#065f46;--am:#f59e0b;color-scheme:light}
+:root[data-theme=dark]{--bg:#0b1220;--sf:#111a2e;--tx:#f1f5f9;--mu:#a3b0c5;--ln:#1f2a44;--ye:#34d399;--ac:#6ee7b7;--am:#fbbf24;color-scheme:dark}
 *{box-sizing:border-box;margin:0}html{scroll-behavior:smooth;background:var(--bg)}
 body{font:400 1rem/1.6 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)}
 h1,h2,h3,.f{font-family:'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-.035em;line-height:1.05;font-weight:800}
 a{color:inherit}
 .w{max-width:76rem;margin:0 auto;padding:0 1.25rem}
-nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--ln);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--ln);box-shadow:0 1px 2px rgba(15,23,42,.06)}
 nav .w{display:flex;align-items:center;gap:1.4rem;height:4rem}
 .logo{display:flex;align-items:center;gap:.6rem;font:800 1.3rem 'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em;margin-right:auto;text-decoration:none}
 .logo i{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:.9rem;background:#0f172a;box-shadow:0 1px 2px rgba(15,23,42,.1)}.logo i svg{width:1.5rem;height:1.5rem}
@@ -93,10 +94,21 @@ h2{font-size:clamp(1.6rem,4vw,2.2rem);margin:2rem 0 .6rem}
 h3{font-size:1.2rem;margin:1.2rem 0 .3rem}
 p,li{color:var(--mu)}p{margin:.6rem 0}ul{padding-left:1.2rem;margin:.6rem 0}
 main a:not(.cta){color:var(--ac);text-decoration:underline;text-underline-offset:3px}
-.cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.9rem;font:600 .95rem Inter,sans-serif;background:#0f172a;color:#fff;text-decoration:none;transition:.2s;box-shadow:0 1px 2px rgba(15,23,42,.1)}
+.cta{display:inline-flex;align-items:center;padding:.85rem 1.5rem;margin-top:1.5rem;border-radius:.9rem;font:600 .95rem Inter,sans-serif;background:#0f172a;color:#fff;border:1px solid #334155;text-decoration:none;transition:.2s;box-shadow:0 1px 2px rgba(15,23,42,.1)}
 .cta:hover{transform:translateY(-1px);background:#1e293b}
 .cta.y{background:var(--am);color:#0f172a}.cta.y:hover{background:#fbbf24}
 .cta.sm{margin:0;padding:.6rem 1.1rem;box-shadow:none}
+#tg{display:grid;place-items:center;width:2.2rem;height:2.2rem;border-radius:50%;border:1px solid var(--ln);background:var(--sf);color:var(--tx);cursor:pointer;font-size:1rem;line-height:1}
+main.post-wrap,.crumbs{font-size:.85rem}.crumbs{margin-bottom:1rem;color:var(--mu)}
+.post h1{margin-bottom:.4rem}.post h2{margin-top:2.2rem}.post p,.post li{font-size:1.05rem;line-height:1.75;color:var(--tx)}.post li{margin:.35rem 0}
+.meta{font-size:.85rem;color:var(--mu)}
+.post figure{margin:1.2rem 0}.post img,.pc-i{display:block;width:100%;height:auto;border-radius:1rem;aspect-ratio:3/2;object-fit:cover;border:1px solid var(--ln)}
+figcaption{font-size:.75rem;color:var(--mu);margin-top:.4rem}
+.post blockquote{border-left:4px solid var(--ye);margin:1.4rem 0;padding:.2rem 1rem;background:var(--sf);border-radius:0 .8rem .8rem 0}
+.hn-video{position:relative;aspect-ratio:16/9;margin:1.4rem 0;border-radius:1rem;overflow:hidden;border:1px solid var(--ln)}.hn-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.cta-box{margin:2.5rem 0;padding:1.6rem;border-radius:1.2rem;background:var(--sf);border:1px solid var(--ln)}.cta-box h2{margin-top:0}.cta-box .cta{margin-top:.6rem;margin-right:.4rem}
+.pcs{display:grid;gap:1.4rem;margin:1.6rem 0}@media(min-width:40rem){.pcs{grid-template-columns:1fr 1fr}}
+.pc{background:var(--sf);border:1px solid var(--ln);border-radius:1.2rem;padding:1rem;transition:.2s}.pc:hover{transform:translateY(-3px)}.pc h2{font-size:1.25rem;margin:.8rem 0 .3rem}.pc a{text-decoration:none!important;color:var(--tx)!important}
 footer .fb{font-size:1.3rem;color:#fff}
 footer{padding:3rem 1.25rem 2.5rem;margin-top:3rem;background:#0f172a;border-top:1px solid #1e293b;font-size:.8rem;color:#94a3b8;text-align:center}footer p{max-width:42rem;margin:.6rem auto;color:#94a3b8}footer a{text-decoration:underline;text-underline-offset:3px}footer a:hover{color:#fff}`
 
@@ -108,12 +120,13 @@ function page({ title, description, path, robots, body, jsonld }) {
 <meta name="robots" content="${robots},max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${url}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:image" content="${SITE}/img/handy.jpg"><meta property="og:image:width" content="900"><meta property="og:image:height" content="735"><meta property="og:image:alt" content="${esc(BRAND)}: local help for your home"><meta property="og:locale" content="en_US"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${SITE}/img/handy.jpg"><meta name="theme-color" content="#1f4bff">
 ${FONT_PRELOAD}
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark"><script>try{var t=localStorage.getItem('hn-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>${FONT_FACE}${css}</style>
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script></head>
-<body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">${LOGO}</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/login">Sign in</a><a class="cta y sm" href="/signup">Get started</a></div></nav>
+<body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">${LOGO}</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/blog">Blog</a><a class="l" href="/login">Sign in</a><a class="cta y sm" href="/signup?role=worker">Join as a worker</a><button id=\"tg\" type=\"button\" aria-label=\"Switch between day and night mode\">◐</button></div></nav>
 <main>${body}</main>
-<footer><p class="f fb">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer></body></html>`
+<footer><p class="f fb">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer>
+<script>document.getElementById('tg').addEventListener('click',function(){var n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('hn-theme',n)}catch(e){}})</script></body></html>`
 }
 
 const crumbs = (items) => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: `${SITE}${path}` })) })
@@ -190,8 +203,12 @@ ${(DETAIL[cat.id] ?? []).map((items, i) => `<h2>${SECTION_TITLES[i]}</h2><ul>${i
 }
 
 await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
-await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /profile\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nAgentmap: ${SITE}/.well-known/ard.json\n`)
+await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /profile\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nSitemap: ${SITE}/sitemap-blog.xml\nAgentmap: ${SITE}/.well-known/ard.json\n`)
 await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers anywhere in the United States.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
+// Template for the blog pages that functions/ renders at the edge: same head, menu, footer and styles as every static page.
+// The .tpl extension keeps it out of the sitemap and is scanned by scripts/headers.mjs, so the inline code in it is allowed by the CSP.
+await writeFile(`${OUT}/_blog-shell.tpl`, page({ title: '%%TITLE%%', description: '%%DESC%%', path: '%%PATH%%', robots: 'index,follow', body: '%%BODY%%', jsonld: '%%JSONLD%%' }))
+
 // Agent discovery (ARD): the site has no MCP server or API, so the only honest entry is the llms.txt index above. Without these files the single-page-app
 // fallback answers /.well-known/ai-catalog.json with the HTML home page, which Lighthouse reports as "Malformed JSON".
 const host = new URL(SITE).hostname

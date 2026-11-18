@@ -16,7 +16,8 @@
     <meta property="og:image" content="%SITE_URL%/img/handy.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","name":"%BRAND_NAME%","url":"%SITE_URL%/"},{"@type":"WebSite","name":"%BRAND_NAME%","url":"%SITE_URL%/"}]}</script>
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <script>try{var t=localStorage.getItem('hn-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}</script>
     <noscript><style>.hn-shell{visibility:visible}</style></noscript>
   </head>
   <body>

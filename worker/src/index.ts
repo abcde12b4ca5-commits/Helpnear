@@ -5,6 +5,7 @@
 // Secrets: FIREBASE_SA_JSON, TURNSTILE_SECRET. See worker/README.md.
 import { signJwt } from './jwt'
 import { runPolicy } from './policy'
+import { handleAngles, handleGenerate, handleImages, handlePublish, runArticleJob } from './articles'
 import { docsUrl, fsBool, fsFetch, fsString, getAccessToken, parseServiceAccount, verifyIdToken, type Env, type FsFields, type ServiceAccount } from './google'
 
 const APPCHECK_AUDIENCE = 'https://firebaseappcheck.googleapis.com/google.firebase.appcheck.v1.TokenExchangeService'
@@ -196,6 +197,7 @@ async function handleRunPolicy(req: Request, env: Env, cors: Record<string, stri
 
 export default {
   async scheduled(_event: unknown, env: Env, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<void> {
+    ctx.waitUntil(runArticleJob(env).then((r) => { if (r.ran) console.log('article job', JSON.stringify(r)) }).catch((e) => console.error('article job failed', e instanceof Error ? e.message : e)))
     ctx.waitUntil(runPolicy(env).then((r) => console.log('fair-use run', JSON.stringify(r))).catch((e) => console.error('fair-use run failed', e instanceof Error ? e.message : e)))
   },
   async fetch(req: Request, env: Env): Promise<Response> {
@@ -208,6 +210,10 @@ export default {
       if (path === '/push') return await handlePush(req, env, cors)
       if (path === '/push-new') return await handlePushNew(req, env, cors)
       if (path === '/run-policy') return await handleRunPolicy(req, env, cors)
+      if (path === '/articles/angles') return await handleAngles(req, env, cors)
+      if (path === '/articles/generate') return await handleGenerate(req, env, cors)
+      if (path === '/articles/publish') return await handlePublish(req, env, cors)
+      if (path === '/articles/images') return await handleImages(req, env, cors)
       return json({ error: 'not found' }, 404, cors)
     } catch (e) {
       console.error('worker error', e instanceof Error ? e.message : e)

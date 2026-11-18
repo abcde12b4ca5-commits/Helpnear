@@ -66,11 +66,11 @@ test.describe('sign up and sign in forms (client-side validation)', () => {
     expect(await page.getByLabel('Password').evaluate((el: HTMLInputElement) => !el.validity.valid)).toBe(true)
   })
 
-  test('?role=worker preselects "Find work", and the default is "Hire someone"', async ({ page }) => {
+  test('?role=worker preselects "I’m a worker", and the default is "I’m looking for a worker"', async ({ page }) => {
     await page.goto('/signup?role=worker')
-    await expect(page.getByLabel('Find work')).toBeChecked()
+    await expect(page.getByLabel('I’m a worker')).toBeChecked()
     await page.goto('/signup')
-    await expect(page.getByLabel('Hire someone')).toBeChecked()
+    await expect(page.getByLabel('I’m looking for a worker')).toBeChecked()
   })
 
   test('sign-up links to the Terms and Privacy Policy in a new tab', async ({ page }) => {

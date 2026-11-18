@@ -6,6 +6,10 @@ compatibility_date = "2025-01-01"
 [triggers]
 crons = ["*/15 * * * *"]
 
+# Workers AI writes the blog drafts (free daily allowance, no key). Admin > Articles uses it.
+[ai]
+binding = "AI"
+
 [vars]
 FIREBASE_PROJECT_ID = "REPLACE_WITH_FIREBASE_PROJECT_ID"
 # Web app id from Firebase console > Project settings > Your apps (looks like 1:1234567890:web:abcdef)
@@ -15,3 +19,6 @@ ALLOWED_ORIGINS = "http://localhost:5173,https://REPLACE.pages.dev"
 SITE_URL = "https://REPLACE.pages.dev"
 
 # Secrets (never commit): wrangler secret put FIREBASE_SA_JSON ; wrangler secret put TURNSTILE_SECRET
+
+# Optional (blog): wrangler secret put PEXELS_API_KEY   (free key from pexels.com/api, for stock photos)
+# Optional (blog): INDEXNOW_KEY = "<the key in public/<key>.txt>"   so new articles are announced to Bing immediately
