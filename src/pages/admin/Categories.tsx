@@ -8,6 +8,7 @@ import { getCategories } from '../../lib/catalog'
 import { friendlyError } from '../../lib/errors'
 import { ErrorBox, Spinner, btn, btnGhost, card, input } from '../../components/ui'
 import type { Category } from '../../lib/types'
+import starter from '../../config/starter-categories.json'
 
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean)
 const states = (s: string) => [...new Set(s.split(/[ ,]+/).map((x) => x.trim().toUpperCase()).filter((x) => /^[A-Z]{2}$/.test(x)))]
@@ -59,10 +60,27 @@ export default function Categories() {
     const { id, ...data } = blank(newId, newName.trim())
     try { await adminWrite(user.uid, 'create-category', `categories/${id}`, (b) => b.set(doc(db, `categories/${id}`), data)); setNewId(''); setNewName(''); reload() } catch (e) { setErr(friendlyError(e)) }
   }
+  const [info, setInfo] = useState<string | null>(null)
+  const missing = cats ? (starter as Category[]).filter((s) => !cats.some((c) => c.id === s.id)) : []
+  async function addMissing() {
+    if (!user || missing.length === 0) return
+    setErr(null); setInfo(null)
+    try {
+      await adminWrite(user.uid, 'add-starter-services', `categories/(${missing.length})`, (b) => missing.forEach(({ id, ...data }) => b.set(doc(db, `categories/${id}`), data)))
+      setInfo(`Added ${missing.length} services.`); reload()
+    } catch (e) { setErr(friendlyError(e)) }
+  }
   if (!cats) return err ? <ErrorBox message={err} /> : <Spinner />
   return (
     <div className="space-y-4">
       <ErrorBox message={err} />
+      {missing.length > 0 && (
+        <div className={`${card} space-y-2`}>
+          <p className="text-sm"><strong>{missing.length} standard services are not in your database yet</strong>: {missing.map((m) => m.name).join(', ')}.</p>
+          <button className={btn} onClick={addMissing}>Add the {missing.length} missing services</button>
+        </div>
+      )}
+      {info && <p className="text-sm text-ok" role="status">{info}</p>}
       <div className="flex flex-wrap gap-2">
         <input aria-label="New category id" className={`${input} w-48`} placeholder="new-category-id" value={newId} onChange={(e) => setNewId(e.target.value)} />
         <input aria-label="New category name" className={`${input} w-56`} placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />

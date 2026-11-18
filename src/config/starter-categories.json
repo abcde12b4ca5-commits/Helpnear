@@ -1,0 +1,555 @@
+[
+ {
+  "id": "house-cleaning",
+  "name": "House cleaning",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Regular cleaning",
+   "Deep cleaning",
+   "Move-in/move-out cleaning",
+   "Airbnb turnover cleaning"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "window-cleaning",
+  "name": "Window cleaning",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Interior and exterior window cleaning",
+   "Screen and track cleaning"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "pressure-washing",
+  "name": "Pressure washing",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Driveways, patios, siding, fences"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "carpet-upholstery-cleaning",
+  "name": "Carpet and upholstery cleaning",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Carpet, rug and upholstery cleaning"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "painting",
+  "name": "Painting",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Interior painting",
+   "Exterior painting"
+  ],
+  "blockedKeywords": [
+   "wiring",
+   "breaker",
+   "gas line",
+   "refrigerant",
+   "hvac"
+  ],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "handyman",
+  "name": "Handyman (general repairs)",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Minor non-regulated repairs",
+   "Door and cabinet adjustments",
+   "Caulking, patching, small fixes"
+  ],
+  "blockedKeywords": [
+   "wiring",
+   "breaker",
+   "panel",
+   "circuit",
+   "outlet",
+   "plumbing",
+   "pipe",
+   "water heater",
+   "gas line",
+   "ac",
+   "hvac",
+   "furnace",
+   "refrigerant",
+   "irrigation",
+   "sprinkler"
+  ],
+  "notes": "Regulated work (electrical, plumbing, HVAC, gas, irrigation) is not allowed.",
+  "disabledStates": []
+ },
+ {
+  "id": "furniture-assembly",
+  "name": "Furniture assembly",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Assembling flat-pack and ready-to-assemble furniture"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "tv-shelf-mounting",
+  "name": "TV and shelf mounting",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Wall mounting TVs, shelves, mirrors",
+   "No new electrical wiring"
+  ],
+  "blockedKeywords": [
+   "wiring",
+   "breaker",
+   "gas line",
+   "refrigerant",
+   "hvac"
+  ],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "drywall-repair",
+  "name": "Drywall repair and patching",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Patching holes, texture matching, minor repair"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "flooring-installation",
+  "name": "Flooring installation",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Laminate, vinyl, tile"
+  ],
+  "blockedKeywords": [],
+  "notes": "Local permits may apply. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "fence-work",
+  "name": "Fence repair and installation",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Fence repair",
+   "Fence installation"
+  ],
+  "blockedKeywords": [],
+  "notes": "Local permits may apply. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "deck-work",
+  "name": "Deck repair and building",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Deck repair",
+   "Deck building"
+  ],
+  "blockedKeywords": [],
+  "notes": "Local permits may apply. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "gutter-cleaning",
+  "name": "Gutter cleaning",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Gutter cleaning and debris removal"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "lawn-care",
+  "name": "Lawn mowing and yard maintenance",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Mowing, edging, trimming"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "yard-cleanup",
+  "name": "Yard cleanup",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Leaves, brush, general cleanup. No tree removal."
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "move-out-cleaning",
+  "name": "Move-out and Airbnb cleaning",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Move-in/move-out cleaning",
+   "Airbnb turnover cleaning"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "garage-cleanout",
+  "name": "Garage cleanout and organizing",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Sorting and organizing",
+   "Cleanout of items you already own"
+  ],
+  "blockedKeywords": [
+   "hazardous",
+   "asbestos",
+   "chemicals"
+  ],
+  "notes": "Hauling away waste is not included.",
+  "disabledStates": []
+ },
+ {
+  "id": "home-organizing",
+  "name": "Home organizing",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Closets, pantries and rooms"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "pet-sitting",
+  "name": "Pet sitting",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "In-home pet sitting",
+   "Drop-in visits"
+  ],
+  "blockedKeywords": [],
+  "notes": "Local rules and liability apply. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "dog-walking",
+  "name": "Dog walking",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Dog walking"
+  ],
+  "blockedKeywords": [],
+  "notes": "Follow local leash rules. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "car-detailing",
+  "name": "Mobile car detailing",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Washing, interior cleaning"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "holiday-lights",
+  "name": "Holiday light installation",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Hanging decorative lights"
+  ],
+  "blockedKeywords": [
+   "wiring",
+   "breaker",
+   "gas line",
+   "refrigerant",
+   "hvac"
+  ],
+  "notes": "Ladder safety and liability apply.",
+  "disabledStates": []
+ },
+ {
+  "id": "landscaping-mulching",
+  "name": "Landscaping and mulching",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Mulching, planting, bed edging"
+  ],
+  "blockedKeywords": [
+   "irrigation",
+   "sprinkler",
+   "tree removal"
+  ],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "snow-removal",
+  "name": "Snow removal",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Shoveling driveways and walks"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "errand-running",
+  "name": "Errands and personal shopping",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Grocery pickup and shopping",
+   "Picking up and dropping off items"
+  ],
+  "blockedKeywords": [
+   "alcohol",
+   "prescription",
+   "cash withdrawal"
+  ],
+  "notes": "Workers use their own vehicle. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "laundry-help",
+  "name": "Laundry, folding and ironing",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Washing, folding and ironing clothes"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "trash-bin-cleaning",
+  "name": "Trash bin cleaning",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Washing and sanitizing trash and recycling bins"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "event-setup-help",
+  "name": "Event setup and party help",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Setting up tables, chairs and decorations",
+   "Cleanup after the event"
+  ],
+  "blockedKeywords": [
+   "alcohol",
+   "bartend",
+   "childcare"
+  ],
+  "notes": "No alcohol service or childcare. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "photography",
+  "name": "Photography for events and portraits",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Event, family and product photography"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "home-tech-help",
+  "name": "Home tech help",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Wi-Fi, printer, TV and smart-device setup",
+   "Teaching how to use phones and computers"
+  ],
+  "blockedKeywords": [
+   "wiring",
+   "breaker",
+   "gas line",
+   "refrigerant",
+   "hvac"
+  ],
+  "notes": "No new in-wall wiring.",
+  "disabledStates": []
+ },
+ {
+  "id": "furniture-refinishing",
+  "name": "Furniture painting and refinishing",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Sanding, painting, staining and sealing furniture"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "bike-help",
+  "name": "Bike assembly and tune-ups",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Assembling and adjusting bicycles",
+   "Basic tune-ups and flat repair"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "house-sitting",
+  "name": "House sitting and plant care",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Plant watering, mail pickup and home check-ins"
+  ],
+  "blockedKeywords": [],
+  "notes": "Share keys only with people you trust. Not verified by Helpnear.",
+  "disabledStates": []
+ },
+ {
+  "id": "gardening-planting",
+  "name": "Gardening and planting",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Planting, weeding and garden bed care"
+  ],
+  "blockedKeywords": [
+   "pesticide",
+   "herbicide",
+   "tree removal",
+   "irrigation",
+   "sprinkler"
+  ],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "sewing-alterations",
+  "name": "Sewing and clothing alterations",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Hemming, repairs and clothing alterations"
+  ],
+  "blockedKeywords": [],
+  "notes": "",
+  "disabledStates": []
+ },
+ {
+  "id": "blinds-curtains",
+  "name": "Blinds and curtain installation",
+  "enabled": true,
+  "riskLevel": "low",
+  "requiresLicenseCheck": false,
+  "allowedServices": [
+   "Hanging curtain rods, blinds and shades"
+  ],
+  "blockedKeywords": [
+   "wiring",
+   "breaker",
+   "gas line",
+   "refrigerant",
+   "hvac"
+  ],
+  "notes": "",
+  "disabledStates": []
+ }
+]
