@@ -236,3 +236,11 @@ describe('blog', () => {
     expect(rules).toMatch(/match \/articleSettings\/\{docId\} \{\s+allow read, write: if isAdmin\(\);/)
   })
 })
+
+describe('starter services list used by the Admin button', () => {
+  it('is a copy of the enabled services in the seed, so the button adds exactly what the site shows', async () => {
+    const { categories } = await import('../../firebase/seed/data.mjs')
+    const copy = JSON.parse(readFileSync('src/config/starter-categories.json', 'utf8')) as { id: string }[]
+    expect(copy).toEqual(JSON.parse(JSON.stringify(categories.filter((c) => c.enabled))))
+  })
+})
