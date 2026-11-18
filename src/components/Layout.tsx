@@ -1,4 +1,5 @@
 import LogoMark from './LogoMark'
+import ThemeToggle from './ThemeToggle'
 import { useScrollFx } from '../lib/useScrollFx'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
@@ -89,7 +90,9 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="hidden items-center gap-1 md:flex">
             <a href="/services/" className="hn-link">Services</a>
             <NavLink to="/how-it-works" className={link}>How it works</NavLink>
+            <a href="/blog" className="hn-link">Blog</a>
             {links(link)}
+            <ThemeToggle />
             {user
               ? <><span className="hn-av mx-2" aria-hidden="true">{(profile?.displayName ?? user.email ?? '?').charAt(0).toUpperCase()}</span><button className={btnGhost} onClick={() => signOut()}>Sign out</button></>
               : (<>
@@ -98,6 +101,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <Link to="/signup?role=worker" className="hn-btn hn-y ml-2">Join as a worker</Link>
               </>)}
           </div>
+          <span className="md:hidden"><ThemeToggle /></span>
           <button
             type="button"
             className="grid h-10 w-10 place-items-center rounded-xl border border-bd bg-sf text-xl md:hidden"
@@ -111,6 +115,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div id="mobile-menu" className="hn-w space-y-1 pb-4 md:hidden">
             <a href="/services/" className="block rounded-xl px-3 py-2 text-base font-semibold text-tx hover:bg-sf">Services</a>
             <NavLink to="/how-it-works" className={mobileLink}>How it works</NavLink>
+                <a href="/blog" className="block rounded-xl px-3 py-2 text-base font-semibold text-tx hover:bg-sf">Blog</a>
             {links(mobileLink)}
             {user
               ? <button className={`${btnGhost} mt-2 w-full`} onClick={() => signOut()}>Sign out</button>

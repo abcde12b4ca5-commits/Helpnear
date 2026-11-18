@@ -48,8 +48,8 @@ export default function Signup() {
       <fieldset>
         <legend className="sr-only">I want to</legend>
         <div className="hn-seg">
-          <label><input type="radio" name="role" className="sr-only" checked={role === 'client'} onChange={() => setRole('client')} />Hire someone</label>
-          <label><input type="radio" name="role" className="sr-only" checked={role === 'worker'} onChange={() => setRole('worker')} />Find work</label>
+          <label><input type="radio" name="role" className="sr-only" checked={role === 'worker'} onChange={() => setRole('worker')} />I’m a worker</label>
+          <label><input type="radio" name="role" className="sr-only" checked={role === 'client'} onChange={() => setRole('client')} />I’m looking for a worker</label>
         </div>
       </fieldset>
       <Field label="Name" htmlFor="name" hint="First name and last initial is fine."><input id="name" required maxLength={60} className={input} value={displayName} onChange={(e) => setDisplayName(e.target.value)} /></Field>

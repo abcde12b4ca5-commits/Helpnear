@@ -12,10 +12,11 @@ import Disputes from './admin/Disputes'
 import Users from './admin/Users'
 import LegalEditor from './admin/LegalEditor'
 import AuditLog from './admin/AuditLog'
+import Articles from './admin/Articles'
 
 const TABS = [
   ['Dashboard', Dashboard], ['Settings', Settings], ['Categories', Categories], ['Coverage', Coverage],
-  ['Moderation', Moderation], ['Disputes', Disputes], ['Users', Users], ['Legal', LegalEditor], ['Audit log', AuditLog],
+  ['Moderation', Moderation], ['Disputes', Disputes], ['Users', Users], ['Articles', Articles], ['Legal', LegalEditor], ['Audit log', AuditLog],
 ] as const
 
 export default function Admin() {
