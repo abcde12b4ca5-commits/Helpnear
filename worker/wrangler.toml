@@ -10,13 +10,12 @@ crons = ["*/15 * * * *"]
 [ai]
 binding = "AI"
 
-[vars]
-FIREBASE_PROJECT_ID = "REPLACE_WITH_FIREBASE_PROJECT_ID"
-# Web app id from Firebase console > Project settings > Your apps (looks like 1:1234567890:web:abcdef)
-FIREBASE_APP_ID = "REPLACE_WITH_FIREBASE_WEB_APP_ID"
-# Comma separated browser origins allowed to call this worker
-ALLOWED_ORIGINS = "http://localhost:5173,https://REPLACE.pages.dev"
-SITE_URL = "https://REPLACE.pages.dev"
+# Variables (FIREBASE_PROJECT_ID, FIREBASE_APP_ID, ALLOWED_ORIGINS, SITE_URL) are NOT kept in this file any more: they live on the worker itself
+# (Cloudflare dashboard > Workers & Pages > helpnear-worker > Settings > Variables), and `keep_vars` makes every deploy, including the automatic
+# one from GitHub, leave them untouched. Set them once there. Values:
+#   FIREBASE_PROJECT_ID = your Firebase project id        FIREBASE_APP_ID = Firebase console > Project settings > Your apps (1:123:web:abc)
+#   ALLOWED_ORIGINS = https://your-site.pages.dev          SITE_URL = https://your-site.pages.dev
+keep_vars = true
 
 # Secrets (never commit): wrangler secret put FIREBASE_SA_JSON ; wrangler secret put TURNSTILE_SECRET
 

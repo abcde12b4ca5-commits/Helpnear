@@ -7,7 +7,7 @@
 - Pictures: free Pexels photos with the photographer credit; video: a YouTube link (privacy-enhanced embed).
 
 ## One-time setup
-1. **Worker** (`worker/`): `wrangler deploy` (the `[ai]` binding is already in `wrangler.toml`). Workers AI has a free daily allowance (10,000 "neurons"; about 20 articles a day with the default model). Optional: `wrangler secret put PEXELS_API_KEY` (free key at pexels.com/api) and set `INDEXNOW_KEY` in `wrangler.toml` to the key in `public/<key>.txt`.
+1. **Worker** (`worker/`): deploy it with `wrangler deploy`, or without a terminal: Cloudflare dashboard > Workers & Pages > helpnear-worker > Settings > Build > connect the GitHub repo (root directory `worker`, deploy command `npx wrangler deploy`); every push then updates the worker. Variables stay as they are (`keep_vars`). The `[ai]` binding is already in `wrangler.toml`. Workers AI has a free daily allowance (10,000 "neurons"; about 20 articles a day with the default model). Optional: `wrangler secret put PEXELS_API_KEY` (free key at pexels.com/api) and set `INDEXNOW_KEY` in `wrangler.toml` to the key in `public/<key>.txt`.
 2. **Firestore rules**: `firebase deploy --only firestore:rules` (new `articles` and `articleSettings` rules).
 3. **Cloudflare Pages**: nothing to configure. The `functions/` folder is picked up on the next deploy. If your Firebase project id is not `helpnear-48ff5`, add the Pages variable `FIREBASE_PROJECT_ID`.
 4. Open Admin > Articles > Automatic articles, choose the mode and the period, Save.
