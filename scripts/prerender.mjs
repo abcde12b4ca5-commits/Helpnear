@@ -203,7 +203,7 @@ ${(DETAIL[cat.id] ?? []).map((items, i) => `<h2>${SECTION_TITLES[i]}</h2><ul>${i
 }
 
 await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
-await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /profile\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nSitemap: ${SITE}/sitemap-blog.xml\nAgentmap: ${SITE}/.well-known/ard.json\n`)
+await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /profile\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nSitemap: ${SITE}/sitemap-blog.xml\n`)
 await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers anywhere in the United States.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
 // Template for the blog pages that functions/ renders at the edge: same head, menu, footer and styles as every static page.
 // The .tpl extension keeps it out of the sitemap and is scanned by scripts/headers.mjs, so the inline code in it is allowed by the CSP.
