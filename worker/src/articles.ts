@@ -1,7 +1,7 @@
 // Blog articles: AI drafting (Cloudflare Workers AI, no key needed), stock photo lookup (Pexels, optional key), publishing, and the daily schedule.
 // Everything an admin triggers is checked against admins/{uid} first. The schedule only ever writes DRAFTS unless the admin chose "auto-publish".
 import { docsUrl, fsFetch, fsNum, fsString, fsTime, parseServiceAccount, verifyIdToken, type Env, type FsFields } from './google'
-import { buildAnglesPrompt, buildArticlePrompt, findSimilar, makeSlug, parseAngles, parseArticleOutput, uniqueSlug, wordCount, type ArticleFields, type ServiceLink } from '../../src/shared/articles'
+import { buildAnglesPrompt, buildArticlePrompt, buildKeywordPrompt, checkArticle, fallbackKeyword, findSimilar, gatePasses, makeSlug, MAX_PER_TITLE, parseAngles, parseArticleOutput, parseKeyword, parseQueueLine, uniqueSlug, wordCount, type ArticleFields, type QueueItem, type ServiceLink } from '../../src/shared/articles'
 
 export const DEFAULT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
 const DAY = 86_400_000
@@ -23,13 +23,23 @@ const encFields = (o: Record<string, V>) => Object.fromEntries(Object.entries(o)
 const fsStrings = (f: FsFields | undefined, key: string): string[] => ((f?.[key] as { arrayValue?: { values?: { stringValue?: string }[] } } | undefined)?.arrayValue?.values ?? []).map((x) => x.stringValue ?? '').filter(Boolean)
 const idOf = (name: string) => name.slice(name.lastIndexOf('/') + 1)
 
-export interface ArticleSettings { mode: 'off' | 'draft' | 'publish'; everyDays: number; topics: string[]; lastRunAt: number; lastError: string }
+export type ArticleMode = 'off' | 'draft' | 'checked' | 'publish'
+/** perDay articles every everyDays days (1 to 5 per day, or 1 to 5 per 2, 3, 7 days...). perTitle is the default number of articles written for one title of the queue. */
+export interface ArticleSettings { mode: ArticleMode; everyDays: number; perDay: number; perTitle: number; topics: string[]; headProgress: number; headFailures: number; lastRunAt: number; lastError: string }
+const clampInt = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(n)))
 export function readSettings(f: FsFields | undefined): ArticleSettings {
   const mode = fsString(f, 'mode')
-  return { mode: mode === 'draft' || mode === 'publish' ? mode : 'off', everyDays: Math.min(30, Math.max(1, fsNum(f, 'everyDays', 1))), topics: fsStrings(f, 'topics'), lastRunAt: fsTime(f, 'lastRunAt'), lastError: fsString(f, 'lastError') }
+  return {
+    mode: mode === 'draft' || mode === 'checked' || mode === 'publish' ? mode : 'off',
+    everyDays: clampInt(fsNum(f, 'everyDays', 1), 1, 30), perDay: clampInt(fsNum(f, 'perDay', 1), 1, 5), perTitle: clampInt(fsNum(f, 'perTitle', 1), 1, MAX_PER_TITLE),
+    topics: fsStrings(f, 'topics'), headProgress: clampInt(fsNum(f, 'headProgress', 0), 0, 99), headFailures: clampInt(fsNum(f, 'headFailures', 0), 0, 99),
+    lastRunAt: fsTime(f, 'lastRunAt'), lastError: fsString(f, 'lastError'),
+  }
 }
-/** Due when enough days have passed since the last run (a 15-minute margin, because the schedule ticks every 15 minutes). */
-export const isDue = (s: ArticleSettings, now: number): boolean => s.mode !== 'off' && now - s.lastRunAt >= s.everyDays * DAY - 15 * 60_000
+/** Time between two articles: the period split evenly (3 per day = every 8 hours). */
+export const intervalMs = (s: ArticleSettings): number => (s.everyDays * DAY) / s.perDay
+/** Due when enough time has passed since the last run (a 15-minute margin, because the schedule ticks every 15 minutes). */
+export const isDue = (s: ArticleSettings, now: number): boolean => s.mode !== 'off' && now - s.lastRunAt >= intervalMs(s) - 15 * 60_000
 
 // ---------- AI ----------
 async function runAI(env: Env, system: string, user: string, maxTokens: number): Promise<string> {
@@ -167,35 +177,81 @@ export async function handleImages(req: Request, env: Env, cors: Cors): Promise<
 }
 
 // ---------- the schedule ----------
-export interface JobResult { ran: boolean; reason?: string; id?: string; published?: boolean }
-export async function runArticleJob(env: Env, now = Date.now()): Promise<JobResult> {
+export interface JobResult { ran: boolean; reason?: string; id?: string; title?: string; published?: boolean }
+async function fetchSettings(env: Env): Promise<ArticleSettings | null> {
+  const res = await fsFetch(parseServiceAccount(env), `${docsUrl(env.FIREBASE_PROJECT_ID)}/articleSettings/main`)
+  return res.ok ? readSettings(((await res.json()) as { fields?: FsFields }).fields) : null
+}
+/** The search phrase for a queue title that has none: the AI proposes one, with a plain fallback so a bad answer never blocks the queue. */
+async function keywordFor(env: Env, title: string): Promise<string> {
+  try { const p = buildKeywordPrompt({ title, site: siteName(env) }); const k = parseKeyword(await runAI(env, p.system, p.user, 40)); if (k) return k } catch { /* use the fallback */ }
+  return fallbackKeyword(title)
+}
+/** Writes ONE article per call. Takes the next title of the queue (or, when the queue is empty, lets the AI pick a topic), spreads several articles of one title over different angles, and saves a draft or publishes according to the chosen mode. `force` skips the timer (the admin's "write one now" button). */
+export async function runArticleJob(env: Env, now = Date.now(), opts: { force?: boolean } = {}): Promise<JobResult> {
   if (!env.AI) return { ran: false, reason: 'AI binding missing' }
-  const sa = parseServiceAccount(env)
-  const res = await fsFetch(sa, `${docsUrl(env.FIREBASE_PROJECT_ID)}/articleSettings/main`)
-  if (!res.ok) return { ran: false, reason: 'no settings yet' }
-  const settings = readSettings(((await res.json()) as { fields?: FsFields }).fields)
-  if (!isDue(settings, now)) return { ran: false, reason: settings.mode === 'off' ? 'off' : 'not due' }
+  const settings = await fetchSettings(env)
+  if (!settings) return { ran: false, reason: 'no settings yet' }
+  if (settings.mode === 'off') return { ran: false, reason: 'off' }
+  if (!opts.force && !isDue(settings, now)) return { ran: false, reason: 'not due' }
   await patchDoc(env, 'articleSettings/main', { lastRunAt: new Date(now) }) // claim the slot first, so overlapping runs cannot write two articles
+  // The first usable line of the queue (lines that cannot be read are dropped on the way).
+  let skip = 0
+  let head: QueueItem | null = null
+  while (skip < settings.topics.length && !(head = parseQueueLine(settings.topics[skip]))) skip++
+  const progress = skip === 0 ? settings.headProgress : 0
+  const headLine = settings.topics[0]
   try {
     const ctx = await loadContext(env)
-    let topic = settings.topics[0]
-    if (!topic) {
-      const names = ctx.services.map((s) => s.name)
-      const t = await runAI(env, 'You are an SEO editor for a U.S. home-services marketplace.', `Suggest ONE new topic for a helpful blog post about home or yard work that a neighbor might need help with. Pick from or near: ${names.join(', ')}.\nIt must not overlap these existing titles:\n${ctx.otherTitles.slice(0, 80).map((x) => `- ${x}`).join('\n') || '(none yet)'}\nAnswer with the topic only, under 12 words.`, 60)
-      topic = t.trim().split('\n')[0].replace(/^["'\-\s]+|["'\s]+$/g, '').slice(0, 160)
+    let spec: { title: string; keyword: string; intent: string }
+    if (head && progress === 0) {
+      spec = { title: head.title, keyword: head.keyword || await keywordFor(env, head.title), intent: '' }
+    } else {
+      // The same title again (a different angle), or no queue at all (the AI picks a topic).
+      let topic = head?.title
+      if (!topic) {
+        const names = ctx.services.map((s) => s.name)
+        const t = await runAI(env, 'You are an SEO editor for a U.S. home-services marketplace.', `Suggest ONE new topic for a helpful blog post about home or yard work that a neighbor might need help with. Pick from or near: ${names.join(', ')}.\nIt must not overlap these existing titles:\n${ctx.otherTitles.slice(0, 80).map((x) => `- ${x}`).join('\n') || '(none yet)'}\nAnswer with the topic only, under 12 words.`, 60)
+        topic = t.trim().split('\n')[0].replace(/^["'\-\s]+|["'\s]+$/g, '').slice(0, 160)
+      }
+      const ap = buildAnglesPrompt({ topic, count: 1, existingTitles: ctx.otherTitles, site: siteName(env) })
+      const angle = parseAngles(await runAI(env, ap.system, ap.user, 400))[0]
+      if (!angle) throw new Error(`could not plan an article for "${topic}"`)
+      spec = angle
     }
-    const ap = buildAnglesPrompt({ topic, count: 1, existingTitles: ctx.otherTitles, site: siteName(env) })
-    const angle = parseAngles(await runAI(env, ap.system, ap.user, 400))[0]
-    if (!angle) throw new Error('could not plan an article for the topic')
-    const draft = await composeArticle(env, angle, ctx)
-    const publish = settings.mode === 'publish' && findSimilar(draft.title, ctx.otherTitles, 0.7).length === 0
+    const draft = await composeArticle(env, spec, ctx)
+    const similar = findSimilar(draft.title, ctx.otherTitles, 0.7).length > 0
+    const allowed = settings.mode === 'publish' || (settings.mode === 'checked' && gatePasses(checkArticle(draft, ctx.otherTitles)))
+    const publish = allowed && !similar
     const id = await saveDraft(env, draft, publish ? 'published' : 'draft', 'ai', now)
     if (publish) await pingIndexNow(env, draft.slug)
-    await patchDoc(env, 'articleSettings/main', { lastError: '', ...(settings.topics.length ? { topics: settings.topics.slice(1) } : {}) })
-    return { ran: true, id, published: publish }
+    // Move the queue on. Read it again first: the admin may have edited the list while the article was being written.
+    const fresh = (await fetchSettings(env)) ?? settings
+    const patch: Record<string, V> = { lastError: '', headFailures: 0 }
+    if (fresh.topics[0] === headLine && (head || skip > 0)) {
+      const finished = head ? progress + 1 >= (head.count ?? settings.perTitle) : true
+      patch.topics = fresh.topics.slice(skip + (head && finished ? 1 : 0))
+      patch.headProgress = head && !finished ? progress + 1 : 0
+    }
+    await patchDoc(env, 'articleSettings/main', patch)
+    return { ran: true, id, title: draft.title, published: publish }
   } catch (e) {
-    // try again in about 2 hours instead of waiting a whole period
-    await patchDoc(env, 'articleSettings/main', { lastRunAt: new Date(now - settings.everyDays * DAY + 2 * 3_600_000), lastError: (e instanceof Error ? e.message : 'failed').slice(0, 300) }).catch(() => undefined)
-    return { ran: false, reason: e instanceof Error ? e.message : 'failed' }
+    const message = e instanceof Error ? e.message : 'failed'
+    // Try again soon instead of waiting a whole interval; after 3 failures on the same title, skip it so one bad title cannot block the queue.
+    const interval = intervalMs(settings)
+    const patch: Record<string, V> = { lastRunAt: new Date(now - interval + Math.min(2 * 3_600_000, interval / 2)), lastError: message.slice(0, 300) }
+    if (head) {
+      const failures = (skip === 0 ? settings.headFailures : 0) + 1
+      if (failures >= 3) {
+        const fresh = await fetchSettings(env).catch(() => null)
+        if (fresh && fresh.topics[0] === headLine) { patch.topics = fresh.topics.slice(skip + 1); patch.headProgress = 0; patch.headFailures = 0; patch.lastError = `Skipped "${head.title}" after 3 failed tries: ${message}`.slice(0, 300) }
+      } else patch.headFailures = failures
+    }
+    await patchDoc(env, 'articleSettings/main', patch).catch(() => undefined)
+    return { ran: false, reason: message }
   }
+}
+export async function handleRunNow(req: Request, env: Env, cors: Cors): Promise<Response> {
+  const denied = await requireAdmin(req, env, cors); if (denied) return denied
+  try { return json(await runArticleJob(env, Date.now(), { force: true }), 200, cors) } catch (e) { return fail(e, cors) }
 }

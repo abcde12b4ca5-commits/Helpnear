@@ -5,7 +5,7 @@
 // Secrets: FIREBASE_SA_JSON, TURNSTILE_SECRET. See worker/README.md.
 import { signJwt } from './jwt'
 import { runPolicy } from './policy'
-import { handleAngles, handleGenerate, handleImages, handlePublish, runArticleJob } from './articles'
+import { handleAngles, handleGenerate, handleImages, handlePublish, handleRunNow, runArticleJob } from './articles'
 import { docsUrl, fsBool, fsFetch, fsString, getAccessToken, parseServiceAccount, verifyIdToken, type Env, type FsFields, type ServiceAccount } from './google'
 
 const APPCHECK_AUDIENCE = 'https://firebaseappcheck.googleapis.com/google.firebase.appcheck.v1.TokenExchangeService'
@@ -214,6 +214,7 @@ export default {
       if (path === '/articles/generate') return await handleGenerate(req, env, cors)
       if (path === '/articles/publish') return await handlePublish(req, env, cors)
       if (path === '/articles/images') return await handleImages(req, env, cors)
+      if (path === '/articles/run-now') return await handleRunNow(req, env, cors)
       return json({ error: 'not found' }, 404, cors)
     } catch (e) {
       console.error('worker error', e instanceof Error ? e.message : e)

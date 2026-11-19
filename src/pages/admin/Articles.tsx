@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { callWorker, deleteArticle, EMPTY_ARTICLE, getArticleSettings, listArticles, saveArticle, saveArticleSettings, type Angle, type ArticleDoc, type ArticleSettings, type Photo } from '../../lib/articles'
-import { checkArticle, makeSlug, renderMarkdown, type ArticleFields } from '../../shared/articles'
+import { callWorker, deleteArticle, EMPTY_ARTICLE, getArticleSettings, listArticles, saveArticle, saveArticleSettings, type Angle, type ArticleDoc, type ArticleSettings, type Photo, type RunNowResult } from '../../lib/articles'
+import { checkArticle, makeSlug, MAX_PER_TITLE, MAX_QUEUE, parseQueue, renderMarkdown, type ArticleFields } from '../../shared/articles'
 import { friendlyError } from '../../lib/errors'
 import { ErrorBox, Field, Pill, btn, btnGhost, card, input } from '../../components/ui'
 
@@ -43,43 +43,81 @@ export default function Articles() {
   )
 }
 
+const PERIODS: [number, string][] = [[1, 'day'], [2, '2 days'], [3, '3 days'], [7, 'week']]
 function SettingsPanel() {
   const [s, setS] = useState<ArticleSettings | null>(null)
+  const [saved, setSaved] = useState<{ settings: ArticleSettings; topics: string } | null>(null)
   const [topics, setTopics] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  useEffect(() => { getArticleSettings().then((x) => { setS(x); setTopics(x.topics.join('\n')) }).catch((e) => setErr(friendlyError(e))) }, [])
-  if (!s) return <ErrorBox message={err} />
+  const [busy, setBusy] = useState<string | null>(null)
+  const load = useCallback(() => getArticleSettings().then((x) => { setS(x); setTopics(x.topics.join('\n')); setSaved({ settings: x, topics: x.topics.join('\n') }) }).catch((e) => setErr(friendlyError(e))), [])
+  useEffect(() => { void load() }, [load])
+  const queue = useMemo(() => parseQueue(topics), [topics])
+  if (!s || !saved) return <ErrorBox message={err} />
+  const dirty = topics !== saved.topics || (['mode', 'everyDays', 'perDay', 'perTitle'] as const).some((k) => s[k] !== saved.settings[k])
+  const total = queue.items.reduce((n, i) => n + (i.count ?? s.perTitle), 0)
+  const perPeriod = s.perDay / s.everyDays
+  const days = Math.ceil(total / perPeriod)
+  const lines = topics.split('\n').map((t) => t.trim()).filter(Boolean)
   const save = async () => {
     setErr(null); setMsg(null)
-    try { await saveArticleSettings({ ...s, topics: topics.split('\n').map((t) => t.trim()).filter(Boolean).slice(0, 50) }); setMsg('Saved.') } catch (e) { setErr(friendlyError(e)) }
+    if (lines.length > MAX_QUEUE) { setErr(`The list can hold ${MAX_QUEUE} titles. Remove ${lines.length - MAX_QUEUE}.`); return }
+    try {
+      await saveArticleSettings({ ...s, topics: lines }, lines[0] !== saved.topics.split('\n').map((t) => t.trim()).filter(Boolean)[0])
+      setMsg('Saved.'); await load()
+    } catch (e) { setErr(friendlyError(e)) }
+  }
+  const runNow = async () => {
+    setErr(null); setMsg(null); setBusy('Writing one article now… this takes up to a minute.')
+    try {
+      const r = await callWorker<RunNowResult>('/articles/run-now', {})
+      setMsg(r.ran ? `Done: “${r.title}” was ${r.published ? 'published' : 'saved as a draft'}.` : r.reason === 'off' ? 'Choose a mode other than Off first.' : `Nothing was written: ${r.reason}`)
+      await load()
+    } catch (e) { setErr(e instanceof Error ? e.message : friendlyError(e)) } finally { setBusy(null) }
   }
   return (
     <section className={`${card} space-y-3`} aria-labelledby="art-auto">
       <h2 id="art-auto" className="text-xl">Automatic articles</h2>
-      <p className="text-sm text-mu">The worker writes a new article on a schedule using the free Cloudflare AI. Choose “drafts” so you read each one before it goes live.</p>
+      <p className="text-sm text-mu">The worker writes articles by itself with the free Cloudflare AI, one after the other, spread evenly over the day. Paste your titles below and it works through the list from the top. When the list is empty it picks fresh topics from your services.</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Mode" htmlFor="art-mode">
+        <Field label="What to do with each new article" htmlFor="art-mode">
           <select id="art-mode" className={input} value={s.mode} onChange={(e) => setS({ ...s, mode: e.target.value as ArticleSettings['mode'] })}>
-            <option value="off">Off</option>
-            <option value="draft">Write drafts for me to review (recommended)</option>
-            <option value="publish">Write and publish by itself (no review)</option>
+            <option value="off">Off (write nothing)</option>
+            <option value="draft">Save as a draft for me to review (safest)</option>
+            <option value="checked">Publish by itself only if the quality checks pass, otherwise a draft</option>
+            <option value="publish">Publish everything by itself (no review)</option>
           </select>
         </Field>
-        <Field label="Write a new article every" htmlFor="art-days">
-          <select id="art-days" className={input} value={s.everyDays} onChange={(e) => setS({ ...s, everyDays: Number(e.target.value) })}>
-            {[1, 2, 3, 7, 14, 30].map((d) => <option key={d} value={d}>{d === 1 ? 'day' : `${d} days`}</option>)}
-          </select>
+        <Field label="Articles to write" htmlFor="art-per">
+          <div className="flex items-center gap-2">
+            <select id="art-per" aria-label="Number of articles" className={input} value={s.perDay} onChange={(e) => setS({ ...s, perDay: Number(e.target.value) })}>{[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+            <span className="text-sm">per</span>
+            <select aria-label="Period" className={input} value={s.everyDays} onChange={(e) => setS({ ...s, everyDays: Number(e.target.value) })}>{PERIODS.map(([d, l]) => <option key={d} value={d}>{l}</option>)}</select>
+          </div>
+        </Field>
+        <Field label="Articles per title (default)" htmlFor="art-title-count" hint="2 or 3 means different articles on the same subject, each answering a different search question.">
+          <select id="art-title-count" className={input} value={s.perTitle} onChange={(e) => setS({ ...s, perTitle: Number(e.target.value) })}>{Array.from({ length: MAX_PER_TITLE }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}</select>
         </Field>
       </div>
-      {s.mode === 'publish' && <p className="text-sm" style={{ color: 'var(--warn-tx)' }} role="alert">Auto-publish puts AI text on your site with nobody checking it. Search engines treat many unreviewed articles as low quality. Drafts are safer.</p>}
-      <Field label="Topic ideas (one per line, used first; optional)" htmlFor="art-topics" hint="When the list is empty the AI picks a new topic from your services.">
-        <textarea id="art-topics" rows={4} className={input} value={topics} onChange={(e) => setTopics(e.target.value)} placeholder={'gutter cleaning before winter\nhow to choose a lawn mowing service'} />
+      {s.mode === 'publish' && <p className="text-sm" style={{ color: 'var(--warn-tx)' }} role="alert">This puts AI text on your site with nobody checking it. Search engines treat many unreviewed articles as low quality. “Publish only if the checks pass” is safer.</p>}
+      {s.mode === 'checked' && <p className="text-xs text-mu">Needs: 900+ words, the search phrase in the title, first paragraph and a heading, 5+ different headings, 2+ links to your service pages, no stock AI phrases, no dollar amounts, and not too similar to an existing article. A missing photo or a title a few characters long does not stop it.</p>}
+      <Field label="Titles to write (one per line, from the top)" htmlFor="art-topics" hint="English titles. Optional extras on a line: “Title | search phrase | x2” (x1 to x3 sets how many articles this title gets). Without a search phrase the AI picks one.">
+        <textarea id="art-topics" rows={10} className={`${input} font-mono text-sm`} value={topics} onChange={(e) => setTopics(e.target.value)} placeholder={'How to choose a lawn mowing service\nGutter cleaning before winter | gutter cleaning | x2\nWhat to ask a handyman before hiring'} />
       </Field>
+      <p className="text-sm" role="status">
+        {queue.items.length} titles in the list{lines.length > 0 ? ` = ${total} articles` : ''}.
+        {lines.length > 0 && s.mode !== 'off' ? ` At ${s.perDay} per ${s.everyDays === 1 ? 'day' : PERIODS.find(([d]) => d === s.everyDays)?.[1]} the list lasts about ${days} ${days === 1 ? 'day' : 'days'}.` : ''}
+        {queue.skipped > 0 ? <span style={{ color: 'var(--warn-tx)' }}> {queue.skipped} lines cannot be used and will be dropped (an English title of at least 8 characters is needed).</span> : null}
+      </p>
       {s.lastError && <p className="text-sm text-danger-tx" role="alert">Last automatic run failed: {s.lastError}</p>}
       <ErrorBox message={err} />
+      {busy && <p className="text-sm text-mu" role="status">{busy}</p>}
       {msg && <p className="text-sm text-ok" role="status">{msg}</p>}
-      <button type="button" className={btn} onClick={save}>Save settings</button>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" className={btn} onClick={save} disabled={Boolean(busy) || !dirty}>Save settings</button>
+        <button type="button" className={btnGhost} onClick={runNow} disabled={Boolean(busy) || dirty || s.mode === 'off'} title={dirty ? 'Save first' : undefined}>Write one article now</button>
+      </div>
     </section>
   )
 }

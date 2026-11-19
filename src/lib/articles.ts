@@ -3,8 +3,11 @@ import { auth, db, WORKER_URL } from './firebase'
 import { wordCount, type ArticleFields, type ArticleStatus } from '../shared/articles'
 
 export interface ArticleDoc extends ArticleFields { id: string; status: ArticleStatus; source: 'ai' | 'manual'; wordCount: number; createdAt?: Timestamp; updatedAt?: Timestamp; publishedAt?: Timestamp }
-export interface ArticleSettings { mode: 'off' | 'draft' | 'publish'; everyDays: number; topics: string[]; lastError?: string }
-export const DEFAULT_ARTICLE_SETTINGS: ArticleSettings = { mode: 'off', everyDays: 1, topics: [] }
+export type ArticleMode = 'off' | 'draft' | 'checked' | 'publish'
+/** perDay articles every everyDays days; perTitle = default number of articles written for each title of the queue (topics). */
+export interface ArticleSettings { mode: ArticleMode; everyDays: number; perDay: number; perTitle: number; topics: string[]; lastError?: string }
+export const DEFAULT_ARTICLE_SETTINGS: ArticleSettings = { mode: 'off', everyDays: 1, perDay: 1, perTitle: 1, topics: [] }
+export interface RunNowResult { ran: boolean; reason?: string; id?: string; title?: string; published?: boolean }
 export const EMPTY_ARTICLE: ArticleFields = { title: '', slug: '', keyword: '', seoTitle: '', description: '', excerpt: '', body: '', imageUrl: '', imageAlt: '', imageCredit: '', imageCreditUrl: '', videoUrl: '' }
 export interface Angle { title: string; keyword: string; intent: string; similarTo?: string[] }
 export interface Photo { imageUrl: string; imageAlt: string; imageCredit: string; imageCreditUrl: string }
@@ -24,7 +27,8 @@ export async function getArticleSettings(): Promise<ArticleSettings> {
   const s = await getDoc(doc(db, 'articleSettings/main'))
   return s.exists() ? { ...DEFAULT_ARTICLE_SETTINGS, ...(s.data() as Partial<ArticleSettings>) } : DEFAULT_ARTICLE_SETTINGS
 }
-export const saveArticleSettings = (s: ArticleSettings) => setDoc(doc(db, 'articleSettings/main'), { mode: s.mode, everyDays: s.everyDays, topics: s.topics }, { merge: true })
+/** `resetHead` restarts the progress counter of the first queue title (use it when the first line was changed). */
+export const saveArticleSettings = (s: ArticleSettings, resetHead = false) => setDoc(doc(db, 'articleSettings/main'), { mode: s.mode, everyDays: s.everyDays, perDay: s.perDay, perTitle: s.perTitle, topics: s.topics, ...(resetHead ? { headProgress: 0, headFailures: 0 } : {}) }, { merge: true })
 
 /** Calls an admin-only worker endpoint (AI drafts, photo search, publish with the Bing ping). */
 export async function callWorker<T>(path: string, body: unknown): Promise<T> {

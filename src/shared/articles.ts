@@ -138,7 +138,8 @@ export function titleSimilarity(a: string, b: string): number {
   return common / (x.size + y.size - common)
 }
 export const findSimilar = (title: string, others: string[], threshold = 0.6): string[] => others.filter((o) => titleSimilarity(title, o) >= threshold)
-export interface CheckItem { label: string; pass: boolean; detail?: string }
+/** `soft` checks are shown to the admin but never stop an automatic publish (a photo, a title one character long, a meta description a few characters off). */
+export interface CheckItem { label: string; pass: boolean; detail?: string; soft?: boolean }
 export function checkArticle(a: Pick<ArticleFields, 'title' | 'slug' | 'keyword' | 'seoTitle' | 'description' | 'body' | 'imageUrl'>, otherTitles: string[] = []): CheckItem[] {
   const kw = a.keyword.toLowerCase().trim()
   const words = wordCount(a.body)
@@ -156,12 +157,55 @@ export function checkArticle(a: Pick<ArticleFields, 'title' | 'slug' | 'keyword'
     { label: 'Search phrase is in at least one H2', pass: Boolean(kw) && h2.some((h) => h.toLowerCase().includes(kw)) },
     { label: 'Link (URL) contains the search phrase words', pass: slugWords.length > 0 && slugWords.every((w) => a.slug.split('-').includes(w)), detail: `/blog/${a.slug}` },
     { label: 'At least 5 different H2 headings', pass: new Set(h2.map((h) => h.toLowerCase())).size >= 5, detail: `${h2.length} headings` },
-    { label: 'Title is 62 characters or fewer', pass: a.title.length <= 62, detail: `${a.title.length} characters` },
-    { label: 'Meta description is 120 to 160 characters', pass: a.description.length >= 120 && a.description.length <= 160, detail: `${a.description.length} characters` },
+    { label: 'Title is 62 characters or fewer', pass: a.title.length <= 62, detail: `${a.title.length} characters`, soft: true },
+    { label: 'Meta description is 120 to 160 characters', pass: a.description.length >= 120 && a.description.length <= 160, detail: `${a.description.length} characters`, soft: true },
     { label: 'Has 2 or more links to service pages', pass: links >= 2, detail: `${links} links` },
-    { label: 'Has an image', pass: Boolean(a.imageUrl) },
+    { label: 'Has an image', pass: Boolean(a.imageUrl), soft: true },
     { label: 'No stock AI phrases', pass: banned.length === 0, detail: banned.join(', ') || undefined },
     { label: 'No dollar amounts (check any you keep is true)', pass: dollars.length === 0, detail: dollars.join(', ') || undefined },
     { label: 'Not too similar to another article', pass: similar.length === 0, detail: similar.join(' | ') || undefined },
   ]
+}
+
+/** True when every check that matters passes. Used by the "publish only if the checks pass" mode. */
+export const gatePasses = (checks: CheckItem[]): boolean => checks.every((c) => c.pass || c.soft)
+
+// ---------- the title queue (Admin > Articles > Automatic articles) ----------
+export const MAX_PER_TITLE = 3
+export const MAX_QUEUE = 300
+export interface QueueItem { title: string; keyword: string; count: number | null }
+/**
+ * One line of the queue. Formats:  `Title`  |  `Title | search phrase`  |  `Title | search phrase | x2`  |  `Title | x3`.
+ * `count` is how many articles to write for this title (null = use the default chosen in the panel). Returns null for a line that cannot be used.
+ */
+export function parseQueueLine(line: string): QueueItem | null {
+  const parts = line.split('|').map((p) => p.trim())
+  let count: number | null = null
+  if (parts.length > 1) {
+    const m = new RegExp(`^x?\\s*([1-${MAX_PER_TITLE}])$`, 'i').exec(parts[parts.length - 1])
+    if (m) { count = Number(m[1]); parts.pop() }
+  }
+  const title = (parts[0] ?? '').replace(/^\s*(?:\d+[.)]|[-*\u2022])\s+/, '').replace(/^["\u201c]|["\u201d]$/g, '').trim().slice(0, 120)
+  if (title.length < 8 || !/[a-z]{3}/i.test(title)) return null
+  const keyword = (parts[1] ?? '').toLowerCase().replace(/\s+/g, ' ').slice(0, 80)
+  return { title, keyword: keyword.length >= 3 ? keyword : '', count }
+}
+export function parseQueue(text: string): { items: QueueItem[]; skipped: number } {
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  const items = lines.map(parseQueueLine).filter((x): x is QueueItem => x !== null)
+  return { items, skipped: lines.length - items.length }
+}
+/** When the title has no search phrase of its own, the AI proposes one; this is the plain fallback if the AI is unavailable. */
+export const fallbackKeyword = (title: string): string => title.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(Boolean).slice(0, 5).join(' ')
+export function buildKeywordPrompt({ title, site }: { title: string; site: string }): { system: string; user: string } {
+  return {
+    system: `You are an SEO editor for ${site}, a free U.S. marketplace where neighbors post home jobs and local workers send prices.`,
+    user: `Blog title: ${title}\nWhat exact phrase would a person type into Google to find an article like this? 2 to 5 words, lowercase, natural, no year.\nAnswer with exactly one line:\nKEYWORD: <phrase>`,
+  }
+}
+export function parseKeyword(text: string): string {
+  const raw = /^\s*KEYWORD:\s*(.+)$/im.exec(text)?.[1] ?? ''
+  const k = raw.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').replace(/\s+/g, ' ').trim()
+  const n = k.split(' ').filter(Boolean).length
+  return n >= 2 && n <= 6 ? k : ''
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAnglesPrompt, buildArticlePrompt, checkArticle, cleanBody, findSimilar, makeSlug, parseAngles, parseArticleOutput, renderMarkdown, slugify, uniqueSlug, youtubeId } from '../../src/shared/articles'
+import { buildAnglesPrompt, buildArticlePrompt, checkArticle, cleanBody, fallbackKeyword, gatePasses, parseKeyword, parseQueue, parseQueueLine, findSimilar, makeSlug, parseAngles, parseArticleOutput, renderMarkdown, slugify, uniqueSlug, youtubeId } from '../../src/shared/articles'
 
 describe('slugs', () => {
   it('turns a search phrase into a short readable link', () => {
@@ -94,5 +94,34 @@ describe('quality checks', () => {
   it('detects near-duplicate titles', () => {
     expect(findSimilar('How Much Does Lawn Mowing Cost', ['How much does lawn mowing cost?', 'Roof repair guide'])).toEqual(['How much does lawn mowing cost?'])
     expect(findSimilar('Gutter cleaning mistakes', ['Lawn mowing price'])).toEqual([])
+  })
+})
+
+describe('title queue lines', () => {
+  it('reads a plain title, a title with a search phrase, and a per-title count', () => {
+    expect(parseQueueLine('How to choose a lawn mowing service')).toEqual({ title: 'How to choose a lawn mowing service', keyword: '', count: null })
+    expect(parseQueueLine('Gutter cleaning before winter | Gutter Cleaning')).toEqual({ title: 'Gutter cleaning before winter', keyword: 'gutter cleaning', count: null })
+    expect(parseQueueLine('Gutter cleaning before winter | gutter cleaning | x2')).toMatchObject({ keyword: 'gutter cleaning', count: 2 })
+    expect(parseQueueLine('Gutter cleaning before winter | x3')).toMatchObject({ keyword: '', count: 3 })
+    expect(parseQueueLine('Gutter cleaning before winter | 1')).toMatchObject({ count: 1 })
+  })
+  it('strips list numbering and quotes, and refuses lines it cannot write an article for', () => {
+    expect(parseQueueLine('12. "What to ask a handyman before hiring"')?.title).toBe('What to ask a handyman before hiring')
+    expect(parseQueueLine('- Mowing tips for spring')?.title).toBe('Mowing tips for spring')
+    expect(parseQueueLine('short')).toBeNull()
+    expect(parseQueueLine('اكتب عن الحدائق والمقاولات')).toBeNull()
+    expect(parseQueueLine('Title that is fine | | x9')?.count).toBeNull()
+  })
+  it('counts the lines it will drop', () => { expect(parseQueue('Good title about lawns\n\nno\nAnother good title here')).toMatchObject({ skipped: 1, items: [{ title: 'Good title about lawns' }, { title: 'Another good title here' }] }) })
+  it('reads the AI search phrase and falls back to the title words', () => {
+    expect(parseKeyword('KEYWORD: Lawn Mowing Service')).toBe('lawn mowing service')
+    expect(parseKeyword('KEYWORD: lawn')).toBe('')
+    expect(parseKeyword('I think the phrase is lawn care')).toBe('')
+    expect(fallbackKeyword('How to Choose a Lawn Mowing Service!')).toBe('how to choose a lawn')
+  })
+  it('lets a weak photo, title length or meta length through the automatic gate but nothing else', () => {
+    const ok = [{ label: 'a', pass: true }, { label: 'Has an image', pass: false, soft: true }]
+    expect(gatePasses(ok)).toBe(true)
+    expect(gatePasses([...ok, { label: 'Length', pass: false }])).toBe(false)
   })
 })
