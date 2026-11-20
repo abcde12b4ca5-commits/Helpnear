@@ -5,10 +5,10 @@ import { wordCount, type ArticleFields, type ArticleStatus } from '../shared/art
 export interface ArticleDoc extends ArticleFields { id: string; status: ArticleStatus; source: 'ai' | 'manual'; wordCount: number; createdAt?: Timestamp; updatedAt?: Timestamp; publishedAt?: Timestamp }
 export type ArticleMode = 'off' | 'draft' | 'checked' | 'publish'
 /** perDay articles every everyDays days; perTitle = default number of articles written for each title of the queue (topics). */
-export interface ArticleSettings { mode: ArticleMode; everyDays: number; perDay: number; perTitle: number; topics: string[]; lastError?: string }
+export interface ArticleSettings { mode: ArticleMode; everyDays: number; perDay: number; perTitle: number; topics: string[]; lastError?: string; lastRunAt?: { toDate(): Date } }
 export const DEFAULT_ARTICLE_SETTINGS: ArticleSettings = { mode: 'off', everyDays: 1, perDay: 1, perTitle: 1, topics: [] }
 export interface RunNowResult { ran: boolean; reason?: string; id?: string; title?: string; published?: boolean }
-export const EMPTY_ARTICLE: ArticleFields = { title: '', slug: '', keyword: '', seoTitle: '', description: '', excerpt: '', body: '', imageUrl: '', imageAlt: '', imageCredit: '', imageCreditUrl: '', videoUrl: '' }
+export const EMPTY_ARTICLE: ArticleFields = { title: '', slug: '', keyword: '', seoTitle: '', description: '', excerpt: '', body: '', imageUrl: '', imageAlt: '', imageCredit: '', imageCreditUrl: '', videoUrl: '', category: '' }
 export interface Angle { title: string; keyword: string; intent: string; similarTo?: string[] }
 export interface Photo { imageUrl: string; imageAlt: string; imageCredit: string; imageCreditUrl: string }
 

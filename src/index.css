@@ -258,3 +258,39 @@
 .hn-theme { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 1px solid var(--bd); background: var(--sf); color: var(--tx); cursor: pointer; transition: transform .2s, background .2s; }
 .hn-theme:hover { transform: rotate(18deg); background: var(--pl); }
 .hn-theme svg { width: 1.2rem; height: 1.2rem; }
+
+/* ---------- Admin panel (Arabic, right-to-left). Scoped to .ad so the public site is untouched. ---------- */
+.ad { --side: #0f172a; --side-on: #1e293b; display: grid; gap: 1.25rem; grid-template-columns: 15rem minmax(0, 1fr); align-items: start; font-family: 'Segoe UI', Tahoma, 'Noto Sans Arabic', Inter, system-ui, sans-serif; letter-spacing: 0; }
+:root[data-theme='dark'] .ad { --side: #0b1220; --side-on: #16213a; }
+/* negative letter-spacing breaks Arabic letter joining, so it is reset for everything inside the panel */
+.ad *, .ad h1, .ad h2, .ad h3 { letter-spacing: 0; font-family: inherit; }
+.ad h1, .ad h2, .ad h3 { line-height: 1.35; }
+.ad-side { position: sticky; top: 5rem; display: grid; gap: .15rem; padding: .8rem; border-radius: 1.2rem; background: var(--side); color: #cbd5e1; box-shadow: var(--shadow-lg); }
+.ad-grp { margin: .9rem .6rem .3rem; font-size: .72rem; font-weight: 700; color: #64748b; }
+.ad-grp:first-child { margin-top: .3rem; }
+.ad-nav { display: flex; align-items: center; gap: .65rem; width: 100%; padding: .55rem .7rem; border: 0; border-radius: .7rem; background: none; color: inherit; font-size: .9rem; font-weight: 600; text-align: start; cursor: pointer; transition: background .15s, color .15s; }
+.ad-nav:hover { background: var(--side-on); color: #fff; }
+.ad-nav[aria-selected='true'] { background: var(--side-on); color: #fff; box-shadow: inset -3px 0 0 var(--am); }
+.ad-nav svg { width: 1.1rem; height: 1.1rem; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ad-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; margin-bottom: 1.1rem; }
+.ad-head h1 { font-size: clamp(1.6rem, 3vw, 2.1rem); }
+.ad-head p { color: var(--mu); font-size: .85rem; }
+.ad .hn-btn, .ad .hn-btn-ghost { padding: .45rem .9rem; font-size: .82rem; border-radius: .7rem; }
+.ad .hn-btn-ghost.ad-danger { background: var(--danger-bg); color: var(--danger-tx); border-color: transparent; }
+.ad .hn-card { padding: 1.1rem; border-radius: 1.1rem; }
+.ad-stat { position: relative; overflow: hidden; }
+.ad-stat::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, var(--ye), var(--am)); }
+.ad-ic { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: .6rem; background: var(--pl); color: var(--ye); flex: none; }
+.ad-ic svg { width: 1rem; height: 1rem; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ad-ltr { direction: ltr; unicode-bidi: plaintext; }
+.ad table { text-align: start; }
+/* the on/off switch must slide the other way in right-to-left */
+.hn-switch::after { left: auto; inset-inline-start: .2rem; }
+[dir='rtl'] .hn-switch.on::after { transform: translateX(-1.1rem); }
+@media (max-width: 48rem) {
+  .ad { grid-template-columns: 1fr; }
+  .ad-side { position: static; display: flex; gap: .3rem; overflow-x: auto; padding: .5rem; border-radius: 99px; }
+  .ad-grp { display: none; }
+  .ad-nav { width: auto; white-space: nowrap; border-radius: 99px; padding: .5rem .85rem; }
+  .ad-nav[aria-selected='true'] { box-shadow: none; background: var(--ye); color: var(--ink); }
+}

@@ -11,7 +11,7 @@ import type { StrikeDoc, UserDoc } from '../../lib/types'
 
 type Row = UserDoc & { id: string }
 
-const when = (t: { toDate(): Date } | null | undefined) => (t ? t.toDate().toLocaleString('en-US') : '-')
+const when = (t: { toDate(): Date } | null | undefined) => (t ? t.toDate().toLocaleString('ar-EG') : '-')
 
 const toRows = (s: Awaited<ReturnType<typeof getDocs>>) => s.docs.map((d) => ({ ...(d.data() as UserDoc), id: d.id }))
 const fetchRows = async (search: string) => {
@@ -56,17 +56,17 @@ export default function Users() {
     try { setStrikes({ ...strikes, [r.id]: await getUserStrikes(r.id) }) } catch (e) { setErr(friendlyError(e)) }
   }
 
-  if (!rows) return <Spinner />
+  if (!rows) return <Spinner label="جارٍ التحميل..." />
   return (
     <div className="space-y-4">
       <form onSubmit={search} className="flex flex-wrap gap-2">
-        <input aria-label="Exact email" type="email" className={`${input} flex-1`} placeholder="Search by exact email (empty = latest 20)" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <button className={btn}>Search</button>
-        <button type="button" className={btnGhost} onClick={showFlagged}>Show accounts flagged for review</button>
+        <input aria-label="البريد الإلكتروني بالضبط" type="email" dir="ltr" className={`${input} flex-1`} placeholder="ابحث بالبريد الإلكتروني بالضبط (فارغ = آخر 20)" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <button className={btn}>بحث</button>
+        <button type="button" className={btnGhost} onClick={showFlagged}>عرض الحسابات المحوّلة للمراجعة</button>
       </form>
       <ErrorBox message={err} />
       {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
-      {rows.length === 0 && <Empty>No users found.</Empty>}
+      {rows.length === 0 && <Empty>لم يتم العثور على مستخدمين.</Empty>}
       <ul className="space-y-2">
         {rows.map((r) => {
           const frozen = r.frozenUntil && r.frozenUntil.toMillis() > now
@@ -74,35 +74,35 @@ export default function Users() {
           return (
             <li key={r.id} className={`${card} space-y-2 text-sm`}>
               <p>
-                {r.displayName} &middot; {r.email} &middot; {r.role} &middot; <strong>{r.status}</strong> <code className="text-xs text-mu">{r.id}</code>
-                {frozen && <span className="ml-2 rounded bg-danger-bg px-2 py-0.5 text-danger-tx">frozen until {when(r.frozenUntil)}{r.frozenReason ? `: ${r.frozenReason}` : ''}</span>}
-                {r.needsReview && <span className="ml-2 rounded bg-warn-bg px-2 py-0.5 text-warn-tx">needs review{r.reviewReason ? `: ${r.reviewReason}` : ''}</span>}
+                {r.displayName} &middot; {r.email} &middot; {r.role} &middot; <strong>{r.status}</strong> <code className="text-xs text-mu ad-ltr">{r.id}</code>
+                {frozen && <span className="ms-2 rounded bg-danger-bg px-2 py-0.5 text-danger-tx">مجمّد حتى {when(r.frozenUntil)}{r.frozenReason ? `: ${r.frozenReason}` : ''}</span>}
+                {r.needsReview && <span className="ms-2 rounded bg-warn-bg px-2 py-0.5 text-warn-tx">للمراجعة{r.reviewReason ? `: ${r.reviewReason}` : ''}</span>}
               </p>
-              <label className="block text-xs text-mu">Reason or note (used by Escalate and Freeze)
+              <label className="block text-xs text-mu">السبب أو الملاحظة (تُستخدم في التصعيد والتجميد)
                 <input className={`${input} mt-1`} maxLength={200} value={reason} onChange={(e) => setReasons({ ...reasons, [r.id]: e.target.value })} />
               </label>
               <div className="flex flex-wrap items-center gap-2">
-                <button className={btnGhost} onClick={() => user && act(r, () => setUserSuspended(user.uid, r.id, r.role, r.status === 'active'))}>{r.status === 'active' ? 'Suspend' : 'Unsuspend'}</button>
-                <button className={btnGhost} onClick={() => user && act(r, () => escalate(user.uid, r.id, r.role, reason))}>Escalate (warning, freeze, ban)</button>
+                <button className={btnGhost} onClick={() => user && act(r, () => setUserSuspended(user.uid, r.id, r.role, r.status === 'active'))}>{r.status === 'active' ? 'إيقاف' : 'إلغاء الإيقاف'}</button>
+                <button className={btnGhost} onClick={() => user && act(r, () => escalate(user.uid, r.id, r.role, reason))}>تصعيد (إنذار، تجميد، حظر)</button>
                 <span className="flex items-center gap-1">
-                  <input aria-label="Freeze days" type="number" min={1} max={90} className={`${input} w-20`} value={freezeDays} onChange={(e) => setFreezeDays(Math.min(90, Math.max(1, Number(e.target.value) || 1)))} />
-                  <button className={btnGhost} onClick={() => user && act(r, async () => { await freezeUser(user.uid, r.id, freezeDays, reason || 'Fair-use limit'); return `Frozen for ${freezeDays} days.` })}>Freeze days</button>
+                  <input aria-label="أيام التجميد" type="number" min={1} max={90} className={`${input} w-20`} value={freezeDays} onChange={(e) => setFreezeDays(Math.min(90, Math.max(1, Number(e.target.value) || 1)))} />
+                  <button className={btnGhost} onClick={() => user && act(r, async () => { await freezeUser(user.uid, r.id, freezeDays, reason || 'حد الاستخدام العادل'); return `تم التجميد لمدة ${freezeDays} يومًا.` })}>تجميد بالأيام</button>
                 </span>
-                {(frozen || r.needsReview) && <button className={btnGhost} onClick={() => user && act(r, async () => { await unfreezeUser(user.uid, r.id); return 'Freeze and review flag cleared.' })}>Unfreeze / clear review</button>}
-                <button className={btnGhost} onClick={() => loadStrikes(r)}>Strikes</button>
-                <button className={btnGhost} onClick={() => {
-                  if (user && window.confirm(`Ban ${r.email}${r.role === 'worker' ? ' and remove all of their confirmed jobs from earnings' : ''}? Use this for fraud only.`)) {
-                    void act(r, async () => `Banned.${r.role === 'worker' ? ` ${await banAndVoid(user.uid, r.id, r.role)} confirmed jobs removed.` : ''}`)
+                {(frozen || r.needsReview) && <button className={btnGhost} onClick={() => user && act(r, async () => { await unfreezeUser(user.uid, r.id); return 'تم رفع التجميد وعلامة المراجعة.' })}>رفع التجميد / إلغاء المراجعة</button>}
+                <button className={btnGhost} onClick={() => loadStrikes(r)}>المخالفات</button>
+                <button className={`${btnGhost} ad-danger`} onClick={() => {
+                  if (user && window.confirm(`حظر ${r.email}${r.role === 'worker' ? ' وإزالة كل أعماله المؤكدة من الأرباح' : ''}؟ استخدم هذا للاحتيال فقط.`)) {
+                    void act(r, async () => `تم الحظر.${r.role === 'worker' ? ` أُزيلت ${await banAndVoid(user.uid, r.id, r.role)} أعمال مؤكدة.` : ''}`)
                   }
-                }}>Ban (fraud)</button>
+                }}>حظر (احتيال)</button>
               </div>
               {strikes[r.id] && (
                 <ul className="space-y-1 rounded-xl bg-bg p-2">
-                  {strikes[r.id].length === 0 && <li className="text-mu">No strikes.</li>}
+                  {strikes[r.id].length === 0 && <li className="text-mu">لا توجد مخالفات.</li>}
                   {strikes[r.id].map((s) => (
                     <li key={s.id} className="flex items-center justify-between gap-2">
                       <span>{when(s.createdAt)} &middot; <strong>{s.type}</strong> &middot; {s.by}{s.note ? ` \u00b7 ${s.note}` : ''}</span>
-                      <button className={btnGhost} onClick={() => user && act(r, async () => { await removeStrike(user.uid, s.id); return 'Strike removed.' })}>Remove</button>
+                      <button className={btnGhost} onClick={() => user && act(r, async () => { await removeStrike(user.uid, s.id); return 'تمت إزالة المخالفة.' })}>إزالة</button>
                     </li>
                   ))}
                 </ul>

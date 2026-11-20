@@ -27,23 +27,23 @@ export default function LegalEditor() {
 
   async function publish() {
     if (!user) return
-    if (!version.trim()) { setErr('Version is required.'); return }
+    if (!version.trim()) { setErr('رقم الإصدار مطلوب.'); return }
     setErr(null); setMsg(null)
     try {
       await adminWrite(user.uid, 'publish-legal', `legal/${id}`, (b) => b.set(doc(db, `legal/${id}`), { title, version: version.trim(), body, isDraft, publishedAt: serverTimestamp() }))
-      setMsg(id === 'terms' ? 'Published. All users must accept this new Terms version on their next visit.' : 'Published.')
+      setMsg(id === 'terms' ? 'تم النشر. سيُطلب من كل المستخدمين قبول نسخة الشروط الجديدة في زيارتهم القادمة.' : 'تم النشر.')
     } catch (e) { setErr(friendlyError(e)) }
   }
   return (
-    <div className="max-w-2xl space-y-3">
-      <Field label="Document" htmlFor="doc"><select id="doc" className={input} value={id} onChange={(e) => setId(e.target.value)}>{IDS.map((x) => <option key={x}>{x}</option>)}</select></Field>
-      <Field label="Title" htmlFor="t"><input id="t" className={input} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
-      <Field label="Version (change it to force re-acceptance of Terms)" htmlFor="v"><input id="v" className={input} value={version} onChange={(e) => setVersion(e.target.value)} /></Field>
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isDraft} onChange={(e) => setIsDraft(e.target.checked)} /> Still a draft (needs attorney review)</label>
-      <Field label="Text" htmlFor="b"><textarea id="b" rows={16} className={input} value={body} onChange={(e) => setBody(e.target.value)} /></Field>
+    <div className="max-w-2xl space-y-3 hn-card">
+      <Field label="المستند" htmlFor="doc"><select id="doc" dir="ltr" className={input} value={id} onChange={(e) => setId(e.target.value)}>{IDS.map((x) => <option key={x}>{x}</option>)}</select></Field>
+      <Field label="العنوان" htmlFor="t"><input id="t" dir="ltr" className={input} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
+      <Field label="الإصدار (غيّره لإجبار المستخدمين على إعادة قبول الشروط)" htmlFor="v"><input id="v" dir="ltr" className={input} value={version} onChange={(e) => setVersion(e.target.value)} /></Field>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isDraft} onChange={(e) => setIsDraft(e.target.checked)} /> ما زال مسودة (يحتاج مراجعة محامٍ)</label>
+      <Field label="النص" htmlFor="b"><textarea id="b" dir="ltr" rows={16} className={input} value={body} onChange={(e) => setBody(e.target.value)} /></Field>
       <ErrorBox message={err} />
       {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
-      <button className={btn} onClick={publish}>Publish</button>
+      <button className={btn} onClick={publish}>نشر</button>
     </div>
   )
 }

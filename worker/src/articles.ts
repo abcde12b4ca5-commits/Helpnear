@@ -76,7 +76,7 @@ export async function composeArticle(env: Env, spec: Spec, ctx: Context): Promis
   const photo = (await searchPhotos(env, parsed.imageQuery || keyword, 1))[0]
   return {
     title: parsed.title, slug: uniqueSlug(makeSlug(keyword, parsed.title), ctx.takenSlugs), keyword, seoTitle: parsed.seoTitle || parsed.title, description: parsed.description, excerpt: parsed.excerpt,
-    body: parsed.body, imageUrl: photo?.imageUrl ?? '', imageAlt: photo?.imageAlt ?? `${keyword}`, imageCredit: photo?.imageCredit ?? '', imageCreditUrl: photo?.imageCreditUrl ?? '', videoUrl: '', imageQuery: parsed.imageQuery,
+    body: parsed.body, imageUrl: photo?.imageUrl ?? '', imageAlt: photo?.imageAlt ?? `${keyword}`, imageCredit: photo?.imageCredit ?? '', imageCreditUrl: photo?.imageCreditUrl ?? '', videoUrl: '', category: parsed.category, imageQuery: parsed.imageQuery,
   }
 }
 
@@ -95,7 +95,7 @@ export async function loadContext(env: Env): Promise<Context & { raw: { id: stri
 }
 export async function saveDraft(env: Env, d: Draft, status: 'draft' | 'published', source: 'ai' | 'manual', now = Date.now()): Promise<string> {
   const sa = parseServiceAccount(env)
-  const doc: Record<string, V> = { title: d.title, slug: d.slug, keyword: d.keyword, seoTitle: d.seoTitle, description: d.description, excerpt: d.excerpt, body: d.body, imageUrl: d.imageUrl, imageAlt: d.imageAlt, imageCredit: d.imageCredit, imageCreditUrl: d.imageCreditUrl, videoUrl: d.videoUrl, status, source, wordCount: wordCount(d.body), createdAt: new Date(now), updatedAt: new Date(now) }
+  const doc: Record<string, V> = { title: d.title, slug: d.slug, keyword: d.keyword, seoTitle: d.seoTitle, description: d.description, excerpt: d.excerpt, body: d.body, imageUrl: d.imageUrl, imageAlt: d.imageAlt, imageCredit: d.imageCredit, imageCreditUrl: d.imageCreditUrl, videoUrl: d.videoUrl, category: d.category ?? '', status, source, wordCount: wordCount(d.body), createdAt: new Date(now), updatedAt: new Date(now) }
   if (status === 'published') doc.publishedAt = new Date(now)
   const res = await fsFetch(sa, `${docsUrl(env.FIREBASE_PROJECT_ID)}/articles`, { method: 'POST', body: JSON.stringify({ fields: encFields(doc) }) })
   if (!res.ok) throw new Error(`could not save the article (${res.status})`)
@@ -189,10 +189,14 @@ async function keywordFor(env: Env, title: string): Promise<string> {
 }
 /** Writes ONE article per call. Takes the next title of the queue (or, when the queue is empty, lets the AI pick a topic), spreads several articles of one title over different angles, and saves a draft or publishes according to the chosen mode. `force` skips the timer (the admin's "write one now" button). */
 export async function runArticleJob(env: Env, now = Date.now(), opts: { force?: boolean } = {}): Promise<JobResult> {
-  if (!env.AI) return { ran: false, reason: 'AI binding missing' }
   const settings = await fetchSettings(env)
   if (!settings) return { ran: false, reason: 'no settings yet' }
   if (settings.mode === 'off') return { ran: false, reason: 'off' }
+  if (!env.AI) {
+    // Say it where the admin can see it (Admin > Articles shows lastError) instead of failing silently on every tick.
+    await patchDoc(env, 'articleSettings/main', { lastError: 'Workers AI is not connected: deploy the worker from the worker/ folder (it has the [ai] binding) and try again.' }).catch(() => undefined)
+    return { ran: false, reason: 'AI binding missing' }
+  }
   if (!opts.force && !isDue(settings, now)) return { ran: false, reason: 'not due' }
   await patchDoc(env, 'articleSettings/main', { lastRunAt: new Date(now) }) // claim the slot first, so overlapping runs cannot write two articles
   // The first usable line of the queue (lines that cannot be read are dropped on the way).

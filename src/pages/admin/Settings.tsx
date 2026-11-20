@@ -11,22 +11,22 @@ import { ErrorBox, Field, btn, btnGhost, input } from '../../components/ui'
 import type { AppConfig } from '../../lib/types'
 
 const BOOLS: [keyof AppConfig, string][] = [
-  ['signupOpen', 'Sign-ups open'], ['maintenanceMode', 'Maintenance mode (banner for all users)'], ['revealContactOnClaim', 'Reveal contact when a worker accepts'],
-  ['chatEnabled', 'In-app chat enabled'], ['feesEnabled', 'Fees enabled (reserved, no payments are built)'],
-  ['autoRulesEnabled', 'Automatic fair-use rules ON (scheduled worker: auto-release, auto-confirm, strikes and freezes)'],
-  ['noResponseStrikes', 'A worker who accepts and never agrees a price in time gets a strike'],
+  ['signupOpen', 'التسجيل مفتوح'], ['maintenanceMode', 'وضع الصيانة (شريط تنبيه لكل المستخدمين)'], ['revealContactOnClaim', 'إظهار بيانات التواصل عند قبول العامل للطلب'],
+  ['chatEnabled', 'الدردشة داخل التطبيق مفعّلة'], ['feesEnabled', 'الرسوم مفعّلة (محجوزة للمستقبل، لا توجد مدفوعات)'],
+  ['autoRulesEnabled', 'قواعد الاستخدام العادل التلقائية مفعّلة (تحرير وتأكيد تلقائي ومخالفات وتجميد)'],
+  ['noResponseStrikes', 'العامل الذي يقبل الطلب ولا يتفق على سعر في الوقت المحدد يحصل على مخالفة'],
 ]
 const NUMS: [keyof AppConfig, string, number, number][] = [
-  ['maxWorkersPerRequest', 'Max workers a client can ask for (rules cap: 10)', 1, 10], ['requestExpiryHours', 'Request expiry (hours, max 160)', 1, 160],
-  ['maxCategoriesPerWorker', 'Max services per worker (rules cap: 5)', 1, 5],
-  ['freeRequestsPerClient', 'Free requests per client (reserved)', 0, 1000],
-  ['penaltyWindowDays', 'Fair use: strikes count for this many days', 7, 180],
-  ['clientFreezeAt', 'Fair use: client strikes that freeze posting', 1, 20], ['clientReviewAt', 'Fair use: client strikes that flag the account for admin review', 1, 50],
-  ['workerFreezeAt', 'Fair use: worker strikes that freeze accepting', 1, 20], ['workerReviewAt', 'Fair use: worker strikes that flag the account for admin review', 1, 50],
-  ['freezeDays', 'Fair use: days an account stays frozen', 1, 90],
-  ['noResponseHours', 'Fair use: release a worker who has no agreed price after (hours)', 1, 720],
-  ['autoConfirmDays', 'Fair use: confirm a "done" job automatically after (days of client silence)', 1, 60],
-  ['disputeAfterReopens', 'Fair use: "Not done yet" this many times turns the job into a dispute', 1, 10],
+  ['maxWorkersPerRequest', 'أقصى عدد عمّال يطلبهم العميل (الحد في القواعد: 10)', 1, 10], ['requestExpiryHours', 'مدة صلاحية الطلب (بالساعات، الحد 160)', 1, 160],
+  ['maxCategoriesPerWorker', 'أقصى عدد خدمات لكل عامل (الحد في القواعد: 5)', 1, 5],
+  ['freeRequestsPerClient', 'الطلبات المجانية لكل عميل (محجوزة)', 0, 1000],
+  ['penaltyWindowDays', 'الاستخدام العادل: عدد الأيام التي تُحسب فيها المخالفات', 7, 180],
+  ['clientFreezeAt', 'الاستخدام العادل: مخالفات العميل التي توقف نشر الطلبات', 1, 20], ['clientReviewAt', 'الاستخدام العادل: مخالفات العميل التي تحوّل الحساب للمراجعة', 1, 50],
+  ['workerFreezeAt', 'الاستخدام العادل: مخالفات العامل التي توقف قبول الطلبات', 1, 20], ['workerReviewAt', 'الاستخدام العادل: مخالفات العامل التي تحوّل الحساب للمراجعة', 1, 50],
+  ['freezeDays', 'الاستخدام العادل: عدد أيام تجميد الحساب', 1, 90],
+  ['noResponseHours', 'الاستخدام العادل: تحرير العامل الذي لم يتفق على سعر بعد (ساعات)', 1, 720],
+  ['autoConfirmDays', 'الاستخدام العادل: تأكيد العمل "المنجز" تلقائيًا بعد (أيام صمت العميل)', 1, 60],
+  ['disputeAfterReopens', 'الاستخدام العادل: عدد مرات "لم يُنجز بعد" التي تحوّل العمل إلى نزاع', 1, 10],
 ]
 
 export default function Settings() {
@@ -40,7 +40,7 @@ export default function Settings() {
     setErr(null); setMsg(null)
     try {
       const r = await runPolicyNow()
-      setMsg(r.disabled ? 'Automatic rules are switched off (save the setting first).' : `Done. Auto-confirmed: ${r.autoConfirmed}, released: ${r.released}, new strikes: ${r.strikes}, frozen: ${r.frozen}, flagged for review: ${r.flagged}${r.stoppedEarly ? ' (stopped early, the rest runs next time)' : ''}.`)
+      setMsg(r.disabled ? 'القواعد التلقائية متوقفة (احفظ الإعداد أولًا).' : `تم. تأكيد تلقائي: ${r.autoConfirmed}، تحرير: ${r.released}، مخالفات جديدة: ${r.strikes}، تجميد: ${r.frozen}، للمراجعة: ${r.flagged}${r.stoppedEarly ? ' (توقف مبكرًا، والباقي في المرة القادمة)' : ''}.`)
     } catch (e) { setErr(e instanceof Error ? e.message : friendlyError(e)) }
   }
 
@@ -49,11 +49,11 @@ export default function Settings() {
     setErr(null); setMsg(null)
     try {
       await adminWrite(user.uid, 'update-config', 'config/app', (b) => b.set(doc(db, 'config/app'), cfg))
-      setMsg('Saved.')
+      setMsg('تم الحفظ.')
     } catch (e) { setErr(friendlyError(e)) }
   }
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-xl space-y-4 hn-card">
       {BOOLS.map(([k, label]) => (
         <label key={k} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(cfg[k])} onChange={(e) => setCfg({ ...cfg, [k]: e.target.checked })} /> {label}</label>
       ))}
@@ -63,8 +63,8 @@ export default function Settings() {
       <ErrorBox message={err} />
       {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
       <div className="flex flex-wrap gap-2">
-        <button className={btn} onClick={save}>Save settings</button>
-        <button className={btnGhost} onClick={runNow}>Run the fair-use rules now</button>
+        <button className={btn} onClick={save}>حفظ الإعدادات</button>
+        <button className={btnGhost} onClick={runNow}>تشغيل قواعد الاستخدام العادل الآن</button>
       </div>
     </div>
   )

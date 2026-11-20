@@ -24,11 +24,11 @@ export default function Disputes() {
     if (!user) return
     const k = key(c)
     const note = (notes[k] ?? '').trim()
-    if (note.length < 3) { setErr('Write a short note about your decision (3+ characters). Both sides see it.'); return }
+    if (note.length < 3) { setErr('اكتب ملاحظة قصيرة عن قرارك (3 أحرف على الأقل). يراها الطرفان.'); return }
     let finalCents: number | undefined
     if (outcome === 'confirm') {
       const cents = dollarsToCents(amounts[k] ?? ((c.finalCents ?? c.quotedCents) / 100).toString())
-      if (cents == null) { setErr('Enter a valid final amount in dollars.'); return }
+      if (cents == null) { setErr('أدخل مبلغًا نهائيًا صحيحًا بالدولار.'); return }
       finalCents = cents
     }
     try {
@@ -38,32 +38,32 @@ export default function Disputes() {
     } catch (e) { setErr(friendlyError(e)) }
   }
 
-  if (!rows) return <Spinner />
+  if (!rows) return <Spinner label="جارٍ التحميل..." />
   return (
     <div className="space-y-4">
-      <p className="text-sm text-mu">Jobs where a side reported a problem, or where the client said "not done yet" too many times. Decide, write a short note, and optionally give a strike to the side at fault.</p>
+      <p className="text-sm text-mu">أعمال أبلغ فيها أحد الطرفين عن مشكلة، أو قال فيها العميل "لم يُنجز بعد" مرات كثيرة. اتخذ قرارك واكتب ملاحظة قصيرة، ويمكنك إعطاء مخالفة للطرف المخطئ.</p>
       <ErrorBox message={err} />
-      {rows.length === 0 && <Empty>No open disputes.</Empty>}
+      {rows.length === 0 && <Empty>لا توجد نزاعات مفتوحة.</Empty>}
       <ul className="space-y-3">
         {rows.map((c) => {
           const k = key(c)
           return (
             <li key={k} className={`${card} space-y-2 text-sm`}>
               <p><strong>{c.title}</strong> ({c.categoryName})</p>
-              <p>Worker: {c.workerName} <code className="text-xs">{c.workerId}</code> &middot; Client <code className="text-xs">{c.clientId}</code></p>
-              <p>Quoted {formatCents(c.quotedCents)}{c.finalCents != null ? <> &middot; Worker's final {formatCents(c.finalCents)}</> : null} &middot; "Not done yet" {c.reopenCount ?? 0}x</p>
-              <p className="text-tx">Raised by the <strong>{c.disputeBy}</strong>: {c.disputeReason}</p>
-              <label className="block">Decision note (both sides see it)<input className={`${input} mt-1`} maxLength={300} value={notes[k] ?? ''} onChange={(e) => setNotes({ ...notes, [k]: e.target.value })} /></label>
-              <label className="block">Final amount if you confirm (USD)<input className={`${input} mt-1`} inputMode="decimal" value={amounts[k] ?? ((c.finalCents ?? c.quotedCents) / 100).toString()} onChange={(e) => setAmounts({ ...amounts, [k]: e.target.value })} /></label>
-              <label className="block">Strike for the side at fault
+              <p>العامل: {c.workerName} <code className="text-xs ad-ltr">{c.workerId}</code> &middot; العميل <code className="text-xs ad-ltr">{c.clientId}</code></p>
+              <p>السعر المعروض {formatCents(c.quotedCents)}{c.finalCents != null ? <> &middot; السعر النهائي من العامل {formatCents(c.finalCents)}</> : null} &middot; "لم يُنجز بعد" {c.reopenCount ?? 0} مرة</p>
+              <p className="text-tx">رفعه <strong>{c.disputeBy === 'worker' ? 'العامل' : c.disputeBy === 'client' ? 'العميل' : c.disputeBy}</strong>: {c.disputeReason}</p>
+              <label className="block">ملاحظة القرار (يراها الطرفان)<input className={`${input} mt-1`} maxLength={300} value={notes[k] ?? ''} onChange={(e) => setNotes({ ...notes, [k]: e.target.value })} /></label>
+              <label className="block">المبلغ النهائي إذا أكدت (بالدولار)<input className={`${input} mt-1`} inputMode="decimal" value={amounts[k] ?? ((c.finalCents ?? c.quotedCents) / 100).toString()} onChange={(e) => setAmounts({ ...amounts, [k]: e.target.value })} /></label>
+              <label className="block">مخالفة للطرف المخطئ
                 <select className={`${input} mt-1`} value={strike[k] ?? ''} onChange={(e) => setStrike({ ...strike, [k]: e.target.value as 'worker' | 'client' | '' })}>
-                  <option value="">No strike</option><option value="worker">The worker</option><option value="client">The client</option>
+                  <option value="">بدون مخالفة</option><option value="worker">العامل</option><option value="client">العميل</option>
                 </select>
               </label>
               <div className="flex flex-wrap gap-2">
-                <button className={btn} onClick={() => decide(c, 'confirm')}>Confirm the job as done</button>
-                <button className={btnGhost} onClick={() => decide(c, 'resume')}>Send back to work</button>
-                <button className={btnGhost} onClick={() => decide(c, 'cancel')}>Cancel the job</button>
+                <button className={btn} onClick={() => decide(c, 'confirm')}>تأكيد إنجاز العمل</button>
+                <button className={btnGhost} onClick={() => decide(c, 'resume')}>إعادته للعمل</button>
+                <button className={btnGhost} onClick={() => decide(c, 'cancel')}>إلغاء العمل</button>
               </div>
             </li>
           )

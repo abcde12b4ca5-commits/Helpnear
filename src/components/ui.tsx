@@ -34,5 +34,5 @@ export function Pill({ tone, children }: { tone?: 'y' | 'g' | 'r'; children: Rea
 }
 
 export function Switch({ on, label }: { on: boolean; label: string }) {
-  return <span className={`hn-switch${on ? ' on' : ''}`} role="img" aria-label={`${label}: ${on ? 'on' : 'off'}`} />
+  return <span className={`hn-switch${on ? ' on' : ''}`} role="img" aria-label={`${label}: ${on ? 'مفعّل' : 'متوقف'}`} />
 }

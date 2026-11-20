@@ -34,44 +34,44 @@ export default function Moderation() {
     let userId = r.targetId, role: 'client' | 'worker' = 'worker'
     if (r.targetType === 'request') {
       const snap = await getDoc(doc(db, `requests/${r.targetId}`))
-      if (!snap.exists()) throw new Error('That request no longer exists.')
+      if (!snap.exists()) throw new Error('هذا الطلب لم يعد موجودًا.')
       userId = (snap.data() as RequestDoc).clientId; role = 'client'
     }
-    setMsg(await escalate(user!.uid, userId, role, `Report: ${r.reason}`.slice(0, 200)))
+    setMsg(await escalate(user!.uid, userId, role, `بلاغ: ${r.reason}`.slice(0, 200)))
     await adminWrite(user!.uid, 'report-resolved', `reports/${r.id}`, (b) => b.update(doc(db, `reports/${r.id}`), { status: 'resolved' }))
   })
 
-  if (!reports) return <Spinner />
+  if (!reports) return <Spinner label="جارٍ التحميل..." />
   return (
     <div className="space-y-6">
       <ErrorBox message={err} />
       {msg && <p role="status" className="text-sm text-ac">{msg}</p>}
       <section>
-        <h2 className="mb-2 font-semibold">Open reports</h2>
-        {reports.length === 0 && <Empty>No open reports.</Empty>}
+        <h2 className="mb-2 font-semibold">البلاغات المفتوحة</h2>
+        {reports.length === 0 && <Empty>لا توجد بلاغات مفتوحة.</Empty>}
         <ul className="space-y-2">
           {reports.map((r) => (
             <li key={r.id} className={`${card} space-y-2 text-sm`}>
-              <p><strong>{r.targetType}</strong> <code>{r.targetId}</code> reported by <code>{r.reporterId}</code></p>
+              <p><strong>{r.targetType === 'request' ? 'طلب' : r.targetType === 'worker' ? 'عامل' : r.targetType}</strong> <code className="ad-ltr">{r.targetId}</code> بلاغ من <code className="ad-ltr">{r.reporterId}</code></p>
               <p className="text-tx">{r.reason}</p>
               <div className="flex flex-wrap gap-2">
-                {r.targetType === 'request' && <button className={btnGhost} onClick={() => setRequest(r.targetId, 'removed').then(() => setReport(r, 'resolved'))}>Remove request and resolve</button>}
-                {r.targetType === 'worker' && <button className={btnGhost} onClick={() => run(() => setUserSuspended(user!.uid, r.targetId, 'worker', true)).then(() => setReport(r, 'resolved'))}>Suspend worker and resolve</button>}
-                {(r.targetType === 'request' || r.targetType === 'worker') && <button className={btnGhost} onClick={() => escalateReport(r)}>Report upheld: warn, freeze or ban the user</button>}
-                <button className={btnGhost} onClick={() => setReport(r, 'resolved')}>Mark resolved</button>
-                <button className={btnGhost} onClick={() => setReport(r, 'dismissed')}>Dismiss</button>
+                {r.targetType === 'request' && <button className={btnGhost} onClick={() => setRequest(r.targetId, 'removed').then(() => setReport(r, 'resolved'))}>حذف الطلب وإغلاق البلاغ</button>}
+                {r.targetType === 'worker' && <button className={btnGhost} onClick={() => run(() => setUserSuspended(user!.uid, r.targetId, 'worker', true)).then(() => setReport(r, 'resolved'))}>إيقاف العامل وإغلاق البلاغ</button>}
+                {(r.targetType === 'request' || r.targetType === 'worker') && <button className={btnGhost} onClick={() => escalateReport(r)}>البلاغ صحيح: إنذار أو تجميد أو حظر المستخدم</button>}
+                <button className={btnGhost} onClick={() => setReport(r, 'resolved')}>تم الحل</button>
+                <button className={btnGhost} onClick={() => setReport(r, 'dismissed')}>رفض البلاغ</button>
               </div>
             </li>
           ))}
         </ul>
       </section>
       <section>
-        <h2 className="mb-2 font-semibold">Latest requests</h2>
+        <h2 className="mb-2 font-semibold">أحدث الطلبات</h2>
         <ul className="space-y-2">
           {reqs.map((r) => (
             <li key={r.id} className={`${card} flex flex-wrap items-center justify-between gap-2 text-sm`}>
               <span><strong>{r.title}</strong> ({r.categoryName}, {r.city}, {r.state}) <em>{r.status}</em></span>
-              {r.status === 'removed' ? <button className={btnGhost} onClick={() => setRequest(r.id, 'open')}>Restore</button> : <button className={btnGhost} onClick={() => setRequest(r.id, 'removed')}>Remove</button>}
+              {r.status === 'removed' ? <button className={btnGhost} onClick={() => setRequest(r.id, 'open')}>استعادة</button> : <button className={btnGhost} onClick={() => setRequest(r.id, 'removed')}>حذف</button>}
             </li>
           ))}
         </ul>

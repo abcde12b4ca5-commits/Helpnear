@@ -3,9 +3,11 @@ import { Timestamp, collection, getCountFromServer, query, where } from 'firebas
 import { db } from '../../lib/firebase'
 import { DEFAULT_CONFIG, getAppConfig } from '../../lib/catalog'
 import { Pill, Switch, btnGhost, card } from '../../components/ui'
+import { Icon } from '../../components/AdminIcon'
 import type { AppConfig } from '../../lib/types'
 
-const SYSTEM: [keyof AppConfig, string][] = [['signupOpen', 'Sign-ups open'], ['maintenanceMode', 'Maintenance mode'], ['chatEnabled', 'In-app chat'], ['autoRulesEnabled', 'Automatic fair-use rules']]
+const SYSTEM: [keyof AppConfig, string][] = [['signupOpen', 'التسجيل مفتوح'], ['maintenanceMode', 'وضع الصيانة'], ['chatEnabled', 'الدردشة داخل التطبيق'], ['autoRulesEnabled', 'قواعد الاستخدام العادل التلقائية']]
+const ar = new Intl.NumberFormat('ar-EG')
 
 export default function Dashboard({ onGo }: { onGo?: (tab: string) => void }) {
   const [c, setC] = useState<{ users: number; requests: number; reports: number } | null>(null)
@@ -20,29 +22,34 @@ export default function Dashboard({ onGo }: { onGo?: (tab: string) => void }) {
     ]).then(([u, r, p]) => setC({ users: u.data().count, requests: r.data().count, reports: p.data().count })).catch(() => setErr(true))
     getAppConfig().then(setCfg).catch(() => undefined)
   }, [])
-  const items: [string, number | undefined][] = [['New users today', c?.users], ['New requests today', c?.requests], ['Open reports', c?.reports]]
+  const items: [string, number | undefined, string, string][] = [['مستخدمون جدد اليوم', c?.users, 'users', 'منذ منتصف الليل'], ['طلبات جديدة اليوم', c?.requests, 'plus', 'منذ منتصف الليل'], ['بلاغات مفتوحة', c?.reports, 'shield', 'في انتظار قرارك']]
   const go = (t: string) => onGo?.(t)
+  const val = (v: number | undefined) => (err ? '-' : v == null ? '...' : ar.format(v))
   return (
-    <div className="grid gap-4 lg:grid-cols-[repeat(3,1fr)_1.1fr]">
-      {items.map(([label, v], i) => (
-        <div key={label} className={`${card} hn-in`} style={{ ['--i' as string]: i }}><p className="text-sm text-mu">{label}</p><p className="font-display text-5xl font-semibold">{err ? '-' : v ?? '...'}</p></div>
+    <div className="grid gap-4 lg:grid-cols-3">
+      {items.map(([label, v, icon, sub], i) => (
+        <div key={label} className={`${card} ad-stat hn-in`} style={{ ['--i' as string]: i }}>
+          <p className="flex items-center gap-2 text-sm font-semibold text-mu"><span className="ad-ic"><Icon n={icon} /></span>{label}</p>
+          <p className="mt-2 font-display text-5xl font-extrabold">{val(v)}</p>
+          <p className="text-xs text-mu">{sub}</p>
+        </div>
       ))}
-      <aside className={`${card} hn-in space-y-4 lg:row-span-3 lg:col-start-4 lg:row-start-1`} style={{ ['--i' as string]: 3 }} aria-label="System status">
-        <h2 className="text-lg">System</h2>
-        {SYSTEM.map(([k, label]) => <div key={k} className="flex items-center justify-between gap-3 text-sm"><span>{label}</span><Switch on={Boolean(cfg[k])} label={label} /></div>)}
-        <button className={btnGhost} onClick={() => go('Settings')}>Change in Settings</button>
-      </aside>
-      <section className={`${card} hn-in space-y-1 lg:col-span-3`} style={{ ['--i' as string]: 4 }}>
-        <h2 className="mb-2 text-xl">Needs your decision</h2>
-        {([['Reports', (c?.reports ?? 0) > 0 ? `${c?.reports} open` : 'None open', 'Moderation', (c?.reports ?? 0) > 0 ? 'y' : 'g'], ['Disputes', 'Jobs where a side asked an admin to decide', 'Disputes', undefined], ['Users flagged for review', 'Accounts that reached the strike limit', 'Users', undefined]] as const).map(([name, text, tab, tone]) => (
-          <div key={name} className="flex items-center gap-3 border-t border-ln py-3">
-            <Pill tone={tone as 'y' | 'g' | undefined}>{name}</Pill><span className="flex-1 text-sm text-mu">{text}</span>
-            <button className={btnGhost} onClick={() => go(tab)}>Review</button>
+      <section className={`${card} hn-in space-y-1 lg:col-span-2`} style={{ ['--i' as string]: 3 }}>
+        <h2 className="mb-2 text-xl">بانتظار قرارك</h2>
+        {([['البلاغات', (c?.reports ?? 0) > 0 ? `${ar.format(c?.reports ?? 0)} مفتوح` : 'لا يوجد بلاغ مفتوح', 'Moderation', (c?.reports ?? 0) > 0 ? 'y' : 'g'], ['النزاعات', 'أعمال طلب فيها أحد الطرفين قرارًا من الإدارة', 'Disputes', undefined], ['مستخدمون للمراجعة', 'حسابات وصلت إلى حد المخالفات', 'Users', undefined]] as const).map(([name, text, tab, tone]) => (
+          <div key={name} className="flex flex-wrap items-center gap-3 border-t border-ln py-3">
+            <Pill tone={tone as 'y' | 'g' | undefined}>{name}</Pill><span className="min-w-0 flex-1 text-sm text-mu">{text}</span>
+            <button className={btnGhost} onClick={() => go(tab)}>مراجعة</button>
           </div>
         ))}
       </section>
+      <aside className={`${card} hn-in space-y-3`} style={{ ['--i' as string]: 4 }} aria-label="حالة النظام">
+        <h2 className="text-lg">النظام</h2>
+        {SYSTEM.map(([k, label]) => <div key={k} className="flex items-center justify-between gap-3 text-sm"><span>{label}</span><Switch on={Boolean(cfg[k])} label={label} /></div>)}
+        <button className={btnGhost} onClick={() => go('Settings')}>تعديل من الإعدادات</button>
+      </aside>
       <p className="rounded-xl bg-warn-bg p-3 text-sm text-warn-tx lg:col-span-3">
-        Spark free limits are hard daily caps (reads, writes, deletes); when exceeded the service stops until the next day. This page uses cheap count queries and cannot measure your reads. Check the Usage tab in the Firebase console daily during launch, and consider turning on maintenance mode (Settings) if you are close to a limit.
+        حدود الخطة المجانية (Spark) يومية وصارمة: القراءة والكتابة والحذف. عند تجاوزها تتوقف الخدمة حتى اليوم التالي. هذه الصفحة تستخدم استعلامات عدّ خفيفة ولا تستطيع قياس القراءات عندك. راجع تبويب Usage في Firebase يوميًا خلال الإطلاق، وفكّر في تفعيل وضع الصيانة من الإعدادات إذا اقتربت من الحد.
       </p>
     </div>
   )

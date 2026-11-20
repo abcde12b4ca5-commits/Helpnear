@@ -30,18 +30,18 @@ function Row({ cat, onSaved, onError }: { cat: Category; onSaved: () => void; on
   return (
     <li className={`${card} space-y-2`}>
       <div className="flex flex-wrap items-center gap-3">
-        <strong className="text-sm">{c.name}</strong><code className="text-xs text-mu">{c.id}</code>
-        <label className="flex items-center gap-1 text-sm"><input type="checkbox" disabled={locked} checked={c.enabled && !locked} onChange={(e) => setC({ ...c, enabled: e.target.checked })} /> Enabled</label>
-        <select aria-label="Risk level" className={`${input} w-auto`} value={c.riskLevel} onChange={(e) => setC({ ...c, riskLevel: e.target.value as Category['riskLevel'] })}>
-          <option value="low">low</option><option value="regulated">regulated</option><option value="high">high</option>
+        <strong className="text-sm">{c.name}</strong><code className="text-xs text-mu ad-ltr">{c.id}</code>
+        <label className="flex items-center gap-1 text-sm"><input type="checkbox" disabled={locked} checked={c.enabled && !locked} onChange={(e) => setC({ ...c, enabled: e.target.checked })} /> مفعّلة</label>
+        <select aria-label="مستوى الخطورة" dir="ltr" className={`${input} w-auto`} value={c.riskLevel} onChange={(e) => setC({ ...c, riskLevel: e.target.value as Category['riskLevel'] })}>
+          <option value="low">منخفض</option><option value="regulated">منظَّم (يحتاج ترخيصًا)</option><option value="high">مرتفع</option>
         </select>
       </div>
-      {locked && <p className="text-xs text-warn-tx">Cannot be enabled until a license-verification feature exists.</p>}
-      <textarea aria-label="Allowed services, one per line" rows={3} className={input} value={services} onChange={(e) => setServices(e.target.value)} />
-      <input aria-label="Blocked keywords, comma separated" className={input} placeholder="Blocked keywords, comma separated" value={blocked} onChange={(e) => setBlocked(e.target.value)} />
-      <input aria-label="States where this service is switched off" className={input} placeholder="States where this service is OFF, e.g. NY, CA (empty = available everywhere)" value={off} onChange={(e) => setOff(e.target.value)} />
-      <input aria-label="Notes" className={input} placeholder="Notes" value={c.notes} onChange={(e) => setC({ ...c, notes: e.target.value })} />
-      <button className={btnGhost} onClick={save}>Save</button>
+      {locked && <p className="text-xs text-warn-tx">لا يمكن تفعيلها حتى تتوفر ميزة التحقق من التراخيص.</p>}
+      <textarea aria-label="الخدمات المسموحة، واحدة في كل سطر" dir="ltr" rows={3} className={input} value={services} onChange={(e) => setServices(e.target.value)} />
+      <input aria-label="الكلمات المحظورة، مفصولة بفواصل" dir="ltr" className={input} placeholder="الكلمات المحظورة، مفصولة بفواصل" value={blocked} onChange={(e) => setBlocked(e.target.value)} />
+      <input aria-label="الولايات التي تتوقف فيها هذه الخدمة" dir="ltr" className={input} placeholder="الولايات التي تتوقف فيها الخدمة، مثل NY, CA (فارغ = متاحة في كل مكان)" value={off} onChange={(e) => setOff(e.target.value)} />
+      <input aria-label="ملاحظات" className={input} placeholder="ملاحظات" value={c.notes} onChange={(e) => setC({ ...c, notes: e.target.value })} />
+      <button className={btnGhost} onClick={save}>حفظ</button>
     </li>
   )
 }
@@ -56,7 +56,7 @@ export default function Categories() {
   useEffect(() => { getCategories().then(setCats).catch((e) => setErr(friendlyError(e))) }, [])
 
   async function add() {
-    if (!user || !/^[a-z0-9-]{2,60}$/.test(newId) || !newName.trim()) { setErr('Use a lowercase id (letters, numbers, dashes) and a name.'); return }
+    if (!user || !/^[a-z0-9-]{2,60}$/.test(newId) || !newName.trim()) { setErr('استخدم معرّفًا بحروف إنجليزية صغيرة (حروف وأرقام وشرطات) واسمًا.'); return }
     const { id, ...data } = blank(newId, newName.trim())
     try { await adminWrite(user.uid, 'create-category', `categories/${id}`, (b) => b.set(doc(db, `categories/${id}`), data)); setNewId(''); setNewName(''); reload() } catch (e) { setErr(friendlyError(e)) }
   }
@@ -67,24 +67,24 @@ export default function Categories() {
     setErr(null); setInfo(null)
     try {
       await adminWrite(user.uid, 'add-starter-services', `categories/(${missing.length})`, (b) => missing.forEach(({ id, ...data }) => b.set(doc(db, `categories/${id}`), data)))
-      setInfo(`Added ${missing.length} services.`); reload()
+      setInfo(`تمت إضافة ${missing.length} خدمة.`); reload()
     } catch (e) { setErr(friendlyError(e)) }
   }
-  if (!cats) return err ? <ErrorBox message={err} /> : <Spinner />
+  if (!cats) return err ? <ErrorBox message={err} /> : <Spinner label="جارٍ التحميل..." />
   return (
     <div className="space-y-4">
       <ErrorBox message={err} />
       {missing.length > 0 && (
         <div className={`${card} space-y-2`}>
-          <p className="text-sm"><strong>{missing.length} standard services are not in your database yet</strong>: {missing.map((m) => m.name).join(', ')}.</p>
-          <button className={btn} onClick={addMissing}>Add the {missing.length} missing services</button>
+          <p className="text-sm"><strong>{missing.length} خدمة قياسية غير موجودة في قاعدة بياناتك بعد</strong>: {missing.map((m) => m.name).join(', ')}.</p>
+          <button className={btn} onClick={addMissing}>إضافة الخدمات الناقصة ({missing.length})</button>
         </div>
       )}
       {info && <p className="text-sm text-ok" role="status">{info}</p>}
       <div className="flex flex-wrap gap-2">
-        <input aria-label="New category id" className={`${input} w-48`} placeholder="new-category-id" value={newId} onChange={(e) => setNewId(e.target.value)} />
-        <input aria-label="New category name" className={`${input} w-56`} placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-        <button className={btn} onClick={add}>Add category (disabled by default)</button>
+        <input aria-label="معرّف الخدمة الجديدة" dir="ltr" className={`${input} w-48`} placeholder="new-category-id" value={newId} onChange={(e) => setNewId(e.target.value)} />
+        <input aria-label="اسم الخدمة الجديدة" dir="ltr" className={`${input} w-56`} placeholder="الاسم" value={newName} onChange={(e) => setNewName(e.target.value)} />
+        <button className={btn} onClick={add}>إضافة خدمة (تكون متوقفة افتراضيًا)</button>
       </div>
       <ul className="space-y-3">{cats.map((c) => <Row key={c.id} cat={c} onSaved={reload} onError={setErr} />)}</ul>
     </div>

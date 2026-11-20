@@ -13,12 +13,12 @@ export default function AuditLog() {
     getDocs(query(collection(db, 'adminLog'), orderBy('createdAt', 'desc'), limit(30)))
       .then((s) => setRows(s.docs.map((d) => ({ ...(d.data() as Omit<Entry, 'id'>), id: d.id })))).catch((e) => { setErr(friendlyError(e)); setRows([]) })
   }, [])
-  if (!rows) return <Spinner />
+  if (!rows) return <Spinner label="جارٍ التحميل..." />
   return (
     <div className="space-y-2">
       <ErrorBox message={err} />
-      {rows.length === 0 && <Empty>No admin actions yet.</Empty>}
-      {rows.map((r) => <p key={r.id} className={`${card} text-sm`}>{r.createdAt?.toDate().toLocaleString()} &middot; <strong>{r.action}</strong> &middot; <code>{r.targetPath}</code> &middot; by <code>{r.adminId}</code></p>)}
+      {rows.length === 0 && <Empty>لا توجد إجراءات إدارية بعد.</Empty>}
+      {rows.map((r) => <p key={r.id} className={`${card} text-sm`}>{r.createdAt?.toDate().toLocaleString('ar-EG')} &middot; <strong>{r.action}</strong> &middot; <code className="ad-ltr">{r.targetPath}</code> &middot; بواسطة <code className="ad-ltr">{r.adminId}</code></p>)}
     </div>
   )
 }

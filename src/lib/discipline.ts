@@ -41,15 +41,15 @@ export function unfreezeUser(adminId: string, userId: string) {
 export async function escalate(adminId: string, userId: string, role: Role, reason: string): Promise<string> {
   const [cfg, strikes] = await Promise.all([getAppConfig(), getUserStrikes(userId)])
   const earlier = strikes.filter((s) => s.type === 'warning' || s.type === 'conduct').length
-  if (earlier === 0) { await addStrike(adminId, userId, role, 'warning', reason); return 'Warning recorded (visible to the user as a strike note).' }
+  if (earlier === 0) { await addStrike(adminId, userId, role, 'warning', reason); return 'تم تسجيل إنذار (يظهر للمستخدم كملاحظة مخالفة).' }
   if (earlier === 1) {
     await addStrike(adminId, userId, role, 'conduct', reason)
     await freezeUser(adminId, userId, cfg.freezeDays, reason || 'Conduct')
-    return `Account frozen for ${cfg.freezeDays} days.`
+    return `تم تجميد الحساب لمدة ${cfg.freezeDays} يومًا.`
   }
   await addStrike(adminId, userId, role, 'conduct', reason)
   await setUserSuspended(adminId, userId, role, true)
-  return 'Account suspended (ban).'
+  return 'تم إيقاف الحساب (حظر).'
 }
 
 /** Fraud: suspend the user, and for a worker remove every confirmed job (it stops counting in completed jobs and earnings). */

@@ -1,13 +1,15 @@
 // Build-time prerender of PUBLIC SEO pages (static HTML, no JS needed to read them) + sitemap.xml + robots.txt + llms.txt.
 // Runs after `vite build`. Data comes from Firestore public-read REST (config/categories) when
 // VITE_FIREBASE_PROJECT_ID is set, otherwise from the seed file. Set SITE_URL to your real domain.
-// Coverage is nationwide, so there are no per-area pages: one hub plus one page per service.
+// Coverage is nationwide: one hub plus one page per service, plus a city guide page for each major city in src/shared/cities.json (real local content:
+// climate, seasonal jobs, local FAQ, nearby cities; no invented prices and no promise that a worker is available) and a /locations/ hub.
 import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises'
 import { categories as seedCats } from '../firebase/seed/data.mjs'
 import { DETAIL, SECTION_TITLES } from './service-guides.mjs'
 
 const SITE = (process.env.SITE_URL || 'https://example.pages.dev').replace(/\/$/, '')
 const BRAND = process.env.BRAND_NAME || JSON.parse(await readFile(new URL('../src/config/brand.json', import.meta.url), 'utf8')).name
+const CITIES = JSON.parse(await readFile(new URL('../src/shared/cities.json', import.meta.url), 'utf8'))
 const PROJECT = process.env.VITE_FIREBASE_PROJECT_ID
 const OUT = 'dist'
 
@@ -110,7 +112,13 @@ figcaption{font-size:.75rem;color:var(--mu);margin-top:.4rem}
 .pcs{display:grid;gap:1.4rem;margin:1.6rem 0}@media(min-width:40rem){.pcs{grid-template-columns:1fr 1fr}}
 .pc{background:var(--sf);border:1px solid var(--ln);border-radius:1.2rem;padding:1rem;transition:.2s}.pc:hover{transform:translateY(-3px)}.pc h2{font-size:1.25rem;margin:.8rem 0 .3rem}.pc a{text-decoration:none!important;color:var(--tx)!important}
 footer .fb{font-size:1.3rem;color:#fff}
-footer{padding:3rem 1.25rem 2.5rem;margin-top:3rem;background:#0f172a;border-top:1px solid #1e293b;font-size:.8rem;color:#94a3b8;text-align:center}footer p{max-width:42rem;margin:.6rem auto;color:#94a3b8}footer a{text-decoration:underline;text-underline-offset:3px}footer a:hover{color:#fff}`
+footer{padding:3rem 1.25rem 2.5rem;margin-top:3rem;background:#0f172a;border-top:1px solid #1e293b;font-size:.8rem;color:#94a3b8;text-align:center}footer p{max-width:42rem;margin:.6rem auto;color:#94a3b8}footer a{text-decoration:underline;text-underline-offset:3px}footer a:hover{color:#fff}\n.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.2rem 0}.chips a{padding:.4rem .9rem;border:1px solid var(--ln);border-radius:999px;background:var(--sf);font-size:.85rem;font-weight:600;color:var(--tx)!important;text-decoration:none!important}.chips a[aria-current=page]{background:#0f172a;color:#fff!important;border-color:#0f172a}
+.toc{margin:1.4rem 0;padding:1rem 1.2rem;border:1px solid var(--ln);border-radius:1rem;background:var(--sf)}.toc-t{margin:0 0 .4rem;font-weight:700;color:var(--tx)}.toc ol{margin:0;padding-left:1.3rem}.toc li{margin:.25rem 0;font-size:.95rem}
+.tbl{overflow-x:auto;margin:1.4rem 0;border:1px solid var(--ln);border-radius:1rem}.tbl table{border-collapse:collapse;width:100%;min-width:24rem}.tbl th,.tbl td{padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--ln);font-size:.95rem}.tbl th{background:var(--sf);font-weight:700}
+.cta-inline{margin:1.8rem 0;padding:1rem 1.2rem;border-left:4px solid var(--am);border-radius:0 1rem 1rem 0;background:var(--sf)}.cta-inline p{margin:0 0 .6rem}
+.hn-calc{margin:1.6rem 0;padding:1.2rem;border:1px solid var(--ln);border-radius:1rem;background:var(--sf)}.hn-calc h3{margin-top:0}.calc-grid{display:grid;gap:.8rem;grid-template-columns:1fr 1fr}@media(max-width:34rem){.calc-grid{grid-template-columns:1fr}}.calc-grid label{display:flex;flex-direction:column;gap:.25rem;font-size:.85rem;font-weight:600;color:var(--tx)}.calc-grid input{padding:.55rem .7rem;border:1px solid var(--ln);border-radius:.6rem;background:var(--bg);color:var(--tx);font:inherit}.calc-out{margin-top:.8rem;font-weight:600;color:var(--tx)}
+.cities{list-style:none;padding:0;display:grid;gap:.4rem .9rem;grid-template-columns:repeat(auto-fill,minmax(10.5rem,1fr))}.cities li{margin:0}
+`
 
 function page({ title, description, path, robots, body, jsonld }) {
   const url = `${SITE}${path}`
@@ -125,7 +133,7 @@ ${FONT_PRELOAD}
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script></head>
 <body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">${LOGO}</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/blog">Blog</a><a class="l" href="/login">Sign in</a><a class="cta y sm" href="/signup?role=worker">Join as a worker</a><button id=\"tg\" type=\"button\" aria-label=\"Switch between day and night mode\">◐</button></div></nav>
 <main>${body}</main>
-<footer><p class="f fb">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer>
+<footer><p class="f fb">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/locations/">Cities</a> · <a href="/blog">Blog</a> · <a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer>
 <script>document.getElementById('tg').addEventListener('click',function(){var n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('hn-theme',n)}catch(e){}})</script></body></html>`
 }
 
@@ -156,7 +164,7 @@ async function write(path, html) {
 // How it works (static copy of the SPA page so crawlers see real content)
 await write('/how-it-works', page({
   title: `How ${BRAND} works | Post a job, get prices, pay directly`,
-  description: `See how ${BRAND} works: post a request, local workers send prices, you pay the worker directly. Free to use.`,
+  description: `See how ${BRAND} works: post a request, local workers send prices, you pay the worker directly. ${BRAND} never handles job payments. Free to use.`,
   path: '/how-it-works', robots: 'index,follow',
   jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['How it works', '/how-it-works']]), {
     '@type': 'HowTo', name: `How ${BRAND} works`,
@@ -189,7 +197,7 @@ for (const cat of enabledCats) {
   urls.push({ path: `/services/${cat.id}/`, pri: '0.8' })
   await write(`/services/${cat.id}`, page({
     title: `${cat.name} near you | ${BRAND}`,
-    description: `Post a ${cat.name.toLowerCase()} request and let local workers reach out. See what to include and what to ask. Free to use.`,
+    description: `Post a ${cat.name.toLowerCase()} request and local workers near you can reach out with a price. See what to include and what to ask. Free to use.`,
     path: `/services/${cat.id}/`, robots: 'index,follow',
     jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/'], [cat.name, `/services/${cat.id}/`]]), faqLd(faq), { '@type': 'Service', name: cat.name, serviceType: cat.name, description: `Post a ${cat.name.toLowerCase()} request and local workers near you can accept it and send a price.`, url: `${SITE}/services/${cat.id}/`, areaServed: { '@type': 'Country', name: 'United States' }, provider: { '@type': 'Organization', name: BRAND, url: `${SITE}/` } }] },
     body: `<h1>${esc(cat.name)} near you</h1>
@@ -197,14 +205,56 @@ for (const cat of enabledCats) {
 <h2>What this covers</h2><ul>${cat.allowedServices.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>${cat.notes ? `<p><em>${esc(cat.notes)}</em></p>` : ''}
 ${(DETAIL[cat.id] ?? []).map((items, i) => `<h2>${SECTION_TITLES[i]}</h2><ul>${items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`).join('\n')}
 <h2>Frequently asked questions</h2>${faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')}
+<h2>Popular cities</h2><ul class="cities">${CITIES.slice(0, 8).map((c) => `<li><a href="/locations/${c.slug}/">${esc(c.name)}, ${c.state}</a></li>`).join('')}</ul>
 <h2>Other services</h2><ul>${enabledCats.filter((o) => o.id !== cat.id).map((o) => `<li><a href="/services/${o.id}/">${esc(o.name)}</a></li>`).join('')}</ul>
 <p><a class="cta" href="/signup">Post a ${esc(cat.name.toLowerCase())} request</a></p>`,
   }))
 }
 
+// Cities: a hub and one guide page per major city. Local facts come from src/shared/cities.json; the rest is the same honest, nationwide explanation.
+const catName = new Map(enabledCats.map((c) => [c.id, c.name]))
+const cityBySlug = new Map(CITIES.map((c) => [c.slug, c]))
+urls.push({ path: '/locations/', pri: '0.7' })
+await write('/locations', page({
+  title: `Home services by city | ${BRAND}`,
+  description: `Pick your city to see what homes there need through the year and post a home or yard job. ${BRAND} works nationwide and is free to use.`,
+  path: '/locations/', robots: 'index,follow',
+  jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Cities', '/locations/']]), { '@type': 'CollectionPage', name: `Home services by city | ${BRAND}`, url: `${SITE}/locations/` }] },
+  body: `<h1>Home services by city</h1><p>${esc(BRAND)} works across the United States. Choose a city to see what homes there need through the year, which jobs come up most, and how to post yours.</p><ul class="cities">${[...CITIES].sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<li><a href="/locations/${c.slug}/">${esc(c.name)}, ${c.state}</a></li>`).join('')}</ul><p>Not on the list? Post your job anyway: workers who cover your ZIP code can see it.</p><p><a class="cta" href="/signup">Post a job</a></p>`,
+}))
+for (const c of CITIES) {
+  const where = `${c.name}, ${c.state}`
+  const path = `/locations/${c.slug}/`
+  const jobs = c.jobs.filter((j) => catName.has(j.service))
+  const faq = [
+    [`Does ${BRAND} have workers in ${where}?`, `${BRAND} is open nationwide. Workers choose the ZIP codes they cover, so availability depends on who has signed up near you. When you post a request, workers who cover your ZIP code can see it and reply with a price. We cannot promise that a worker will be available for a specific job.`],
+    [c.faq.q, c.faq.a],
+    [`Does ${BRAND} verify licenses or insurance?`, `No. ${DISCLAIMER} Always confirm any license, permit or insurance you need yourself.`],
+    [`Is it free to post a job in ${where}?`, `${BRAND} is free to use at launch.`],
+  ]
+  urls.push({ path, pri: '0.6' })
+  await write(path.replace(/\/$/, ''), page({
+    title: `Home services in ${where} | ${BRAND}`,
+    description: `Post a home or yard job in ${where} and local workers send prices. See what ${c.name} homes need each season and how ${BRAND} works. Free to use.`,
+    path, robots: 'index,follow',
+    jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Cities', '/locations/'], [where, path]]), faqLd(faq), { '@type': 'Service', name: `Home services in ${where}`, serviceType: 'Home and yard services marketplace', areaServed: { '@type': 'City', name: c.name, containedInPlace: { '@type': 'State', name: c.stateName } }, provider: { '@type': 'Organization', name: BRAND, url: SITE } }] },
+    body: `<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/locations/">Cities</a> / ${esc(c.name)}</nav>
+<h1>Home services in ${esc(where)}</h1>
+<p>${esc(c.climate)} ${esc(c.homes)}</p>
+<p>${esc(BRAND)} lets ${esc(c.name)} neighbors post a home or yard job for free and get prices from local workers who cover their ZIP code. You choose who to hire and you pay the worker directly.</p>
+<h2>What ${esc(c.name)} homes need through the year</h2><ul>${c.seasons.map((x) => `<li><strong>${esc(x.label)}.</strong> ${esc(x.text)}</li>`).join('')}</ul>
+${jobs.length ? `<h2>Popular jobs in ${esc(c.name)}</h2><ul>${jobs.map((j) => `<li><a href="/services/${j.service}/">${esc(catName.get(j.service))}</a>: ${esc(j.why)}</li>`).join('')}</ul>` : ''}
+<h2>How it works in ${esc(c.name)}</h2><ol><li>Post your job with the service, your ZIP code, the details and when you need it done.</li><li>Workers who cover your ZIP code can accept it with a price, or decline.</li><li>You pick the worker, agree on the work and pay them directly, then leave a review.</li></ol>
+<h2>Frequently asked questions</h2>${faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')}
+<h2>Cities nearby</h2><ul class="cities">${c.nearby.map((n) => cityBySlug.get(n)).filter(Boolean).map((n) => `<li><a href="/locations/${n.slug}/">${esc(n.name)}, ${n.state}</a></li>`).join('')}</ul>
+<p>Looking for ideas? Read our <a href="/blog">home service guides</a> or <a href="/services/">browse all services</a>.</p>
+<p><a class="cta" href="/signup">Post a job in ${esc(c.name)}</a> <a class="cta y" href="/signup?role=worker">Join as a worker in ${esc(c.name)}</a></p>`,
+  }))
+}
+
 await writeFile(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${SITE}${u.path}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod><priority>${u.pri}</priority></url>`).join('\n')}\n</urlset>\n`)
 await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /chat/\nDisallow: /post\nDisallow: /my-requests\nDisallow: /profile\nDisallow: /feed\nDisallow: /dashboard\nDisallow: /onboarding\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: ${SITE}/sitemap.xml\nSitemap: ${SITE}/sitemap-blog.xml\n`)
-await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> ${DISCLAIMER}\n\nFree marketplace connecting clients with local home-service workers anywhere in the United States.\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
+await writeFile(`${OUT}/llms.txt`, `# ${BRAND}\n> Free marketplace connecting clients with local home-service workers anywhere in the United States. ${DISCLAIMER}\n\n## Key pages\n- [How ${BRAND} works](${SITE}/how-it-works): post a request, workers send prices, you pay the worker directly\n- [All services](${SITE}/services/): every home service that can be requested\n- [Cities](${SITE}/locations/): city guides with seasonal home needs and local FAQs\n- [Blog](${SITE}/blog): home service guides and cost guides\n- [Terms](${SITE}/legal/terms), [Privacy](${SITE}/legal/privacy), [Community Guidelines](${SITE}/legal/guidelines), [Disclaimer](${SITE}/legal/disclaimer)\n\n## Services\n${enabledCats.map((c) => `- [${c.name}](${SITE}/services/${c.id}/)`).join('\n')}\n`)
 // Template for the blog pages that functions/ renders at the edge: same head, menu, footer and styles as every static page.
 // The .tpl extension keeps it out of the sitemap and is scanned by scripts/headers.mjs, so the inline code in it is allowed by the CSP.
 await writeFile(`${OUT}/_blog-shell.tpl`, page({ title: '%%TITLE%%', description: '%%DESC%%', path: '%%PATH%%', robots: 'index,follow', body: '%%BODY%%', jsonld: '%%JSONLD%%' }))
