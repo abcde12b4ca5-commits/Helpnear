@@ -1,0 +1,1562 @@
+[
+ {
+  "slug": "new-york-ny",
+  "name": "New York",
+  "state": "NY",
+  "stateName": "New York",
+  "lat": 40.71,
+  "lng": -74.01,
+  "climate": "New York has four distinct seasons: cold, snowy winters, hot humid summers and rain spread through the year.",
+  "homes": "Much of the city is apartments, co-ops and brownstones, with houses and small yards in the outer boroughs, so many jobs are indoor and small in scale.",
+  "seasons": [
+   {
+    "label": "Winter",
+    "text": "Drafty windows, radiators and snow on stoops and sidewalks keep people busy."
+   },
+   {
+    "label": "Spring",
+    "text": "Spring cleaning, window washing and touch-up painting after a long winter indoors."
+   },
+   {
+    "label": "Fall",
+    "text": "Leases turn over, so move-out cleaning and apartment organizing peak around the move dates."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "furniture-assembly",
+    "why": "Small apartments mean a lot of flat-pack furniture that has to fit the space."
+   },
+   {
+    "service": "tv-shelf-mounting",
+    "why": "Mounting TVs and shelves on plaster, brick or tile takes the right anchors."
+   },
+   {
+    "service": "move-out-cleaning",
+    "why": "Lease turnovers create steady demand for a deep clean."
+   },
+   {
+    "service": "home-organizing",
+    "why": "Getting more out of limited square footage is a daily New York project."
+   }
+  ],
+  "faq": {
+   "q": "Can I post a job for an apartment in New York?",
+   "a": "Yes. Choose the service, enter your ZIP code and describe the access (floor, elevator, doorman). Many buildings have their own rules for outside workers, so check with your building manager before the work starts."
+  },
+  "nearby": [
+   "philadelphia-pa",
+   "boston-ma",
+   "washington-dc",
+   "columbus-oh"
+  ]
+ },
+ {
+  "slug": "los-angeles-ca",
+  "name": "Los Angeles",
+  "state": "CA",
+  "stateName": "California",
+  "lat": 34.05,
+  "lng": -118.24,
+  "climate": "Los Angeles is mild and mostly dry, with warm summers, short rainy winters and strong Santa Ana winds in the fall.",
+  "homes": "The area is a mix of single-family homes with yards, apartments and condos, and drought-tolerant landscaping is common.",
+  "seasons": [
+   {
+    "label": "Summer",
+    "text": "Heat and dust make window cleaning, pressure washing and shade work popular."
+   },
+   {
+    "label": "Fall",
+    "text": "Dry winds blow debris around yards and roofs, so cleanups are worth doing early."
+   },
+   {
+    "label": "Winter",
+    "text": "Short rainy spells expose leaky gutters and worn paint."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "pressure-washing",
+    "why": "Driveways, patios and block walls collect dust and grime all year."
+   },
+   {
+    "service": "window-cleaning",
+    "why": "Dry weather leaves windows with a film that builds up quickly."
+   },
+   {
+    "service": "gardening-planting",
+    "why": "Many yards are being replanted with drought-tolerant plants."
+   },
+   {
+    "service": "painting",
+    "why": "Strong sun fades exterior paint and stucco over time."
+   }
+  ],
+  "faq": {
+   "q": "When is a good time to book yard cleanup in Los Angeles?",
+   "a": "Late summer and fall are busy because dry plants and windblown debris pile up. Booking before the windiest weeks gives you more choice of workers."
+  },
+  "nearby": [
+   "san-diego-ca",
+   "las-vegas-nv",
+   "san-jose-ca",
+   "san-francisco-ca"
+  ]
+ },
+ {
+  "slug": "chicago-il",
+  "name": "Chicago",
+  "state": "IL",
+  "stateName": "Illinois",
+  "lat": 41.88,
+  "lng": -87.63,
+  "climate": "Chicago has cold, snowy winters and hot humid summers, with big swings in between.",
+  "homes": "Brick bungalows, two-flats and greystones are common, and many have older plaster walls, porches and detached garages.",
+  "seasons": [
+   {
+    "label": "Winter",
+    "text": "Snow and ice on sidewalks and driveways need clearing, and cold exposes drafts and cracks."
+   },
+   {
+    "label": "Spring",
+    "text": "Thaw and heavy rain reveal gutter problems and tired paint."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves fill gutters and yards before the first freeze."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "snow-removal",
+    "why": "Winter storms make shoveling and clearing a regular need."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Leaf-heavy fall and spring rain make clean gutters important."
+   },
+   {
+    "service": "handyman",
+    "why": "Older homes always have a door, porch step or window to fix."
+   },
+   {
+    "service": "drywall-repair",
+    "why": "Freeze and thaw cycles crack plaster and drywall."
+   }
+  ],
+  "faq": {
+   "q": "Can I book snow removal in Chicago before the first storm?",
+   "a": "Yes. Post the request early in the fall with your address area and what needs clearing, such as the walk, steps and driveway, so a worker can plan to come after each snowfall."
+  },
+  "nearby": [
+   "indianapolis-in",
+   "detroit-mi",
+   "columbus-oh",
+   "nashville-tn"
+  ]
+ },
+ {
+  "slug": "houston-tx",
+  "name": "Houston",
+  "state": "TX",
+  "stateName": "Texas",
+  "lat": 29.76,
+  "lng": -95.37,
+  "climate": "Houston is hot and humid, with heavy rain through the year and hurricane season running from June through November.",
+  "homes": "The city is wide and flat with many single-family homes, large lawns and fences, and fast-growing yards.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Heavy rain and fast growth keep lawns and beds busy."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and humidity mean mildew on siding, fences and driveways."
+   },
+   {
+    "label": "Fall",
+    "text": "After hurricane season, storm debris and loose fence boards need attention."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "Warm, wet weather means grass grows for much of the year."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Storms leave limbs and debris that need hauling."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Humidity grows mildew on fences, siding and concrete."
+   },
+   {
+    "service": "fence-work",
+    "why": "Wind and soaked ground loosen fence posts and boards."
+   }
+  ],
+  "faq": {
+   "q": "When should I book yard cleanup in Houston?",
+   "a": "Many people book right after a storm and again before hurricane season starts. Describe what is down or overgrown and how much there is to haul so workers can plan their visit."
+  },
+  "nearby": [
+   "austin-tx",
+   "san-antonio-tx",
+   "dallas-tx",
+   "fort-worth-tx"
+  ]
+ },
+ {
+  "slug": "phoenix-az",
+  "name": "Phoenix",
+  "state": "AZ",
+  "stateName": "Arizona",
+  "lat": 33.45,
+  "lng": -112.07,
+  "climate": "Phoenix has very hot, dry summers, mild winters and a monsoon storm season that usually runs from mid-June through September.",
+  "homes": "Many homes have gravel or desert landscaping, block walls, flat roofs or tile roofs, and pools.",
+  "seasons": [
+   {
+    "label": "Summer",
+    "text": "Extreme heat is hard on paint, blinds, sprinklers and anyone working outside."
+   },
+   {
+    "label": "Monsoon season",
+    "text": "Dust storms coat windows and patios and can blow debris across yards."
+   },
+   {
+    "label": "Winter",
+    "text": "Mild weather makes it the favorite season for yard projects and painting."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "pressure-washing",
+    "why": "Dust and hard water stains build up on patios and walls."
+   },
+   {
+    "service": "window-cleaning",
+    "why": "Monsoon dust leaves windows coated."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Desert yards need debris, weeds and dead plants cleared."
+   },
+   {
+    "service": "painting",
+    "why": "Intense sun fades and cracks exterior paint."
+   }
+  ],
+  "faq": {
+   "q": "Is winter a better time for outdoor jobs in Phoenix?",
+   "a": "For many outdoor projects, yes. Cooler months are easier on workers and on materials like paint, so you may find more availability for painting and yard projects between late fall and spring."
+  },
+  "nearby": [
+   "las-vegas-nv",
+   "san-diego-ca",
+   "el-paso-tx",
+   "los-angeles-ca"
+  ]
+ },
+ {
+  "slug": "philadelphia-pa",
+  "name": "Philadelphia",
+  "state": "PA",
+  "stateName": "Pennsylvania",
+  "lat": 39.95,
+  "lng": -75.17,
+  "climate": "Philadelphia has four seasons, with cold winters, hot humid summers and rain in every month.",
+  "homes": "Rowhouses are everywhere, along with older twins and single homes, many with narrow stairs, basements and flat or low-slope roofs.",
+  "seasons": [
+   {
+    "label": "Winter",
+    "text": "Snow and cold put stoops and sidewalks, and heating systems, to the test."
+   },
+   {
+    "label": "Spring",
+    "text": "Rain exposes gutter and downspout problems and worn paint."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves clog gutters on tree-lined streets."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "gutter-cleaning",
+    "why": "Rowhouse gutters collect leaves and can overflow onto neighbors."
+   },
+   {
+    "service": "painting",
+    "why": "Interior touch-ups and trim work are common in older homes."
+   },
+   {
+    "service": "drywall-repair",
+    "why": "Old plaster and drywall cracks with seasonal changes."
+   },
+   {
+    "service": "snow-removal",
+    "why": "Sidewalk clearing matters on narrow city blocks."
+   }
+  ],
+  "faq": {
+   "q": "Can workers handle jobs in a Philadelphia rowhouse?",
+   "a": "Yes. Mention stairs, parking and access in your request. Narrow stairs and limited street parking are common, and workers appreciate knowing before they arrive."
+  },
+  "nearby": [
+   "new-york-ny",
+   "washington-dc",
+   "boston-ma",
+   "columbus-oh"
+  ]
+ },
+ {
+  "slug": "san-antonio-tx",
+  "name": "San Antonio",
+  "state": "TX",
+  "stateName": "Texas",
+  "lat": 29.42,
+  "lng": -98.49,
+  "climate": "San Antonio is hot for much of the year, with mild winters and occasional strong storms.",
+  "homes": "Many homes sit on generous lots with lawns, fences, patios and decks, and outdoor living is a big part of how people use their homes.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Storms and fast growth mean mowing, trimming and cleanup."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat is hard on lawns, fences and wood decks."
+   },
+   {
+    "label": "Fall",
+    "text": "Cooler weather is the best time for fence and deck repairs."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "Warm weather keeps lawns growing for most of the year."
+   },
+   {
+    "service": "fence-work",
+    "why": "Sun and storms wear down fences."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Patios, driveways and decks collect dirt and algae."
+   },
+   {
+    "service": "deck-work",
+    "why": "Sun-baked decks need cleaning, sealing or board repair."
+   }
+  ],
+  "faq": {
+   "q": "Can I find help with fence repair in San Antonio?",
+   "a": "Post the request with the length of fence, the material and what is damaged. Workers who cover your ZIP code can then reply with a price for the repair."
+  },
+  "nearby": [
+   "austin-tx",
+   "houston-tx",
+   "fort-worth-tx",
+   "dallas-tx"
+  ]
+ },
+ {
+  "slug": "san-diego-ca",
+  "name": "San Diego",
+  "state": "CA",
+  "stateName": "California",
+  "lat": 32.72,
+  "lng": -117.16,
+  "climate": "San Diego has a mild coastal climate with little rain, cool mornings and salty air near the coast.",
+  "homes": "There are many single-family homes, condos and townhomes, often with patios and small gardens that people use all year.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Overcast mornings give way to sun, and gardens grow quickly."
+   },
+   {
+    "label": "Summer",
+    "text": "Dry weather is ideal for painting and outdoor projects."
+   },
+   {
+    "label": "Winter",
+    "text": "Occasional rain reveals gutter and roof issues."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "window-cleaning",
+    "why": "Salt air leaves a film on windows near the coast."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Patios and walkways need regular cleaning."
+   },
+   {
+    "service": "painting",
+    "why": "Sun and salt air wear on exterior paint."
+   },
+   {
+    "service": "gardening-planting",
+    "why": "A mild climate means planting is possible nearly year-round."
+   }
+  ],
+  "faq": {
+   "q": "Does salt air change what I should ask a worker in San Diego?",
+   "a": "Near the coast it can. Ask about materials and cleaning methods that hold up to salt air, and mention how close you are to the water in your request."
+  },
+  "nearby": [
+   "los-angeles-ca",
+   "las-vegas-nv",
+   "phoenix-az",
+   "san-jose-ca"
+  ]
+ },
+ {
+  "slug": "dallas-tx",
+  "name": "Dallas",
+  "state": "TX",
+  "stateName": "Texas",
+  "lat": 32.78,
+  "lng": -96.8,
+  "climate": "Dallas has hot summers, mild winters and strong spring storms that can bring hail.",
+  "homes": "Most neighborhoods are single-family homes with lawns, fences and garages, plus many newer builds.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Storm season can mean hail damage, fallen limbs and fence repairs."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and dry spells stress lawns and fences."
+   },
+   {
+    "label": "Fall",
+    "text": "Mild weather is a good window for fence, deck and exterior jobs."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "Hot summers and spring growth keep mowing on the list."
+   },
+   {
+    "service": "fence-work",
+    "why": "Wind and storms knock down boards and posts."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Heavy rain makes clean gutters worthwhile."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Storms leave limbs and debris that need hauling."
+   }
+  ],
+  "faq": {
+   "q": "When do people in Dallas book storm cleanup?",
+   "a": "Usually right after a storm. Describe what is down, how big it is and whether you can leave the debris at the curb so workers can price the job."
+  },
+  "nearby": [
+   "fort-worth-tx",
+   "austin-tx",
+   "oklahoma-city-ok",
+   "houston-tx"
+  ]
+ },
+ {
+  "slug": "jacksonville-fl",
+  "name": "Jacksonville",
+  "state": "FL",
+  "stateName": "Florida",
+  "lat": 30.33,
+  "lng": -81.66,
+  "climate": "Jacksonville is hot and humid, with a rainy summer and a hurricane season that runs from June through November.",
+  "homes": "Many homes sit among tall pines and live oaks on spread-out lots, so yards produce a lot of debris.",
+  "seasons": [
+   {
+    "label": "Summer",
+    "text": "Humidity and afternoon storms feed mildew and fast-growing grass."
+   },
+   {
+    "label": "Hurricane season",
+    "text": "Storm prep and cleanup become a regular need through the fall."
+   },
+   {
+    "label": "Winter",
+    "text": "Cooler, drier weather is a good time for exterior projects."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "yard-cleanup",
+    "why": "Trees drop limbs, needles and leaves almost year-round."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Humidity grows mildew on driveways, siding and fences."
+   },
+   {
+    "service": "lawn-care",
+    "why": "Warm, wet weather keeps grass growing fast."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Pine needles and leaves clog gutters quickly."
+   }
+  ],
+  "faq": {
+   "q": "Can I book cleanup help after a storm in Jacksonville?",
+   "a": "Yes. Post what needs clearing and how much debris there is. After a big storm, many people are looking for help at once, so booking early helps."
+  },
+  "nearby": [
+   "atlanta-ga",
+   "miami-fl",
+   "charlotte-nc",
+   "nashville-tn"
+  ]
+ },
+ {
+  "slug": "austin-tx",
+  "name": "Austin",
+  "state": "TX",
+  "stateName": "Texas",
+  "lat": 30.27,
+  "lng": -97.74,
+  "climate": "Austin has long hot summers, mild winters and occasional heavy storms, with a lot of tree cover in many neighborhoods.",
+  "homes": "There is a mix of older bungalows, newer builds and apartments, and many yards have mature trees.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Heavy rain and warm weather make lawns and beds grow fast."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat is hard on lawns, decks and exterior paint."
+   },
+   {
+    "label": "Fall",
+    "text": "Cooler weather is a good time for deck, fence and yard projects."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "Warm weather keeps grass growing and needing regular mowing."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Mature trees drop leaves, limbs and seed pods."
+   },
+   {
+    "service": "deck-work",
+    "why": "Heat and sun dry out wood decks."
+   },
+   {
+    "service": "fence-work",
+    "why": "Storms and shifting soil loosen fences."
+   }
+  ],
+  "faq": {
+   "q": "How do I find help with a small yard job in Austin?",
+   "a": "Post a request with the yard size, what needs doing and when you want it done. Workers who cover your ZIP code can then reply with a price."
+  },
+  "nearby": [
+   "san-antonio-tx",
+   "houston-tx",
+   "fort-worth-tx",
+   "dallas-tx"
+  ]
+ },
+ {
+  "slug": "fort-worth-tx",
+  "name": "Fort Worth",
+  "state": "TX",
+  "stateName": "Texas",
+  "lat": 32.76,
+  "lng": -97.33,
+  "climate": "Fort Worth has hot summers, mild winters and spring storm season that can bring hail and strong wind.",
+  "homes": "Many homes are single-family houses with big lawns, fences and garages, and the city keeps growing outward.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Hail and wind storms can damage fences, gutters and yards."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and dry spells stress lawns."
+   },
+   {
+    "label": "Fall",
+    "text": "Cooler weather is a good window for repairs and exterior work."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "fence-work",
+    "why": "Wind and storms damage fences across large lots."
+   },
+   {
+    "service": "lawn-care",
+    "why": "Large yards need regular mowing and edging."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Spring storms fill gutters with debris."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Driveways and patios collect dust and stains."
+   }
+  ],
+  "faq": {
+   "q": "Can I get help with fence repair after a storm in Fort Worth?",
+   "a": "Yes. Post a request describing the damage, the fence material and the approximate length. Photos in your description help workers give a more accurate price."
+  },
+  "nearby": [
+   "dallas-tx",
+   "austin-tx",
+   "oklahoma-city-ok",
+   "houston-tx"
+  ]
+ },
+ {
+  "slug": "san-jose-ca",
+  "name": "San Jose",
+  "state": "CA",
+  "stateName": "California",
+  "lat": 37.34,
+  "lng": -121.89,
+  "climate": "San Jose has a mild Mediterranean climate with dry summers, a rainy season from late fall to early spring and plenty of sun.",
+  "homes": "Most neighborhoods are suburban, with single-family homes, townhomes and condos, and many households work from home.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Rain gives way to sun, which is a good time for painting and yard work."
+   },
+   {
+    "label": "Summer",
+    "text": "Long dry days suit exterior projects."
+   },
+   {
+    "label": "Winter",
+    "text": "Rain exposes gutter and roof leaks."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "painting",
+    "why": "Dry weather makes exterior painting easier to schedule."
+   },
+   {
+    "service": "window-cleaning",
+    "why": "Dust and dry weather leave windows dirty."
+   },
+   {
+    "service": "home-tech-help",
+    "why": "Home offices and smart devices create steady setup needs."
+   },
+   {
+    "service": "gardening-planting",
+    "why": "A long growing season makes planting a popular project."
+   }
+  ],
+  "faq": {
+   "q": "When is the best time for exterior painting in San Jose?",
+   "a": "Dry months are usually the easiest to schedule. Ask the worker about prep, number of coats and how they handle weather delays."
+  },
+  "nearby": [
+   "san-francisco-ca",
+   "los-angeles-ca",
+   "las-vegas-nv",
+   "san-diego-ca"
+  ]
+ },
+ {
+  "slug": "columbus-oh",
+  "name": "Columbus",
+  "state": "OH",
+  "stateName": "Ohio",
+  "lat": 39.96,
+  "lng": -83.0,
+  "climate": "Columbus has four seasons, with cold winters, warm humid summers and rain spread through the year.",
+  "homes": "Many homes are suburban houses with lawns, decks and garages, along with older neighborhoods close to downtown.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Rain and warmth wake up lawns and show winter damage."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves fill yards and gutters."
+   },
+   {
+    "label": "Winter",
+    "text": "Snow and ice need clearing from drives and walks."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "The growing season keeps mowing on the schedule."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Fall leaves clog gutters before winter."
+   },
+   {
+    "service": "snow-removal",
+    "why": "Winter storms create a need for clearing."
+   },
+   {
+    "service": "deck-work",
+    "why": "Freeze and thaw cycles are hard on wood decks."
+   }
+  ],
+  "faq": {
+   "q": "When should I clean gutters in Columbus?",
+   "a": "Late fall, after most leaves have dropped, is a common time. Many people also check them again in spring."
+  },
+  "nearby": [
+   "detroit-mi",
+   "indianapolis-in",
+   "chicago-il",
+   "washington-dc"
+  ]
+ },
+ {
+  "slug": "charlotte-nc",
+  "name": "Charlotte",
+  "state": "NC",
+  "stateName": "North Carolina",
+  "lat": 35.23,
+  "lng": -80.84,
+  "climate": "Charlotte has hot humid summers, mild winters and plenty of rain, with a lot of tree cover.",
+  "homes": "There are many single-family neighborhoods with mature trees, decks and fenced yards, and steady growth around the city.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Pollen and rapid growth make cleanup and mowing a regular need."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and humidity bring mildew on siding and decks."
+   },
+   {
+    "label": "Fall",
+    "text": "Falling leaves fill yards and gutters."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "yard-cleanup",
+    "why": "Tree-heavy lots mean leaves and limbs to clear."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Leaves and pine debris clog gutters."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Humidity grows algae on decks, siding and driveways."
+   },
+   {
+    "service": "deck-work",
+    "why": "Wet weather is hard on wood decks."
+   }
+  ],
+  "faq": {
+   "q": "Can I get help with leaf cleanup in Charlotte?",
+   "a": "Yes. Post the request with the size of your yard and whether you want leaves hauled away or left at the curb, so workers can price the job."
+  },
+  "nearby": [
+   "atlanta-ga",
+   "washington-dc",
+   "nashville-tn",
+   "jacksonville-fl"
+  ]
+ },
+ {
+  "slug": "indianapolis-in",
+  "name": "Indianapolis",
+  "state": "IN",
+  "stateName": "Indiana",
+  "lat": 39.77,
+  "lng": -86.16,
+  "climate": "Indianapolis has four seasons, with cold winters, hot humid summers and frequent spring storms.",
+  "homes": "Most of the area is single-family homes with lawns, garages and fences, plus older neighborhoods near downtown.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Storms and fast growth bring mowing, cleanup and fence repairs."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves fill yards and gutters."
+   },
+   {
+    "label": "Winter",
+    "text": "Snow and ice need clearing from drives and walks."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "A long growing season keeps mowing regular."
+   },
+   {
+    "service": "snow-removal",
+    "why": "Winter storms create steady clearing needs."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Fall leaves clog gutters before the first freeze."
+   },
+   {
+    "service": "fence-work",
+    "why": "Storms and frost heave loosen fences."
+   }
+  ],
+  "faq": {
+   "q": "Can I book snow removal in Indianapolis in advance?",
+   "a": "Yes. Post a request early in the season describing the areas to clear, such as the driveway, walk and steps, so a worker can plan to come after each snowfall."
+  },
+  "nearby": [
+   "chicago-il",
+   "columbus-oh",
+   "detroit-mi",
+   "nashville-tn"
+  ]
+ },
+ {
+  "slug": "san-francisco-ca",
+  "name": "San Francisco",
+  "state": "CA",
+  "stateName": "California",
+  "lat": 37.77,
+  "lng": -122.42,
+  "climate": "San Francisco has cool, foggy summers, mild winters and a rainy season from late fall through early spring.",
+  "homes": "Many homes are older, multi-story houses, flats and condos, often on steep streets with limited parking.",
+  "seasons": [
+   {
+    "label": "Summer",
+    "text": "Fog and wind keep outdoor surfaces damp and dusty."
+   },
+   {
+    "label": "Winter",
+    "text": "Rain shows leaks, peeling paint and gutter problems."
+   },
+   {
+    "label": "Spring",
+    "text": "Longer days are good for painting and window cleaning."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "window-cleaning",
+    "why": "Bay windows and tall facades collect salt and fog residue."
+   },
+   {
+    "service": "painting",
+    "why": "Damp air and age mean regular touch-ups on old trim."
+   },
+   {
+    "service": "furniture-assembly",
+    "why": "Smaller spaces mean furniture has to be chosen and built to fit."
+   },
+   {
+    "service": "home-organizing",
+    "why": "Making the most of limited storage is a constant project."
+   }
+  ],
+  "faq": {
+   "q": "Should I mention parking and stairs when I post a job in San Francisco?",
+   "a": "Yes. Many homes have steep stairs and limited parking, and workers plan their time and tools around it."
+  },
+  "nearby": [
+   "san-jose-ca",
+   "los-angeles-ca",
+   "las-vegas-nv",
+   "san-diego-ca"
+  ]
+ },
+ {
+  "slug": "seattle-wa",
+  "name": "Seattle",
+  "state": "WA",
+  "stateName": "Washington",
+  "lat": 47.61,
+  "lng": -122.33,
+  "climate": "Seattle has mild, wet winters and dry, comfortable summers, with moss and moisture a constant theme.",
+  "homes": "Many homes are older houses with trees, decks and shaded yards, where moss and damp are part of ownership.",
+  "seasons": [
+   {
+    "label": "Fall",
+    "text": "The rainy season begins, and leaves and needles fill gutters."
+   },
+   {
+    "label": "Winter",
+    "text": "Constant moisture grows moss on roofs, decks and walkways."
+   },
+   {
+    "label": "Summer",
+    "text": "Dry weather is the window for painting and exterior projects."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "gutter-cleaning",
+    "why": "Rain and falling needles keep gutters busy for most of the year."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Moss and algae build up on decks, walkways and siding."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Shady yards need clearing of leaves and debris."
+   },
+   {
+    "service": "painting",
+    "why": "Dry summer months are the best time for exterior paint."
+   }
+  ],
+  "faq": {
+   "q": "Why do people in Seattle pressure wash so often?",
+   "a": "Constant moisture lets moss and algae grow on walkways, decks and siding. Ask workers about methods that clean without damaging the surface."
+  },
+  "nearby": [
+   "portland-or",
+   "san-francisco-ca",
+   "san-jose-ca",
+   "las-vegas-nv"
+  ]
+ },
+ {
+  "slug": "denver-co",
+  "name": "Denver",
+  "state": "CO",
+  "stateName": "Colorado",
+  "lat": 39.74,
+  "lng": -104.99,
+  "climate": "Denver is sunny and dry, with big temperature swings, intense sun at altitude, hail in summer and snow in winter.",
+  "homes": "Many homes are brick or frame houses with yards, fences and decks, and bright sun is hard on exterior surfaces.",
+  "seasons": [
+   {
+    "label": "Summer",
+    "text": "Afternoon storms can bring hail, and strong sun dries out wood."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves fill gutters before the first snow."
+   },
+   {
+    "label": "Winter",
+    "text": "Snow needs clearing, and cold swings are hard on fences and decks."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "snow-removal",
+    "why": "Snowfall can arrive quickly and needs clearing from walks and drives."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Leaves and hail debris collect in gutters."
+   },
+   {
+    "service": "fence-work",
+    "why": "Wind and temperature swings loosen fences."
+   },
+   {
+    "service": "deck-work",
+    "why": "Strong sun dries and cracks wood decks."
+   }
+  ],
+  "faq": {
+   "q": "Is altitude a factor when hiring painters or deck workers in Denver?",
+   "a": "The sun is stronger at altitude and wood dries out faster. Ask workers what finishes and prep they use for strong sun and dry air."
+  },
+  "nearby": [
+   "oklahoma-city-ok",
+   "el-paso-tx",
+   "phoenix-az",
+   "las-vegas-nv"
+  ]
+ },
+ {
+  "slug": "washington-dc",
+  "name": "Washington",
+  "state": "DC",
+  "stateName": "District of Columbia",
+  "lat": 38.91,
+  "lng": -77.04,
+  "climate": "Washington has hot humid summers, cold winters with occasional snow and rain through the year.",
+  "homes": "Rowhouses and apartments are common, along with older detached homes in nearby neighborhoods, and many buildings have their own rules for outside workers.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Rain and humidity show up in old paint and gutters."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and humidity bring mildew and wear on exteriors."
+   },
+   {
+    "label": "Winter",
+    "text": "Occasional snow needs clearing from steps and sidewalks."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "painting",
+    "why": "Older rowhouses need regular interior and trim touch-ups."
+   },
+   {
+    "service": "handyman",
+    "why": "Old buildings always have a door, window or fixture to fix."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Tree-lined streets mean leaves in the gutters."
+   },
+   {
+    "service": "house-cleaning",
+    "why": "Busy schedules create steady demand for recurring cleaning."
+   }
+  ],
+  "faq": {
+   "q": "Do I need to tell my building about a worker in Washington?",
+   "a": "If you live in a condo, co-op or apartment, check your building rules first. Many buildings have requirements for outside workers, and it is your responsibility to confirm them."
+  },
+  "nearby": [
+   "philadelphia-pa",
+   "new-york-ny",
+   "columbus-oh",
+   "charlotte-nc"
+  ]
+ },
+ {
+  "slug": "nashville-tn",
+  "name": "Nashville",
+  "state": "TN",
+  "stateName": "Tennessee",
+  "lat": 36.16,
+  "lng": -86.78,
+  "climate": "Nashville has hot humid summers, mild winters and frequent spring storms.",
+  "homes": "Newer builds sit beside older neighborhoods, and many homes have decks, fences and yards with mature trees.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Storms and quick growth bring mowing and cleanup."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and humidity grow mildew on decks and siding."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves fill yards and gutters."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "Warm weather keeps lawns growing."
+   },
+   {
+    "service": "deck-work",
+    "why": "Humidity and sun wear on wood decks."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Algae and mildew build up on decks and siding."
+   },
+   {
+    "service": "fence-work",
+    "why": "Storms and wet ground loosen fences."
+   }
+  ],
+  "faq": {
+   "q": "When should I seal or repair my deck in Nashville?",
+   "a": "Late spring and early fall, when it is dry and not too hot, are common times. Ask the worker how long the wood needs to dry before sealing."
+  },
+  "nearby": [
+   "memphis-tn",
+   "atlanta-ga",
+   "indianapolis-in",
+   "columbus-oh"
+  ]
+ },
+ {
+  "slug": "oklahoma-city-ok",
+  "name": "Oklahoma City",
+  "state": "OK",
+  "stateName": "Oklahoma",
+  "lat": 35.47,
+  "lng": -97.52,
+  "climate": "Oklahoma City has hot summers, cold snaps in winter and severe storms in spring, including tornado season.",
+  "homes": "Most homes are single-family houses with large lots, fences and storm-exposed roofs and yards.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Storm season brings wind, hail and fallen limbs."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat dries lawns and fences."
+   },
+   {
+    "label": "Winter",
+    "text": "Ice storms can bring down branches and make walks dangerous."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "yard-cleanup",
+    "why": "Storms leave limbs and debris across large lots."
+   },
+   {
+    "service": "fence-work",
+    "why": "Strong wind damages fences."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Debris from storms fills gutters."
+   },
+   {
+    "service": "lawn-care",
+    "why": "Large yards need regular mowing in the growing season."
+   }
+  ],
+  "faq": {
+   "q": "Can I find cleanup help after a storm in Oklahoma City?",
+   "a": "Yes. Post the request with what is down and how much needs hauling. After a big storm, demand is high, so booking early helps."
+  },
+  "nearby": [
+   "fort-worth-tx",
+   "dallas-tx",
+   "austin-tx",
+   "houston-tx"
+  ]
+ },
+ {
+  "slug": "el-paso-tx",
+  "name": "El Paso",
+  "state": "TX",
+  "stateName": "Texas",
+  "lat": 31.76,
+  "lng": -106.49,
+  "climate": "El Paso is a high desert city with hot, dry summers, mild winters, little rain and frequent dust and wind.",
+  "homes": "Many homes have desert landscaping, block walls and flat or low-slope roofs, and dust is part of daily life.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Windy days blow dust and debris around yards."
+   },
+   {
+    "label": "Summer",
+    "text": "Intense sun fades paint and dries out wood."
+   },
+   {
+    "label": "Monsoon",
+    "text": "Short heavy storms can flood washes and leave mud and debris."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "window-cleaning",
+    "why": "Dust and wind leave windows coated."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Patios and block walls collect dust and stains."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Desert yards need debris and weeds cleared."
+   },
+   {
+    "service": "painting",
+    "why": "Strong sun fades and cracks paint on stucco."
+   }
+  ],
+  "faq": {
+   "q": "Does wind and dust change how often I should book cleaning in El Paso?",
+   "a": "It can. Many people clean windows and patios more often in spring, when wind blows the most dust."
+  },
+  "nearby": [
+   "phoenix-az",
+   "san-antonio-tx",
+   "austin-tx",
+   "fort-worth-tx"
+  ]
+ },
+ {
+  "slug": "boston-ma",
+  "name": "Boston",
+  "state": "MA",
+  "stateName": "Massachusetts",
+  "lat": 42.36,
+  "lng": -71.06,
+  "climate": "Boston has cold, snowy winters, warm summers and rain or snow spread through the year.",
+  "homes": "Many homes are older, such as triple-deckers, brownstones and brick rowhouses, with narrow stairs, shared walls and aging plaster.",
+  "seasons": [
+   {
+    "label": "Winter",
+    "text": "Snow and ice need clearing, and cold exposes drafts."
+   },
+   {
+    "label": "Spring",
+    "text": "Thaw and rain show leaks and worn paint."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves clog gutters before the first snow."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "snow-removal",
+    "why": "Nor’easters make clearing a regular winter need."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Leaves and ice make gutter care important."
+   },
+   {
+    "service": "painting",
+    "why": "Older homes need regular touch-ups, indoors and out."
+   },
+   {
+    "service": "drywall-repair",
+    "why": "Old plaster cracks as the seasons change."
+   }
+  ],
+  "faq": {
+   "q": "Can I book snow removal in Boston for a triple-decker?",
+   "a": "Yes. Describe the steps, walk and any shared areas, and mention whether you share responsibility with neighbors so the worker knows exactly what to clear."
+  },
+  "nearby": [
+   "new-york-ny",
+   "philadelphia-pa",
+   "washington-dc",
+   "detroit-mi"
+  ]
+ },
+ {
+  "slug": "portland-or",
+  "name": "Portland",
+  "state": "OR",
+  "stateName": "Oregon",
+  "lat": 45.52,
+  "lng": -122.68,
+  "climate": "Portland has mild, rainy winters and dry, warm summers, with lush growth and moss in damp spots.",
+  "homes": "Many homes are older houses with leafy yards, decks and gardens, and gardening is a popular hobby.",
+  "seasons": [
+   {
+    "label": "Fall",
+    "text": "The rain returns, and leaves and needles fill gutters."
+   },
+   {
+    "label": "Winter",
+    "text": "Constant moisture grows moss on roofs, decks and walkways."
+   },
+   {
+    "label": "Spring",
+    "text": "Fast growth means weeding, planting and cleanup."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "gutter-cleaning",
+    "why": "Rain and falling leaves keep gutters busy."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Moss and algae grow on decks, walkways and siding."
+   },
+   {
+    "service": "gardening-planting",
+    "why": "A mild climate and a strong gardening culture mean lots of planting."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Lush yards need regular clearing."
+   }
+  ],
+  "faq": {
+   "q": "When should I pressure wash a deck in Portland?",
+   "a": "Many people do it in late spring or summer, when the weather is dry enough for the wood to dry afterward."
+  },
+  "nearby": [
+   "seattle-wa",
+   "san-francisco-ca",
+   "san-jose-ca",
+   "las-vegas-nv"
+  ]
+ },
+ {
+  "slug": "las-vegas-nv",
+  "name": "Las Vegas",
+  "state": "NV",
+  "stateName": "Nevada",
+  "lat": 36.17,
+  "lng": -115.14,
+  "climate": "Las Vegas is a desert city with extremely hot summers, mild winters, very little rain and a lot of dust.",
+  "homes": "Many homes have gravel yards, block walls, tile roofs and pools, and indoor cooling matters through the summer.",
+  "seasons": [
+   {
+    "label": "Summer",
+    "text": "Extreme heat is hard on blinds, paint, sprinklers and anyone working outside."
+   },
+   {
+    "label": "Spring",
+    "text": "Wind blows dust across yards and patios."
+   },
+   {
+    "label": "Winter",
+    "text": "Mild weather makes it the best season for outdoor projects."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "pressure-washing",
+    "why": "Dust and hard water stain walls, patios and driveways."
+   },
+   {
+    "service": "window-cleaning",
+    "why": "Dry dust leaves a film on windows and sliders."
+   },
+   {
+    "service": "house-cleaning",
+    "why": "Dust makes regular cleaning a priority indoors too."
+   },
+   {
+    "service": "blinds-curtains",
+    "why": "Strong sun makes window coverings a big part of staying cool."
+   }
+  ],
+  "faq": {
+   "q": "Is it harder to find outdoor help in Las Vegas in summer?",
+   "a": "Many workers prefer early mornings in the heat. Flexible timing in your request can make it easier to find someone."
+  },
+  "nearby": [
+   "los-angeles-ca",
+   "phoenix-az",
+   "san-diego-ca",
+   "san-jose-ca"
+  ]
+ },
+ {
+  "slug": "detroit-mi",
+  "name": "Detroit",
+  "state": "MI",
+  "stateName": "Michigan",
+  "lat": 42.33,
+  "lng": -83.05,
+  "climate": "Detroit has cold, snowy winters and warm summers, with freeze and thaw cycles that are hard on homes.",
+  "homes": "Many neighborhoods have older houses with basements, porches and detached garages, and plenty of owners handle repairs a little at a time.",
+  "seasons": [
+   {
+    "label": "Winter",
+    "text": "Snow and ice need clearing, and cold exposes drafts."
+   },
+   {
+    "label": "Spring",
+    "text": "Thaw reveals cracks, leaks and damaged gutters."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves fill gutters and yards."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "snow-removal",
+    "why": "Winter storms bring steady clearing needs."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Leaves and ice make clean gutters important."
+   },
+   {
+    "service": "drywall-repair",
+    "why": "Freeze and thaw cycles crack walls and ceilings."
+   },
+   {
+    "service": "garage-cleanout",
+    "why": "Detached garages tend to collect years of stuff."
+   }
+  ],
+  "faq": {
+   "q": "Can a worker help clean out a garage in Detroit?",
+   "a": "Yes. Describe how full it is, what is staying and what needs to go, and whether there is anything heavy or hazardous, so the worker can plan the visit."
+  },
+  "nearby": [
+   "columbus-oh",
+   "chicago-il",
+   "indianapolis-in",
+   "washington-dc"
+  ]
+ },
+ {
+  "slug": "memphis-tn",
+  "name": "Memphis",
+  "state": "TN",
+  "stateName": "Tennessee",
+  "lat": 35.15,
+  "lng": -90.05,
+  "climate": "Memphis has hot humid summers, mild winters and frequent storms.",
+  "homes": "Many neighborhoods have single-family homes with mature trees, large lawns, fences and porches.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Storms and quick growth bring limbs, mowing and cleanup."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and humidity mean fast-growing grass and mildew."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves cover lawns and fill gutters."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "lawn-care",
+    "why": "Warm, wet weather keeps grass growing."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Mature trees drop limbs and leaves."
+   },
+   {
+    "service": "fence-work",
+    "why": "Storms and wet ground loosen fences."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Humidity grows mildew on fences, siding and walks."
+   }
+  ],
+  "faq": {
+   "q": "When do people in Memphis book yard cleanup?",
+   "a": "Often after spring storms and again in late fall, when leaves come down. Describe what needs clearing and what you want hauled away."
+  },
+  "nearby": [
+   "nashville-tn",
+   "atlanta-ga",
+   "indianapolis-in",
+   "dallas-tx"
+  ]
+ },
+ {
+  "slug": "atlanta-ga",
+  "name": "Atlanta",
+  "state": "GA",
+  "stateName": "Georgia",
+  "lat": 33.75,
+  "lng": -84.39,
+  "climate": "Atlanta has hot humid summers, mild winters and plenty of rain, and the city is known for its heavy tree cover.",
+  "homes": "Many neighborhoods have homes under tall trees, with decks, fences and yards that collect leaves and limbs.",
+  "seasons": [
+   {
+    "label": "Spring",
+    "text": "Pollen season and fast growth bring cleanup and mowing."
+   },
+   {
+    "label": "Summer",
+    "text": "Heat and humidity grow mildew on decks and siding."
+   },
+   {
+    "label": "Fall",
+    "text": "Leaves fill yards and gutters."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "yard-cleanup",
+    "why": "Heavy tree cover means regular leaf and limb cleanup."
+   },
+   {
+    "service": "gutter-cleaning",
+    "why": "Leaves and pine needles clog gutters quickly."
+   },
+   {
+    "service": "pressure-washing",
+    "why": "Humidity grows algae on decks and driveways."
+   },
+   {
+    "service": "lawn-care",
+    "why": "Warm, wet weather keeps lawns growing."
+   }
+  ],
+  "faq": {
+   "q": "Why do Atlanta gutters need cleaning so often?",
+   "a": "Tall trees drop leaves, pine needles and seed pods year-round. Many homeowners schedule cleaning in late fall and again in spring."
+  },
+  "nearby": [
+   "nashville-tn",
+   "charlotte-nc",
+   "jacksonville-fl",
+   "memphis-tn"
+  ]
+ },
+ {
+  "slug": "miami-fl",
+  "name": "Miami",
+  "state": "FL",
+  "stateName": "Florida",
+  "lat": 25.76,
+  "lng": -80.19,
+  "climate": "Miami is tropical, hot and humid, with a rainy season from late spring through fall and hurricane season from June through November.",
+  "homes": "Many homes and condos have tile roofs, shutters, patios and tropical landscaping, and salt air is part of coastal living.",
+  "seasons": [
+   {
+    "label": "Rainy season",
+    "text": "Daily storms and humidity grow mildew and fast-growing plants."
+   },
+   {
+    "label": "Hurricane season",
+    "text": "Storm prep and cleanup become regular needs."
+   },
+   {
+    "label": "Winter",
+    "text": "Dry, comfortable weather is the favorite season for projects."
+   }
+  ],
+  "jobs": [
+   {
+    "service": "pressure-washing",
+    "why": "Humidity grows mildew on patios, walls and driveways."
+   },
+   {
+    "service": "window-cleaning",
+    "why": "Salt air and rain leave windows spotted."
+   },
+   {
+    "service": "yard-cleanup",
+    "why": "Tropical plants grow fast and drop debris."
+   },
+   {
+    "service": "painting",
+    "why": "Sun, salt and humidity wear on exterior paint."
+   }
+  ],
+  "faq": {
+   "q": "Can I get cleanup help after a storm in Miami?",
+   "a": "Yes. Describe what needs clearing and how much debris there is. After a major storm, many people need help at once, so booking early helps."
+  },
+  "nearby": [
+   "jacksonville-fl",
+   "atlanta-ga",
+   "charlotte-nc",
+   "nashville-tn"
+  ]
+ }
+]
