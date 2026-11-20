@@ -12,7 +12,7 @@ const APPCHECK_AUDIENCE = 'https://firebaseappcheck.googleapis.com/google.fireba
 const REQUEST_ID = /^[A-Za-z0-9-]{10,60}$/
 
 export function corsHeaders(origin: string | null, env: Env): Record<string, string> {
-  const allowed = env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean)
+  const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
   const h: Record<string, string> = { vary: 'origin' }
   if (origin && allowed.includes(origin)) {
     h['access-control-allow-origin'] = origin
@@ -202,6 +202,8 @@ export default {
   },
   async fetch(req: Request, env: Env): Promise<Response> {
     const cors = corsHeaders(req.headers.get('origin'), env)
+    // A missing variable used to crash here (Cloudflare error 1101). Say what is wrong instead.
+    if (!env.ALLOWED_ORIGINS || !env.FIREBASE_PROJECT_ID) return json({ error: 'worker is not configured: set ALLOWED_ORIGINS and FIREBASE_PROJECT_ID under Settings > Variables and secrets, then Deploy' }, 503, cors)
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
     if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, cors)
     const path = new URL(req.url).pathname
