@@ -30,11 +30,11 @@ export async function getArticleSettings(): Promise<ArticleSettings> {
 /** `resetHead` restarts the progress counter of the first queue title (use it when the first line was changed). */
 export const saveArticleSettings = (s: ArticleSettings, resetHead = false) => setDoc(doc(db, 'articleSettings/main'), { mode: s.mode, everyDays: s.everyDays, perDay: s.perDay, perTitle: s.perTitle, topics: s.topics, ...(resetHead ? { headProgress: 0, headFailures: 0 } : {}) }, { merge: true })
 
-/** Calls an admin-only worker endpoint (AI drafts, photo search, publish with the Bing ping). */
+/** Calls an admin-only article endpoint (AI drafts, photo search, publish with the Bing ping). It is served by the site itself (functions/api/articles); VITE_WORKER_URL, when set, still points it at a separate worker. */
 export async function callWorker<T>(path: string, body: unknown): Promise<T> {
-  if (!WORKER_URL || !auth.currentUser) throw new Error('The edge worker is not configured (VITE_WORKER_URL).')
-  const res = await fetch(`${WORKER_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${await auth.currentUser.getIdToken()}` }, body: JSON.stringify(body) })
+  if (!auth.currentUser) throw new Error('Sign in again, then retry.')
+  const res = await fetch(WORKER_URL ? `${WORKER_URL}${path}` : `/api${path}`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${await auth.currentUser.getIdToken()}` }, body: JSON.stringify(body) })
   const data = await res.json().catch(() => ({})) as { error?: string }
-  if (!res.ok) throw new Error(data.error ?? `The worker answered ${res.status}.`)
+  if (!res.ok) throw new Error(data.error ?? `The server answered ${res.status}.`)
   return data as T
 }

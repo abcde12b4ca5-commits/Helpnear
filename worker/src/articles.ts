@@ -194,7 +194,7 @@ export async function runArticleJob(env: Env, now = Date.now(), opts: { force?: 
   if (settings.mode === 'off') return { ran: false, reason: 'off' }
   if (!env.AI) {
     // Say it where the admin can see it (Admin > Articles shows lastError) instead of failing silently on every tick.
-    await patchDoc(env, 'articleSettings/main', { lastError: 'Workers AI is not connected: deploy the worker from the worker/ folder (it has the [ai] binding) and try again.' }).catch(() => undefined)
+    await patchDoc(env, 'articleSettings/main', { lastError: 'Workers AI is not connected: add a Workers AI binding named AI (Cloudflare Pages > Settings > Bindings, or the [ai] binding of the worker) and redeploy.' }).catch(() => undefined)
     return { ran: false, reason: 'AI binding missing' }
   }
   if (!opts.force && !isDue(settings, now)) return { ran: false, reason: 'not due' }
