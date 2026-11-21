@@ -1,7 +1,7 @@
 // Blog articles: AI drafting (Cloudflare Workers AI, no key needed), stock photo lookup (Pexels, optional key), publishing, and the daily schedule.
 // Everything an admin triggers is checked against admins/{uid} first. The schedule only ever writes DRAFTS unless the admin chose "auto-publish".
 import { docsUrl, fsFetch, fsNum, fsString, fsTime, parseServiceAccount, verifyIdToken, type Env, type FsFields } from './google'
-import { buildAnglesPrompt, buildArticlePrompt, buildKeywordPrompt, checkArticle, fallbackKeyword, findSimilar, gatePasses, makeSlug, MAX_PER_TITLE, parseAngles, parseArticleOutput, parseKeyword, parseQueueLine, uniqueSlug, wordCount, type ArticleFields, type QueueItem, type ServiceLink } from '../../src/shared/articles'
+import { buildAnglesPrompt, buildArticlePrompt, buildKeywordPrompt, checkArticle, deriveMeta, fallbackKeyword, findSimilar, gatePasses, makeSlug, MAX_PER_TITLE, parseAngles, parseArticleOutput, parseKeyword, parseQueueLine, uniqueSlug, wordCount, type ArticleFields, type QueueItem, type ServiceLink } from '../../src/shared/articles'
 
 export const DEFAULT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
 const DAY = 86_400_000
@@ -74,9 +74,10 @@ export async function composeArticle(env: Env, spec: Spec, ctx: Context): Promis
   for (let i = 0; i < 2 && !parsed; i++) { last = await runAI(env, p.system, p.user, 3600); parsed = parseArticleOutput(last, spec.title) }
   if (!parsed) throw new Error(`the AI answer was not in the expected format twice; try again. It started with: ${JSON.stringify(last.slice(0, 200))} (${last.length} characters)`)
   const keyword = parsed.keyword || spec.keyword
+  const meta = deriveMeta(parsed.body)
   const photo = (await searchPhotos(env, parsed.imageQuery || keyword, 1))[0]
   return {
-    title: parsed.title, slug: uniqueSlug(makeSlug(keyword, parsed.title), ctx.takenSlugs), keyword, seoTitle: parsed.seoTitle || parsed.title, description: parsed.description, excerpt: parsed.excerpt,
+    title: parsed.title, slug: uniqueSlug(makeSlug(keyword, parsed.title), ctx.takenSlugs), keyword, seoTitle: parsed.seoTitle || parsed.title, description: parsed.description || meta.description, excerpt: parsed.excerpt || meta.excerpt,
     body: parsed.body, imageUrl: photo?.imageUrl ?? '', imageAlt: photo?.imageAlt ?? `${keyword}`, imageCredit: photo?.imageCredit ?? '', imageCreditUrl: photo?.imageCreditUrl ?? '', videoUrl: '', category: parsed.category, imageQuery: parsed.imageQuery,
   }
 }
@@ -158,8 +159,10 @@ export async function handleGenerate(req: Request, env: Env, cors: Cors): Promis
   try {
     const ctx = await loadContext(env)
     const draft = await composeArticle(env, spec, ctx)
-    const id = await saveDraft(env, draft, 'draft', 'ai')
-    return json({ id, slug: draft.slug, title: draft.title }, 200, cors)
+    const publish = b.publish === true
+    const id = await saveDraft(env, draft, publish ? 'published' : 'draft', 'ai')
+    if (publish) await pingIndexNow(env, draft.slug)
+    return json({ id, slug: draft.slug, title: draft.title, published: publish }, 200, cors)
   } catch (e) { return fail(e, cors) }
 }
 export async function handlePublish(req: Request, env: Env, cors: Cors): Promise<Response> {

@@ -129,7 +129,8 @@ function GeneratePanel({ onDone }: { onDone: () => void }) {
   const [angles, setAngles] = useState<(Angle & { on: boolean })[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  const [done, setDone] = useState<string[]>([])
+  const [done, setDone] = useState<{ title: string; slug: string; published: boolean }[]>([])
+  const [publishNow, setPublishNow] = useState(false)
   const suggest = async () => {
     setErr(null); setBusy('جارٍ البحث عن زوايا مختلفة…'); setDone([])
     try { setAngles((await callWorker<{ angles: Angle[] }>('/articles/angles', { topic, count })).angles.map((a) => ({ ...a, on: !a.similarTo?.length }))) } catch (e) { setErr(friendlyError(e)) } finally { setBusy(null) }
@@ -139,14 +140,14 @@ function GeneratePanel({ onDone }: { onDone: () => void }) {
     const chosen = angles.filter((a) => a.on)
     for (const [i, a] of chosen.entries()) {
       setBusy(`جارٍ كتابة المقال ${i + 1} من ${chosen.length}… يستغرق كل مقال نحو نصف دقيقة`)
-      try { const r = await callWorker<{ title: string }>('/articles/generate', { title: a.title, keyword: a.keyword, intent: a.intent }); setDone((d) => [...d, r.title]) } catch (e) { setErr(friendlyError(e)); break }
+      try { const r = await callWorker<{ title: string; slug: string; published: boolean }>('/articles/generate', { title: a.title, keyword: a.keyword, intent: a.intent, publish: publishNow }); setDone((d) => [...d, r]) } catch (e) { setErr(friendlyError(e)); break }
     }
     setBusy(null); setAngles([]); onDone()
   }
   return (
     <section className={`${card} space-y-3`} aria-labelledby="art-gen">
       <h2 id="art-gen" className="text-xl">كتابة مقالات بالذكاء الاصطناعي</h2>
-      <p className="text-sm text-mu">اكتب موضوعًا. ستحصل على عدة زوايا مختلفة (أسئلة مختلفة يبحث عنها الناس)، وليس نفس المقال بصياغة أخرى. كل واحد يُحفظ كمسودة لتعدّله وتنشره.</p>
+      <p className="text-sm text-mu">اكتب موضوعًا. ستحصل على عدة زوايا مختلفة (أسئلة مختلفة يبحث عنها الناس)، وليس نفس المقال بصياغة أخرى. كل واحد يُحفظ كمسودة لتعدّله وتنشره، أو يُنشر مباشرة إذا فعّلت الخيار بالأسفل.</p>
       <div className="flex flex-wrap items-end gap-3">
         <Field label="الموضوع" htmlFor="gen-topic"><input id="gen-topic" dir="ltr" className={`${input} min-w-[16rem]`} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="مثال: lawn mowing" /></Field>
         <Field label="كم مقالًا" htmlFor="gen-count"><select id="gen-count" className={input} value={count} onChange={(e) => setCount(Number(e.target.value))}>{[1, 2, 3, 4, 5].map((n) => <option key={n}>{n}</option>)}</select></Field>
@@ -161,11 +162,17 @@ function GeneratePanel({ onDone }: { onDone: () => void }) {
               {a.similarTo?.length ? <p className="mt-1 text-xs" style={{ color: 'var(--warn-tx)' }}>قريب جدًا من: {a.similarTo.join(' | ')}</p> : null}
             </div>
           ))}
-          <button type="button" className={btn} onClick={write} disabled={Boolean(busy) || !angles.some((a) => a.on)}>كتابة المقالات المختارة</button>
+          <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />انشر مباشرة بعد الكتابة على رابط الموقع (بدون مراجعة، ويُبلَّغ Bing تلقائيًا)</label>
+          <button type="button" className={btn} onClick={write} disabled={Boolean(busy) || !angles.some((a) => a.on)}>{publishNow ? 'كتابة المقالات المختارة ونشرها' : 'كتابة المقالات المختارة'}</button>
         </div>
       )}
       {busy && <p className="text-sm text-mu" role="status">{busy}</p>}
-      {done.length > 0 && !busy && <p className="text-sm text-ok" role="status">حُفظت كمسودات: {done.join(' | ')}</p>}
+      {done.length > 0 && !busy && (
+        <div className="space-y-1 text-sm text-ok" role="status">
+          <p>{done.every((d) => d.published) ? 'تم النشر على الموقع:' : 'تم الحفظ:'}</p>
+          <ul className="space-y-1">{done.map((d) => <li key={d.slug}>{d.title} {d.published ? <a className="underline ad-ltr" href={`/blog/${d.slug}`} target="_blank" rel="noreferrer">{window.location.origin}/blog/{d.slug}</a> : <span className="text-mu">(مسودة)</span>}</li>)}</ul>
+        </div>
+      )}
       <ErrorBox message={err} />
     </section>
   )
@@ -214,7 +221,7 @@ function Editor({ start, others, onClose }: { start: { id: string | null; fields
         <div className="space-y-3">
           <Field label="العنوان" htmlFor="a-title" hint="حتى 62 حرفًا. اجعل الناس يرغبون في الضغط عليه، بدون خداع."><input id="a-title" dir="ltr" className={input} value={f.title} maxLength={140} onChange={(e) => set({ title: e.target.value })} /></Field>
           <Field label="عبارة البحث (ما يكتبه الناس في Google)" htmlFor="a-kw"><input id="a-kw" dir="ltr" className={input} value={f.keyword} onChange={(e) => set({ keyword: e.target.value.toLowerCase() })} /></Field>
-          <Field label="الرابط" htmlFor="a-slug" hint="يُبنى من عبارة البحث. لا تغيّره بعد النشر."><div className="flex items-center gap-1 text-sm ad-ltr"><span className="text-mu">/blog/</span><input id="a-slug" dir="ltr" className={input} value={f.slug} onChange={(e) => { setSlugTouched(true); set({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }) }} /></div></Field>
+          <Field label="الرابط" htmlFor="a-slug" hint={`يُبنى من عبارة البحث. لا تغيّره بعد النشر. الرابط الكامل: ${window.location.origin}/blog/${f.slug}`}><div className="flex items-center gap-1 text-sm ad-ltr"><span className="text-mu">/blog/</span><input id="a-slug" dir="ltr" className={input} value={f.slug} onChange={(e) => { setSlugTouched(true); set({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }) }} /></div></Field>
           <Field label="عنوان نتيجة البحث (SEO)" htmlFor="a-seo"><input id="a-seo" dir="ltr" className={input} value={f.seoTitle} maxLength={70} onChange={(e) => set({ seoTitle: e.target.value })} /></Field>
           <Field label="وصف نتيجة البحث (من 120 إلى 160 حرفًا)" htmlFor="a-desc"><textarea id="a-desc" dir="ltr" rows={2} className={input} value={f.description} maxLength={200} onChange={(e) => set({ description: e.target.value })} /></Field>
           <Field label="مقتطف قصير (يظهر في صفحة المدونة)" htmlFor="a-exc"><input id="a-exc" dir="ltr" className={input} value={f.excerpt} maxLength={200} onChange={(e) => set({ excerpt: e.target.value })} /></Field>

@@ -36,3 +36,18 @@ describe('parseArticleOutput is tolerant', () => {
     expect(a[0].keyword).toBe('lawn mowing cost')
   })
 })
+
+import { deriveMeta } from '../../src/shared/articles'
+describe('deriveMeta', () => {
+  const text = '## Heading\n\nThe first sentence is about moving a fridge on a Saturday morning. The second one explains why a dolly matters for your floors and your back. A third sentence adds one more useful detail about doorways.\n\n- a list item\n\nMore text follows here.'
+  it('builds a description and an excerpt from the first sentences', () => {
+    const m = deriveMeta(text)
+    expect(m.excerpt).toBe('The first sentence is about moving a fridge on a Saturday morning.')
+    expect(m.description.length).toBeGreaterThanOrEqual(100)
+    expect(m.description.length).toBeLessThanOrEqual(155)
+    expect(m.description).not.toContain('#')
+  })
+  it('copes with an empty body', () => {
+    expect(deriveMeta('')).toEqual({ description: '', excerpt: '' })
+  })
+})
