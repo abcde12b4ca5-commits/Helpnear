@@ -70,8 +70,9 @@ export interface Context { services: ServiceLink[]; takenSlugs: string[]; otherT
 export async function composeArticle(env: Env, spec: Spec, ctx: Context): Promise<Draft> {
   const p = buildArticlePrompt({ ...spec, services: ctx.services, site: siteName(env) })
   let parsed = null
-  for (let i = 0; i < 2 && !parsed; i++) parsed = parseArticleOutput(await runAI(env, p.system, p.user, 3600))
-  if (!parsed) throw new Error('the AI answer was not in the expected format twice; try again')
+  let last = ''
+  for (let i = 0; i < 2 && !parsed; i++) { last = await runAI(env, p.system, p.user, 3600); parsed = parseArticleOutput(last, spec.title) }
+  if (!parsed) throw new Error(`the AI answer was not in the expected format twice; try again. It started with: ${JSON.stringify(last.slice(0, 200))} (${last.length} characters)`)
   const keyword = parsed.keyword || spec.keyword
   const photo = (await searchPhotos(env, parsed.imageQuery || keyword, 1))[0]
   return {

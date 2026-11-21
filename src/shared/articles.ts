@@ -190,7 +190,7 @@ export function buildAnglesPrompt({ topic, count, existingTitles, site }: { topi
   }
 }
 export function parseAngles(text: string): { title: string; keyword: string; intent: string }[] {
-  return text.split('\n').map((l) => /^\s*(?:\d+[.)]\s*)?ANGLE:\s*(.+)$/i.exec(l)?.[1]).filter((x): x is string => Boolean(x)).map((rest) => {
+  return text.replace(/\*\*|__/g, '').split('\n').map((l) => /^\s*(?:[-*]\s*)?(?:\d+[.)]\s*)?ANGLE:\s*(.+)$/i.exec(l)?.[1]).filter((x): x is string => Boolean(x)).map((rest) => {
     const [title = '', keyword = '', intent = ''] = rest.split('|').map((p) => p.trim())
     return { title: title.replace(/^["“]|["”]$/g, ''), keyword: keyword.toLowerCase(), intent }
   }).filter((a) => a.title.length > 8 && a.keyword.length > 2)
@@ -203,12 +203,22 @@ export function buildArticlePrompt({ title, keyword, intent, services, site }: {
   }
 }
 export interface ParsedArticle { title: string; seoTitle: string; description: string; keyword: string; excerpt: string; imageQuery: string; category: string; body: string }
-export function parseArticleOutput(text: string): ParsedArticle | null {
-  const i = text.search(/^\s*---\s*$/m)
-  if (i < 0) return null
-  const head = text.slice(0, i), body = text.slice(i).replace(/^\s*---\s*/, '')
+const FIELD = '(?:TITLE|SEO_TITLE|META_DESCRIPTION|KEYWORD|EXCERPT|CATEGORY|IMAGE_QUERY)'
+/** Models often decorate the labels (**TITLE:** ...), fence the whole answer, or use *** instead of ---. Accept all of that. */
+export function parseArticleOutput(raw: string, fallbackTitle = ''): ParsedArticle | null {
+  const text = raw.replace(/\r\n/g, '\n').replace(/^\s*```[a-z]*\n/i, '').replace(/\n```\s*$/, '')
+    .replace(new RegExp(`^[ \\t]*(?:#{1,6}[ \\t]*)?(?:\\*\\*|__)?[ \\t]*(${FIELD})[ \\t]*(?:\\*\\*|__)?[ \\t]*:[ \\t]*(?:\\*\\*|__)?[ \\t]*`, 'gmi'), (_m, k: string) => `${k.toUpperCase()}: `)
+  let head: string, body: string
+  const i = text.search(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/m)
+  if (i >= 0) { head = text.slice(0, i); body = text.slice(i).replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*/, '') } else {
+    const last = new RegExp(`^IMAGE_QUERY:.*$`, 'mi').exec(text)
+    const h2 = text.search(/^##\s/m)
+    const start = h2 >= 0 ? h2 : last ? last.index + last[0].length : -1
+    if (start < 0) return null
+    head = text.slice(0, start); body = text.slice(start)
+  }
   const get = (k: string) => new RegExp(`^\\s*${k}:\\s*(.+)$`, 'mi').exec(head)?.[1].trim().replace(/^["“]|["”]$/g, '') ?? ''
-  const title = get('TITLE')
+  const title = get('TITLE') || fallbackTitle
   if (!title || body.trim().length < 300) return null
   const asked = get('CATEGORY').toLowerCase()
   const category = categoryOf(asked)?.id ?? guessCategory(`${title} ${get('KEYWORD')}`)
