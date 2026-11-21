@@ -111,7 +111,7 @@ function SettingsPanel() {
         {queue.skipped > 0 ? <span style={{ color: 'var(--warn-tx)' }}> {queue.skipped} أسطر غير صالحة وسيتم حذفها (المطلوب عنوان إنجليزي من 8 أحرف على الأقل).</span> : null}
       </p>
       {s.lastError && <p className="text-sm text-danger-tx ad-ltr" role="alert">فشل آخر تشغيل تلقائي: {s.lastError}</p>}
-      <p className="text-xs text-mu" role="status">{s.lastRunAt ? `آخر محاولة من الجدول: ${s.lastRunAt.toDate().toLocaleString('ar-EG')}` : 'الجدول لم يعمل بعد. يعمل كل 15 دقيقة بعد نشر الـ worker من مجلد worker، وبعد حفظ الإعدادات ووضع غير «متوقف».'}</p>
+      <p className="text-xs text-mu" role="status">{s.lastRunAt ? `آخر محاولة من الجدول: ${s.lastRunAt.toDate().toLocaleString('ar-EG')}` : 'الجدول لم يعمل بعد. يعمل كل ساعة عبر GitHub Actions (Actions ← Articles ← Run workflow لتجربته الآن) بعد حفظ الإعدادات ووضع غير «متوقف».'}</p>
       <ErrorBox message={err} />
       {busy && <p className="text-sm text-mu" role="status">{busy}</p>}
       {msg && <p className="text-sm text-ok" role="status">{msg}</p>}
