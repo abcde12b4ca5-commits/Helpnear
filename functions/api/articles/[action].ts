@@ -22,7 +22,7 @@ export const onRequestPost = async ({ request, env, params }: { request: Request
   const e = env as Partial<Env> & { CRON_SECRET?: string }
   const action = String(Array.isArray(params.action) ? params.action[0] : params.action ?? '')
   if (!e.FIREBASE_SA_JSON) return reply({ error: 'Articles are not set up yet: add the secret FIREBASE_SA_JSON in Cloudflare Pages > Settings > Variables and secrets, then redeploy.' }, 503)
-  const full = { ...e, FIREBASE_PROJECT_ID: e.FIREBASE_PROJECT_ID || DEFAULT_PROJECT, SITE_URL: e.SITE_URL || new URL(request.url).origin } as Env
+  const full = { ...e, FIREBASE_PROJECT_ID: e.FIREBASE_PROJECT_ID || DEFAULT_PROJECT, SITE_URL: new URL(request.url).origin } as Env
   if (action === 'cron') {
     if (!sameSecret(e.CRON_SECRET ?? '', request.headers.get('x-cron-secret') ?? '')) return reply({ error: 'unauthorized' }, 401)
     try { return reply(await runArticleJob(full), 200) } catch (err) { return reply({ error: err instanceof Error ? err.message : 'failed' }, 500) }

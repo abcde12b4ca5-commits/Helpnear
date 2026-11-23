@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { callWorker, deleteArticle, EMPTY_ARTICLE, getArticleSettings, listArticles, saveArticle, saveArticleSettings, type Angle, type ArticleDoc, type ArticleSettings, type Photo, type RunNowResult } from '../../lib/articles'
-import { BLOG_CATEGORIES, checkArticle, guessCategory, makeSlug, MAX_PER_TITLE, MAX_QUEUE, parseQueue, renderMarkdown, type ArticleFields } from '../../shared/articles'
+import { BLOG_CATEGORIES, checkArticle, guessCategory, makeSlug, MAX_PER_TITLE, MAX_QUEUE, parseQueue, renderMarkdown, fillSiteTokens, type ArticleFields } from '../../shared/articles'
 import { friendlyError } from '../../lib/errors'
+import { brand } from '../../config/brand'
 import { ErrorBox, Field, Pill, btn, btnGhost, card, input } from '../../components/ui'
 
 const when = (a?: { toDate(): Date }) => (a ? a.toDate().toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
@@ -203,7 +204,7 @@ function Editor({ start, others, onClose }: { start: { id: string | null; fields
     return next
   })
   const checks = useMemo(() => checkArticle(f, others), [f, others])
-  const html = useMemo(() => (preview ? renderMarkdown(f.body) : ''), [preview, f.body])
+  const html = useMemo(() => (preview ? renderMarkdown(fillSiteTokens(f.body, window.location.origin, brand.name)) : ''), [preview, f.body])
 
   const run = async (fn: () => Promise<void>) => { setBusy(true); setErr(null); setMsg(null); try { await fn() } catch (e) { setErr(e instanceof Error ? e.message : friendlyError(e)) } finally { setBusy(false) } }
   const save = () => run(async () => {
