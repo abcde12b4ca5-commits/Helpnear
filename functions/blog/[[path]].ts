@@ -1,3 +1,4 @@
+import { categoryOf } from '../../src/shared/articles'
 import { getPost, listPosts, renderIndex, renderPost, shellResponse, type PagesEnv } from '../_lib/blog'
 
 const BRAND = 'Helpnear'
@@ -13,11 +14,15 @@ export const onRequestGet = async ({ request, env, params, waitUntil }: Ctx): Pr
   let res: Response
   try {
     if (parts.length === 0) {
-      res = await shellResponse(env, url.origin, { ...renderIndex(await listPosts(env), BRAND), path: '/blog' }, BRAND)
+      res = await shellResponse(env, url.origin, { ...renderIndex(await listPosts(env), BRAND, undefined, url.origin), path: '/blog' }, BRAND)
+    } else if (parts.length === 2 && parts[0] === 'category' && categoryOf(parts[1])) {
+      const posts = await listPosts(env)
+      const empty = !posts.some((p) => p.category === parts[1])
+      res = await shellResponse(env, url.origin, { ...renderIndex(posts, BRAND, parts[1], url.origin), path: `/blog/category/${parts[1]}`, robots: empty ? 'noindex,follow' : undefined }, BRAND)
     } else if (parts.length === 1 && /^[a-z0-9-]{3,70}$/.test(parts[0])) {
       const post = await getPost(env, parts[0])
       res = post
-        ? await shellResponse(env, url.origin, { ...renderPost(post, await listPosts(env, 12), BRAND, url.origin), path: `/blog/${post.slug}` }, BRAND)
+        ? await shellResponse(env, url.origin, { ...renderPost(post, await listPosts(env, 60), BRAND, url.origin), path: `/blog/${post.slug}` }, BRAND)
         : await shellResponse(env, url.origin, { title: 'Article not found', description: 'This article is not available.', body: '<h1>Article not found</h1><p>It may have moved. <a href="/blog">See all articles</a>.</p>', jsonld: {}, path: `/blog/${parts[0]}`, status: 404, robots: 'noindex' }, BRAND)
     } else {
       res = await shellResponse(env, url.origin, { title: 'Page not found', description: 'This page is not available.', body: '<h1>Page not found</h1><p><a href="/blog">See all articles</a>.</p>', jsonld: {}, path: url.pathname, status: 404, robots: 'noindex' }, BRAND)
