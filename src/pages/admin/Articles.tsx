@@ -6,9 +6,11 @@ import { ErrorBox, Field, Pill, btn, btnGhost, card, input } from '../../compone
 
 const when = (a?: { toDate(): Date }) => (a ? a.toDate().toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
+const ar = new Intl.NumberFormat('ar-EG')
 export default function Articles() {
   const [items, setItems] = useState<ArticleDoc[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [editing, setEditing] = useState<{ id: string | null; fields: ArticleFields; status: ArticleDoc['status'] } | null>(null)
   const reload = useCallback(() => { listArticles().then(setItems).catch((e) => setError(friendlyError(e))) }, [])
   useEffect(reload, [reload])
@@ -25,13 +27,19 @@ export default function Articles() {
           <button type="button" className={btn} onClick={() => setEditing({ id: null, fields: EMPTY_ARTICLE, status: 'draft' })}>كتابة مقال</button>
         </div>
         {items?.length === 0 && <p className="text-sm text-mu">لا توجد مقالات بعد. أنشئ بعضها من الأعلى أو اكتب مقالك بنفسك.</p>}
+        <div className="ad-seg" role="tablist" aria-label="تصفية المقالات">
+          {([['all', 'الكل', (items ?? []).length], ['published', 'منشور', (items ?? []).filter((a) => a.status === 'published').length], ['draft', 'مسودة', (items ?? []).filter((a) => a.status !== 'published').length]] as const).map(([k, label, n]) => (
+            <button key={k} type="button" role="tab" aria-selected={filter === k} onClick={() => setFilter(k)}>{label} ({n})</button>
+          ))}
+        </div>
         <ul className="divide-y divide-ln">
-          {(items ?? []).map((a) => (
+          {(items ?? []).filter((a) => filter === 'all' || (filter === 'published') === (a.status === 'published')).map((a) => (
             <li key={a.id} className="flex flex-wrap items-center gap-3 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{a.title}</p>
-                <p className="text-xs text-mu"><bdi dir="ltr">/blog/{a.slug}</bdi> · {a.wordCount ?? 0} كلمة · {a.source === 'ai' ? 'مسودة بالذكاء الاصطناعي' : 'مكتوب يدويًا'} · {when(a.status === 'published' ? a.publishedAt : a.createdAt)}</p>
+                <p className="text-xs text-mu"><bdi dir="ltr">/blog/{a.slug}</bdi> · {a.source === 'ai' ? 'مسودة بالذكاء الاصطناعي' : 'مكتوب يدويًا'} · {when(a.status === 'published' ? a.publishedAt : a.createdAt)}</p>
               </div>
+              <Pill tone={(a.wordCount ?? 0) >= 900 ? undefined : 'y'}>{ar.format(a.wordCount ?? 0)} كلمة</Pill>
               <Pill tone={a.status === 'published' ? 'g' : 'y'}>{a.status === 'published' ? 'منشور' : 'مسودة'}</Pill>
               {a.status === 'published' && <a className={btnGhost} href={`/blog/${a.slug}`} target="_blank" rel="noreferrer">عرض</a>}
               <button type="button" className={btnGhost} onClick={() => setEditing({ id: a.id, fields: { ...EMPTY_ARTICLE, ...a }, status: a.status })}>تعديل</button>
@@ -111,6 +119,7 @@ function SettingsPanel() {
         {queue.skipped > 0 ? <span style={{ color: 'var(--warn-tx)' }}> {queue.skipped} أسطر غير صالحة وسيتم حذفها (المطلوب عنوان إنجليزي من 8 أحرف على الأقل).</span> : null}
       </p>
       {s.lastError && <p className="text-sm text-danger-tx ad-ltr" role="alert">فشل آخر تشغيل تلقائي: {s.lastError}</p>}
+      {s.lastPublishedSlug && s.lastPublishedAt && <p className="text-sm text-ok" role="status">آخر مقال نُشر تلقائيًا: <a className="underline ad-ltr" href={`/blog/${s.lastPublishedSlug}`} target="_blank" rel="noreferrer">{s.lastPublishedTitle || s.lastPublishedSlug}</a> · {s.lastPublishedAt.toDate().toLocaleString('ar-EG')}</p>}
       <p className="text-xs text-mu" role="status">{s.lastRunAt ? `آخر محاولة من الجدول: ${s.lastRunAt.toDate().toLocaleString('ar-EG')}` : 'الجدول لم يعمل بعد. يعمل كل ساعة عبر GitHub Actions (Actions ← Articles ← Run workflow لتجربته الآن) بعد حفظ الإعدادات ووضع غير «متوقف».'}</p>
       <ErrorBox message={err} />
       {busy && <p className="text-sm text-mu" role="status">{busy}</p>}

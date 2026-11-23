@@ -10,6 +10,8 @@ export interface Env {
   PEXELS_API_KEY?: string
   /** Optional: the IndexNow key (the same one as the key file in /public) so new articles are announced to Bing right away. */
   INDEXNOW_KEY?: string
+  TELEGRAM_BOT_TOKEN?: string // optional: a Telegram message for every automatic article
+  TELEGRAM_CHAT_ID?: string
   /** Optional: site name used in prompts. Default Helpnear. */
   SITE_NAME?: string
   /** Optional. Set to 'true' (wrangler var) to require a verified e-mail again. Off by default. */

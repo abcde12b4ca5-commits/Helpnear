@@ -109,6 +109,26 @@ async function patchDoc(env: Env, path: string, values: Record<string, V>): Prom
   const res = await fsFetch(sa, `${docsUrl(env.FIREBASE_PROJECT_ID)}/${path}?${mask}`, { method: 'PATCH', body: JSON.stringify({ fields: encFields(values) }) })
   if (!res.ok) throw new Error(`could not update ${path} (${res.status})`)
 }
+/** Tells the owner what the automatic run did: a bell notification for every admin (fixed ids, so a repeat never doubles it) and, when TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set, a Telegram message. Never throws. */
+export async function notifyOwner(env: Env, kind: 'published' | 'failed', title: string, slug: string, detail: string, now = Date.now()): Promise<void> {
+  try {
+    const published = kind === 'published'
+    const message = (published ? `Article published: ${title}` : `Automatic article failed: ${detail}`).slice(0, 140)
+    const requestId = published ? `article-${slug}` : 'article-failed'
+    const day = new Date(now).toISOString().slice(0, 10)
+    const sa = parseServiceAccount(env)
+    const admins = (await listDocs(env, 'admins', [])).map((a) => a.id)
+    let created = admins.length === 0
+    for (const uid of admins) {
+      const res = await fsFetch(sa, `${docsUrl(env.FIREBASE_PROJECT_ID)}/notifications/${uid}/items?documentId=${encodeURIComponent(`${requestId}_${uid}_${published ? 'published' : day}`)}`, { method: 'POST', body: JSON.stringify({ fields: encFields({ type: 'system', requestId, fromId: 'system', message, read: false, createdAt: new Date(now) }) }) })
+      if (res.ok) created = true // a 409 means this exact notification already exists
+    }
+    if (created && env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
+      const link = published && env.SITE_URL ? `\n${env.SITE_URL.replace(/\/$/, '')}/blog/${slug}` : ''
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: `${published ? '✅' : '⚠️'} ${message}${link}`, disable_web_page_preview: false }) })
+    }
+  } catch { /* the article itself is already saved; a missing notification must not undo it */ }
+}
 async function pingIndexNow(env: Env, slug: string): Promise<void> {
   if (!env.INDEXNOW_KEY || !env.SITE_URL) return
   const url = `${env.SITE_URL}/blog/${slug}`
@@ -236,12 +256,14 @@ export async function runArticleJob(env: Env, now = Date.now(), opts: { force?: 
     // Move the queue on. Read it again first: the admin may have edited the list while the article was being written.
     const fresh = (await fetchSettings(env)) ?? settings
     const patch: Record<string, V> = { lastError: '', headFailures: 0 }
+    if (publish && !opts.force) Object.assign(patch, { lastPublishedTitle: draft.title, lastPublishedSlug: draft.slug, lastPublishedAt: new Date(now) })
     if (fresh.topics[0] === headLine && (head || skip > 0)) {
       const finished = head ? progress + 1 >= (head.count ?? settings.perTitle) : true
       patch.topics = fresh.topics.slice(skip + (head && finished ? 1 : 0))
       patch.headProgress = head && !finished ? progress + 1 : 0
     }
     await patchDoc(env, 'articleSettings/main', patch)
+    if (publish && !opts.force) await notifyOwner(env, 'published', draft.title, draft.slug, '', now)
     return { ran: true, id, title: draft.title, published: publish }
   } catch (e) {
     const message = e instanceof Error ? e.message : 'failed'
@@ -256,6 +278,7 @@ export async function runArticleJob(env: Env, now = Date.now(), opts: { force?: 
       } else patch.headFailures = failures
     }
     await patchDoc(env, 'articleSettings/main', patch).catch(() => undefined)
+    if (!opts.force) await notifyOwner(env, 'failed', head?.title ?? '', '', message, now)
     return { ran: false, reason: message }
   }
 }

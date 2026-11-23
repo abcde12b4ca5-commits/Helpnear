@@ -322,3 +322,10 @@ export function parseKeyword(text: string): string {
   const n = k.split(' ').filter(Boolean).length
   return n >= 2 && n <= 6 ? k : ''
 }
+
+/** Time until the next automatic article is due: perDay articles every everyDays days, counted from the last run (0 = never ran). */
+export function nextRunIn(everyDays: number, perDay: number, lastRunMs: number, now = Date.now()): { intervalMs: number; leftMs: number; neverRan: boolean } {
+  const intervalMs = (everyDays * 24 * 3_600_000) / Math.max(1, perDay)
+  if (!lastRunMs) return { intervalMs, leftMs: 0, neverRan: true }
+  return { intervalMs, leftMs: Math.max(0, lastRunMs + intervalMs - now), neverRan: false }
+}

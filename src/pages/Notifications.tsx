@@ -40,7 +40,7 @@ export default function Notifications() {
         {items.map((n) => (
           <li key={n.id} className={`${card} flex items-center justify-between text-sm ${n.read ? 'opacity-70' : 'font-semibold'}`}>
             <span>{n.message}</span>
-            <Link to={profile?.role === 'worker' ? '/dashboard' : '/my-requests'} className="underline" onClick={() => open(n)}>{n.read ? 'View' : 'View and mark read'}</Link>
+            <Link to={n.requestId === 'article-failed' ? '/admin' : n.requestId.startsWith('article-') ? `/blog/${n.requestId.slice(8)}` : profile?.role === 'worker' ? '/dashboard' : '/my-requests'} className="underline" onClick={() => open(n)}>{n.read ? 'View' : 'View and mark read'}</Link>
           </li>
         ))}
       </ul>
