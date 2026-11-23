@@ -10,6 +10,12 @@ import { URGENCY, urgencyTone } from '../components/RequestCard'
 import { Empty, ErrorBox, Field, Pill, Spinner, btn, btnGhost, card, input } from '../components/ui'
 import type { RequestDoc } from '../lib/types'
 
+type FirstPage = { page: Awaited<ReturnType<typeof loadFeed>>; dec: string[]; claims: Awaited<ReturnType<typeof getWorkerClaims>> }
+// The first page is kept for 90 seconds (memory only), so going to another page and coming back does not re-read ~25 documents.
+// The Refresh button, Accept and Decline always clear it, and a change to the worker's services or area makes a different key.
+const FEED_TTL = 90_000
+const feedCache = new Map<string, { at: number; r: FirstPage }>()
+
 export default function Feed() {
   const { user, worker, verified } = useAuth()
   const [items, setItems] = useState<RequestDoc[]>([])
@@ -25,10 +31,15 @@ export default function Feed() {
   const [busy, setBusy] = useState(false)
   const [selId, setSelId] = useState<string | null>(null)
 
-  const fetchFirst = useCallback(async () => {
+  const fetchFirst = useCallback(async (force = false): Promise<FirstPage | null> => {
     if (!worker || !user) return null
+    const key = `${user.uid}|${worker.workMode}|${worker.radiusMiles}|${worker.lat},${worker.lng}|${(worker.cities ?? []).join()}|${worker.matchKeys.join()}`
+    const hit = feedCache.get(key)
+    if (!force && hit && Date.now() - hit.at < FEED_TTL) return hit.r
     const [page, dec, claims] = await Promise.all([loadFeed(worker, newFeedState(worker)), getDeclined(user.uid), getWorkerClaims(user.uid, null, null)])
-    return { page, dec, claims }
+    const r = { page, dec, claims }
+    feedCache.set(key, { at: Date.now(), r })
+    return r
   }, [worker, user])
   const apply = useCallback((r: Awaited<ReturnType<typeof fetchFirst>>) => {
     if (!r) return
@@ -45,7 +56,7 @@ export default function Feed() {
   }, [fetchFirst, apply])
   const start = () => {
     setLoading(true); setError(null)
-    fetchFirst().then(apply).catch((e) => setError(friendlyError(e))).finally(() => setLoading(false))
+    fetchFirst(true).then(apply).catch((e) => setError(friendlyError(e))).finally(() => setLoading(false))
   }
 
   async function more() {
@@ -67,6 +78,7 @@ export default function Feed() {
     setBusy(true); setError(null)
     try {
       await acceptRequest({ requestId: r.id, workerId: user.uid, workerName: worker.displayName, quotedCents: cents, note: note.trim() })
+      feedCache.clear()
       setMine((s) => new Set(s).add(r.id))
       setItems((list) => list.map((x) => (x.id === r.id ? { ...x, claimsCount: x.claimsCount + 1 } : x)))
       setAccepting(null); setPrice(''); setNote('')
@@ -75,7 +87,7 @@ export default function Feed() {
 
   async function decline(r: RequestDoc) {
     if (!user) return
-    try { setDeclined(await declineRequest(user.uid, declined, r.id)) } catch (e) { setError(friendlyError(e)) }
+    try { setDeclined(await declineRequest(user.uid, declined, r.id)); feedCache.clear() } catch (e) { setError(friendlyError(e)) }
   }
 
   const visible = items.filter((r) => !declined.includes(r.id))

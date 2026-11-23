@@ -44,11 +44,11 @@ export async function mintAppCheckToken(env: Env, sa: ServiceAccount): Promise<{
   const res = await fetch(`https://firebaseappcheck.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/apps/${env.FIREBASE_APP_ID}:exchangeCustomToken`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${await getAccessToken(sa)}` },
-    body: JSON.stringify({ customToken }),
+    body: JSON.stringify({ customToken, ttl: '86400s' }), // 24 h (allowed range 30 min to 7 days): the browser asks the Worker about once a day instead of once an hour
   })
   if (!res.ok) throw new Error(`exchangeCustomToken HTTP ${res.status}`)
   const out = (await res.json()) as { token: string; ttl?: string }
-  const ttl = Number.parseInt(out.ttl ?? '3600', 10) || 3600
+  const ttl = Number.parseInt(out.ttl ?? '86400', 10) || 86400
   return { token: out.token, expireTimeMillis: Date.now() + ttl * 1000 }
 }
 

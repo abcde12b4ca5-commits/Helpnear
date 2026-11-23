@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Timestamp, collection, getCountFromServer, query, where } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
+import { cached } from '../../lib/cache'
 import { DEFAULT_CONFIG, getAppConfig } from '../../lib/catalog'
 import { Pill, Switch, btn, btnGhost, card } from '../../components/ui'
 import { Icon } from '../../components/AdminIcon'
@@ -28,11 +29,15 @@ export default function Dashboard({ onGo, auto }: { onGo?: (tab: string) => void
   const [err, setErr] = useState(false)
   useEffect(() => {
     const start = Timestamp.fromDate(new Date(new Date().setHours(0, 0, 0, 0)))
-    Promise.all([
-      getCountFromServer(query(collection(db, 'users'), where('createdAt', '>=', start))),
-      getCountFromServer(query(collection(db, 'requests'), where('createdAt', '>=', start))),
-      getCountFromServer(query(collection(db, 'reports'), where('status', '==', 'open'))),
-    ]).then(([u, r, p]) => setC({ users: u.data().count, requests: r.data().count, reports: p.data().count })).catch(() => setErr(true))
+    // Kept 5 minutes in memory: switching admin tabs and coming back does not re-count.
+    cached('admin:dash', 5 * 60_000, async () => {
+      const [u, r, p] = await Promise.all([
+        getCountFromServer(query(collection(db, 'users'), where('createdAt', '>=', start))),
+        getCountFromServer(query(collection(db, 'requests'), where('createdAt', '>=', start))),
+        getCountFromServer(query(collection(db, 'reports'), where('status', '==', 'open'))),
+      ])
+      return { users: u.data().count, requests: r.data().count, reports: p.data().count }
+    }).then(setC).catch(() => setErr(true))
     getAppConfig().then(setCfg).catch(() => undefined)
   }, [])
   const items: [string, number | undefined, string, string, string][] = [['مستخدمون جدد اليوم', c?.users, 'users', '', 'منذ منتصف الليل'], ['طلبات جديدة اليوم', c?.requests, 'plus', 'a', 'منذ منتصف الليل'], ['بلاغات مفتوحة', c?.reports, 'shield', '', 'في انتظار قرارك']]

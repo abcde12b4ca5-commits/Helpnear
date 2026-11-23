@@ -5,6 +5,7 @@ import { brand } from '../config/brand'
 import { db, ensureAppCheck } from '../lib/firebase'
 import { useAuth } from '../lib/auth'
 import { getCategories } from '../lib/catalog'
+import { cached } from '../lib/cache'
 import { createReview, getWorkerReviews } from '../lib/reviews'
 import { friendlyError } from '../lib/errors'
 import ReportButton from '../components/ReportButton'
@@ -26,7 +27,7 @@ export default function WorkerProfile() {
 
   useEffect(() => {
     ensureAppCheck()
-    getDoc(doc(db, `workers/${id}`)).then((s) => setWorker(s.exists() ? (s.data() as WorkerDoc) : null)).catch((e) => { setError(friendlyError(e)); setWorker(null) })
+    cached(`worker:${id}`, 5 * 60_000, async () => { const s = await getDoc(doc(db, `workers/${id}`)); return s.exists() ? (s.data() as WorkerDoc) : null }).then(setWorker).catch((e) => { setError(friendlyError(e)); setWorker(null) })
     getWorkerReviews(id).then(setReviews).catch(() => setReviews({ items: [], average: null }))
     getCategories().then((c) => setNames({ cats: Object.fromEntries(c.map((x) => [x.id, x.name])) })).catch(() => undefined)
   }, [id])

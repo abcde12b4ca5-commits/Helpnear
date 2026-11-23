@@ -6,10 +6,11 @@ import { ErrorBox, btn, card } from '../../components/ui'
 
 const STATES = 'AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' ')
 interface Row { state: string; workers: number; open: number }
+let lastRows: { at: number; rows: Row[] } | null = null // the last result stays for 10 minutes, so reopening the tab costs nothing; the button always reloads live
 
 /** Where workers are (by their base ZIP's state) and where open requests are waiting. 2 count queries per state, only on click. */
 export default function Coverage() {
-  const [rows, setRows] = useState<Row[] | null>(null)
+  const [rows, setRows] = useState<Row[] | null>(() => (lastRows && Date.now() - lastRows.at < 10 * 60_000 ? lastRows.rows : null))
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -23,6 +24,7 @@ export default function Coverage() {
         ])
         return { state, workers: w.data().count, open: r.data().count }
       }))
+      lastRows = { at: Date.now(), rows: out }
       setRows(out)
     } catch (e) { setErr(friendlyError(e)) } finally { setBusy(false) }
   }

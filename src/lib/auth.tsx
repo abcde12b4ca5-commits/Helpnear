@@ -11,7 +11,7 @@ import {
   signOut as fbSignOut,
   type User,
 } from 'firebase/auth'
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { Timestamp, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { auth, db, ensureAppCheck } from './firebase'
 import { getAppConfig, getLegal } from './catalog'
 import type { Role, UserDoc, WorkerDoc } from './types'
@@ -49,6 +49,32 @@ function writeAdminHint(uid: string, v: boolean) {
   try { sessionStorage.setItem(`hn:isAdmin:${uid}`, JSON.stringify({ at: Date.now(), v })) } catch { /* storage unavailable */ }
 }
 
+// Profile + worker docs are read on every page load; keep them for 10 minutes in this tab only (sessionStorage), so a reload costs no reads.
+// Timestamps are turned back into real Timestamp objects. refresh() always bypasses this cache, so edits show up immediately.
+const PROFILE_TTL = 10 * 60_000
+const PROFILE_KEY = 'hn:profile:'
+function reviveTs(_k: string, v: unknown): unknown {
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>
+    if (typeof o.seconds === 'number' && typeof o.nanoseconds === 'number') return new Timestamp(o.seconds, o.nanoseconds)
+  }
+  return v
+}
+function readProfileCache(uid: string): { p: UserDoc; w: WorkerDoc | null } | null {
+  try {
+    const raw = sessionStorage.getItem(PROFILE_KEY + uid)
+    if (!raw) return null
+    const { at, p, w } = JSON.parse(raw, reviveTs) as { at: number; p: UserDoc; w: WorkerDoc | null }
+    return Date.now() - at < PROFILE_TTL && at <= Date.now() + 60_000 && p ? { p, w: w ?? null } : null
+  } catch { return null }
+}
+function writeProfileCache(uid: string, p: UserDoc, w: WorkerDoc | null) {
+  try { sessionStorage.setItem(PROFILE_KEY + uid, JSON.stringify({ at: Date.now(), p, w })) } catch { /* storage unavailable: just no cache */ }
+}
+function clearProfileCache() {
+  try { for (const k of Object.keys(sessionStorage)) if (k.startsWith(PROFILE_KEY)) sessionStorage.removeItem(k) } catch { /* nothing to clear */ }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserDoc | null>(null)
@@ -57,22 +83,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [verified, setVerified] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  const load = useCallback(async (u: User | null) => {
+  const load = useCallback(async (u: User | null, force = false) => {
     if (u) ensureAppCheck() // a signed-in session reads Firestore, so bot protection starts first
     setUser(u)
     setVerified(!!u) // e-mail verification is off: a signed-in account can post and accept straight away
-    if (!u) { setProfile(null); setWorker(null); setIsAdmin(false); return }
+    if (!u) { setProfile(null); setWorker(null); setIsAdmin(false); clearProfileCache(); return }
     // Only decides whether the Admin link is shown (the rules protect the data), so a 15 minute reuse saves one read on every page load.
     const known = readAdminHint(u.uid)
     if (known !== null) setIsAdmin(known)
     else getDoc(doc(db, `admins/${u.uid}`)).then((a) => { setIsAdmin(a.exists()); writeAdminHint(u.uid, a.exists()) }).catch(() => setIsAdmin(false))
+    const hit = force ? null : readProfileCache(u.uid)
+    if (hit) { setProfile(hit.p); setWorker(hit.w); return } // fresh copy from this tab: no Firestore reads
     const snap = await getDoc(doc(db, `users/${u.uid}`))
     const p = snap.exists() ? (snap.data() as UserDoc) : null
     setProfile(p)
+    let w: WorkerDoc | null = null
     if (p?.role === 'worker') {
-      const w = await getDoc(doc(db, `workers/${u.uid}`))
-      setWorker(w.exists() ? (w.data() as WorkerDoc) : null)
-    } else setWorker(null)
+      const ws = await getDoc(doc(db, `workers/${u.uid}`))
+      w = ws.exists() ? (ws.data() as WorkerDoc) : null
+    }
+    setWorker(w)
+    // Cached only when the profile is complete (a worker still in onboarding has no worker doc yet, so that state is never cached)
+    if (p && (p.role !== 'worker' || w)) writeProfileCache(u.uid, p, w)
   }, [])
 
   useEffect(() => onAuthStateChanged(auth, (u) => { load(u).catch(() => undefined).finally(() => setLoading(false)) }), [load])
@@ -144,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!auth.currentUser) return
       await auth.currentUser.reload()
       await auth.currentUser.getIdToken(true) // rules read email_verified from the token
-      await load(auth.currentUser)
+      await load(auth.currentUser, true) // always fresh after an edit
     },
   }), [user, profile, worker, loading, verified, isAdmin, load])
 

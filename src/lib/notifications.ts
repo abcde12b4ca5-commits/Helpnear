@@ -4,8 +4,15 @@ import type { NotificationDoc, NotificationType } from './types'
 
 /** Count query: about 1 read per 1000 matches. Called once per page load, no listeners. */
 export async function getUnreadCount(uid: string): Promise<number> {
+  const key = `hn:unread:${uid}`
+  try { // reused for 2 minutes in this tab, so reloads do not pay for the count again
+    const raw = sessionStorage.getItem(key)
+    if (raw) { const { at, n } = JSON.parse(raw) as { at: number; n: number }; if (Date.now() - at < 120_000 && at <= Date.now() + 60_000) return n }
+  } catch { /* no cache */ }
   const snap = await getCountFromServer(query(collection(db, `notifications/${uid}/items`), where('read', '==', false)))
-  return snap.data().count
+  const n = snap.data().count
+  try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), n })) } catch { /* no cache */ }
+  return n
 }
 
 export async function listNotifications(uid: string): Promise<NotificationDoc[]> {
@@ -15,6 +22,7 @@ export async function listNotifications(uid: string): Promise<NotificationDoc[]>
 
 export async function markRead(uid: string, id: string) {
   await updateDoc(doc(db, `notifications/${uid}/items/${id}`), { read: true })
+  try { sessionStorage.removeItem(`hn:unread:${uid}`) } catch { /* no cache */ } // the next count must be fresh
 }
 
 /**
