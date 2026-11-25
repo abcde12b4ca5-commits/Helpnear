@@ -73,6 +73,16 @@ export async function composeArticle(env: Env, spec: Spec, ctx: Context): Promis
   let last = ''
   for (let i = 0; i < 2 && !parsed; i++) { last = await runAI(env, p.system, p.user, 3600); parsed = parseArticleOutput(last, spec.title) }
   if (!parsed) throw new Error(`the AI answer was not in the expected format twice; try again. It started with: ${JSON.stringify(last.slice(0, 200))} (${last.length} characters)`)
+  // The model often writes 600 to 880 words although the prompt asks for 1,100 to 1,500, and the quality check needs 900. One extra pass to lengthen it;
+  // if that pass fails or does not give a longer article, the first one is kept, so this can never make things worse or fail the job.
+  if (wordCount(parsed.body) < 900) {
+    try {
+      const had = wordCount(parsed.body)
+      const more = await runAI(env, p.system, `${p.user}\n\nYour first answer below is only ${had} words, which is too short. Write the complete article again, 1,200 to 1,400 words, in exactly the same format as before (the header lines first, then the body). Keep what is good. Add real substance, not filler: typical price ranges and what moves them, a short worked example, common mistakes, and what to ask or check before hiring. Keep the links to our service pages.\n\nFIRST ANSWER:\n${last}`, 3600)
+      const longer = parseArticleOutput(more, spec.title)
+      if (longer && wordCount(longer.body) > had * 1.15) parsed = longer
+    } catch { /* keep the first answer */ }
+  }
   const keyword = parsed.keyword || spec.keyword
   const meta = deriveMeta(parsed.body)
   const photo = (await searchPhotos(env, parsed.imageQuery || keyword, 1))[0]

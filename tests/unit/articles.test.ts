@@ -21,14 +21,14 @@ describe('slugs', () => {
 describe('markdown renderer is safe', () => {
   it('renders headings, lists, emphasis and links', () => {
     const html = renderMarkdown('## Title\n\nHello **bold** and *soft* [lawn](/services/lawn-care/).\n\n- a\n- b\n\n1. one\n2. two')
-    expect(html).toContain('<h2>Title</h2>')
+    expect(html).toContain('<h2 id="title">Title</h2>')
     expect(html).toContain('<strong>bold</strong>')
     expect(html).toContain('<em>soft</em>')
     expect(html).toContain('<a href="/services/lawn-care/">lawn</a>')
     expect(html).toContain('<ul><li>a</li><li>b</li></ul>')
     expect(html).toContain('<ol><li>one</li><li>two</li></ol>')
   })
-  it('turns a lone H1 into an H2 so a page has one H1', () => { expect(renderMarkdown('# Big')).toBe('<h2>Big</h2>') })
+  it('turns a lone H1 into an H2 so a page has one H1', () => { expect(renderMarkdown('# Big')).toBe('<h2 id="big">Big</h2>') })
   it('escapes HTML and blocks script, javascript: links and unknown image hosts', () => {
     const html = renderMarkdown('<script>alert(1)</script>\n\n[x](javascript:alert(1)) ![i](https://evil.example/a.png) ![ok](https://images.pexels.com/photos/1/a.jpeg)')
     expect(html).not.toContain('<script')

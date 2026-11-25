@@ -20,8 +20,25 @@ describe('composeArticle', () => {
     let calls = 0
     const e = env(null); e.AI = { run: async () => (++calls === 1 ? { response: 'garbage' } : { response: aiText }) }
     expect((await composeArticle(e, spec, ctx)).title).toContain('Lawn Mowing')
-    expect(calls).toBe(2)
+    expect(calls).toBe(3) // 1 garbage + 1 good answer + 1 pass to lengthen it (the good answer is under 900 words)
     await expect(composeArticle(env({ response: 'garbage' }), spec, ctx)).rejects.toThrow(/expected format/)
+  })
+  it('asks once for a longer version when the article is under 900 words, and keeps the longer one', async () => {
+    const longer = `${aiText}\n\n${Array.from({ length: 80 }, () => 'More practical detail about the job, the typical price and what to ask first.').join(' ')}`
+    let calls = 0
+    const e = env(null); e.AI = { run: async () => ({ response: ++calls === 1 ? aiText : longer }) }
+    const d = await composeArticle(e, spec, ctx)
+    expect(calls).toBe(2)
+    expect(d.body).toContain('More practical detail')
+  })
+  it('keeps the first article when the longer version fails or is not longer', async () => {
+    let calls = 0
+    const e = env(null); e.AI = { run: async () => { if (++calls === 1) return { response: aiText }; throw new Error('quota') } }
+    expect((await composeArticle(e, spec, ctx)).body).not.toContain('More practical detail')
+    expect(calls).toBe(2)
+    let n = 0
+    const f = env(null); f.AI = { run: async () => ({ response: ++n === 1 ? aiText : 'garbage' }) }
+    expect((await composeArticle(f, spec, ctx)).title).toContain('Lawn Mowing')
   })
   it('explains how to connect the AI when the binding is missing', async () => {
     const e = env(null); delete e.AI
