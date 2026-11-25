@@ -239,7 +239,7 @@ export async function runArticleJob(env: Env, now = Date.now(), opts: { force?: 
       let topic = head?.title
       if (!topic) {
         const names = ctx.services.map((s) => s.name)
-        const t = await runAI(env, 'You are an SEO editor for a U.S. home-services marketplace.', `Suggest ONE new topic for a helpful blog post about home or yard work that a neighbor might need help with. Pick from or near: ${names.join(', ')}.\nIt must not overlap these existing titles:\n${ctx.otherTitles.slice(0, 80).map((x) => `- ${x}`).join('\n') || '(none yet)'}\nAnswer with the topic only, under 12 words.`, 60)
+        const t = await runAI(env, 'You are an SEO editor for a U.S. home-services marketplace.', `Suggest ONE new topic for a helpful blog post about home or yard work that a homeowner might need help with. Pick from or near: ${names.join(', ')}.\nIt must not overlap these existing titles:\n${ctx.otherTitles.slice(0, 80).map((x) => `- ${x}`).join('\n') || '(none yet)'}\nAnswer with the topic only, under 12 words.`, 60)
         topic = t.trim().split('\n')[0].replace(/^["'\-\s]+|["'\s]+$/g, '').slice(0, 160)
       }
       const ap = buildAnglesPrompt({ topic, count: 1, existingTitles: ctx.otherTitles, site: siteName(env) })

@@ -84,7 +84,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:p-2">Skip to content</a>
       <div id="hn-progress" aria-hidden="true" />
       <header className={`hn-nav${solid ? ' solid' : ''}`}>
-        {!solid && <p className="hn-trust">Free to use · No platform fee on jobs · Workers and neighbors across the U.S.</p>}
+        {!solid && <p className="hn-trust">Free to use · No platform fee on jobs · Workers and clients across the U.S.</p>}
         <nav className="hn-w flex h-16 items-center gap-2" aria-label="Main">
           <Link to="/" className="hn-logo" aria-label={`${brand.name} home`}><i aria-hidden="true"><LogoMark /></i>{brand.name}</Link>
           <div className="hidden items-center gap-1 md:flex">

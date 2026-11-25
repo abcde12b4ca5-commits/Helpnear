@@ -22,7 +22,7 @@ export default function RateWorker({ requestId, workerId, clientId, workerName }
   }
   return (
     <div className="mt-3 space-y-2 rounded-xl border border-ye p-3">
-      <p className="text-sm font-semibold">How was {workerName}? Your rating helps other neighbors.</p>
+      <p className="text-sm font-semibold">How was {workerName}? Your rating helps other clients.</p>
       <div className="flex gap-1" role="radiogroup" aria-label="Rating">
         {[1, 2, 3, 4, 5].map((n) => (
           <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} star${n > 1 ? 's' : ''}`} className="text-3xl leading-none" style={{ color: n <= rating ? 'var(--ye)' : 'var(--mu)' }} onClick={() => setRating(n)}>★</button>

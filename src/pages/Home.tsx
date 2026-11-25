@@ -16,10 +16,10 @@ import { TRADES } from '../lib/trades'
 const MARQUEE = TRADES.map(([, n]) => n)
 const SIDES = [
   { k: 'For workers', title: 'Want more work?', cls: 'w', points: ['Choose your trades, then your area: around your location, or the cities you pick.', 'See new requests near you and send your price.', 'No platform fee on jobs, and every review builds your name.'] },
-  { k: 'For neighbors', title: 'Need a hand?', cls: 'c', points: ['Post the job in a minute and pick your city.', 'Workers who cover your area send you a price.', 'Pick one, pay them directly, and leave a review.'] },
+  { k: 'For clients', title: 'Need a hand?', cls: 'c', points: ['Post the job in a minute and pick your city.', 'Workers who cover your area send you a price.', 'Pick one, pay them directly, and leave a review.'] },
 ]
 const STEPS = [
-  { n: '1', title: 'Post it or join', text: 'Neighbors describe the job. Workers pick their trades and the areas they cover.' },
+  { n: '1', title: 'Post it or join', text: 'Clients describe the job. Workers pick their trades and the areas they cover.' },
   { n: '2', title: 'Get prices', text: 'Only workers who cover that city see the request, and they send an offer.' },
   { n: '3', title: 'Done & rated', text: 'They agree the details and the worker is paid directly. Then both leave a review.' },
 ]
@@ -95,7 +95,7 @@ export default function Home() {
           <div>
             <span className="hn-chip">Now open across the U.S.</span>
             <h1 className="hn-h1">Find work. Find help. <u>Next door.</u></h1>
-            <p className="hn-lead">Neighbors post a job in a minute. Workers who cover that city see it and send a price. Free to use, and you deal with each other directly.</p>
+            <p className="hn-lead">Clients post a job in a minute. Workers who cover that city see it and send a price. Free to use, and you deal with each other directly.</p>
             <div className="hn-cta">
               <Link className="hn-btn hn-btn-lg hn-y" to={workBtn.to}>{workBtn.label}</Link>
               <Link className="hn-btn-ghost hn-btn-lg" to={hireBtn.to}>{isClient ? hireBtn.label : 'Need a worker? Post a job →'}</Link>
@@ -140,7 +140,7 @@ export default function Home() {
       <section id="services" className="hn-sec" style={{ paddingTop: '1rem' }}>
         <div className="hn-w">
           <p className="hn-k hn-rv">Trades</p>
-          <h2 className="hn-h2 hn-rv">Pick a job. We’ll bring the neighbors.</h2>
+          <h2 className="hn-h2 hn-rv">Pick a job. We’ll bring the workers.</h2>
           <ul className="hn-tg hn-rv">
             {TRADES.map(([id, name], i) => (
               <li key={id}><a href={`/services/${id}/`}><span>{String(i + 1).padStart(2, '0')}</span>{name}</a></li>
@@ -176,7 +176,7 @@ export default function Home() {
 
       <div className="hn-fin hn-rv">
         <div>
-          <h2 className="hn-h2">Your neighbor is ready.</h2>
+          <h2 className="hn-h2">Your worker is ready.</h2>
           <div className="hn-cta" style={{ justifyContent: 'center' }}>
             {finalCta ? <Link className="hn-btn hn-btn-lg hn-y" to={finalCta.to}>{finalCta.label}</Link> : (<>
               <Link className="hn-btn hn-btn-lg hn-y" to={workBtn.to}>{workBtn.label}</Link>

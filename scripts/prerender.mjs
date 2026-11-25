@@ -117,10 +117,11 @@ footer{padding:3rem 1.25rem 2.5rem;margin-top:3rem;background:#0f172a;border-top
 .tbl{overflow-x:auto;margin:1.4rem 0;border:1px solid var(--ln);border-radius:1rem}.tbl table{border-collapse:collapse;width:100%;min-width:24rem}.tbl th,.tbl td{padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--ln);font-size:.95rem}.tbl th{background:var(--sf);font-weight:700}
 .cta-inline{margin:1.8rem 0;padding:1rem 1.2rem;border-left:4px solid var(--am);border-radius:0 1rem 1rem 0;background:var(--sf)}.cta-inline p{margin:0 0 .6rem}
 .hn-calc{margin:1.6rem 0;padding:1.2rem;border:1px solid var(--ln);border-radius:1rem;background:var(--sf)}.hn-calc h3{margin-top:0}.calc-grid{display:grid;gap:.8rem;grid-template-columns:1fr 1fr}@media(max-width:34rem){.calc-grid{grid-template-columns:1fr}}.calc-grid label{display:flex;flex-direction:column;gap:.25rem;font-size:.85rem;font-weight:600;color:var(--tx)}.calc-grid input{padding:.55rem .7rem;border:1px solid var(--ln);border-radius:.6rem;background:var(--bg);color:var(--tx);font:inherit}.calc-out{margin-top:.8rem;font-weight:600;color:var(--tx)}
+.svc-hero{margin-bottom:1.6rem}.svc-hero p.lead{max-width:40rem;font-size:1.1rem}.eyebrow{display:inline-flex;align-items:center;gap:.4rem;margin-bottom:.9rem;padding:.3rem .85rem;border-radius:999px;background:color-mix(in srgb,var(--ye) 12%,transparent);color:var(--ac);font:700 .8rem Inter,sans-serif}.chips{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;padding:0;margin:1rem 0 0}.chips li{margin:0;padding:.35rem .8rem;border:1px solid var(--ln);border-radius:999px;background:var(--sf);color:var(--tx);font-size:.85rem;font-weight:600}.steps{display:grid;gap:.8rem;list-style:none;padding:0;margin:1.4rem 0 .4rem;counter-reset:st}@media(min-width:40rem){.steps{grid-template-columns:repeat(3,1fr)}}.steps li{counter-increment:st;display:flex;gap:.8rem;align-items:flex-start;margin:0;padding:1rem 1.1rem;border:1px solid var(--ln);border-radius:1rem;background:var(--sf);color:var(--mu);font-size:.92rem;line-height:1.45}.steps li::before{content:counter(st);flex:none;display:grid;place-items:center;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--am);color:#0f172a;font:800 .9rem 'Plus Jakarta Sans',sans-serif}.steps b{display:block;color:var(--tx);font-size:1rem}.grp{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin:2.2rem 0 .8rem}.grp h2{margin:0}.grp span{color:var(--mu);font-size:.85rem;font-weight:600}.svc-grid{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fill,minmax(17.5rem,1fr));list-style:none;padding:0;margin:0}.svc-grid li{margin:0}main a.svc{display:flex;align-items:center;gap:.9rem;height:100%;padding:.9rem 1rem;border:1px solid var(--ln);border-radius:1rem;background:var(--sf);color:var(--tx)!important;text-decoration:none!important;transition:transform .2s,border-color .2s,box-shadow .2s}main a.svc:hover,main a.svc:focus-visible{transform:translateY(-2px);border-color:var(--ye);box-shadow:0 10px 26px rgba(15,23,42,.1);outline:none}.svc .ic{flex:none;display:grid;place-items:center;width:3rem;height:3rem;border-radius:.95rem;background:color-mix(in srgb,var(--ye) 10%,var(--bg));font-size:1.45rem;font-style:normal;line-height:1}.svc .tx{display:grid;gap:.15rem;min-width:0}.svc b{font:700 1rem 'Plus Jakarta Sans',sans-serif;letter-spacing:-.01em}.svc small{color:var(--mu);font-size:.8rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.svc .go{margin-inline-start:auto;flex:none;color:var(--mu);font-style:normal;font-weight:700;transition:transform .2s,color .2s}.svc:hover .go{color:var(--ye);transform:translateX(3px)}.translated-rtl .svc .go{transform:scaleX(-1)}.translated-rtl .svc:hover .go{transform:scaleX(-1) translateX(3px)}.band{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;margin:2.8rem 0 0;padding:1.6rem;border:1px solid var(--ln);border-radius:1.4rem;background:var(--sf)}.band h2{margin:0 0 .3rem;font-size:1.5rem}.band p{margin:0}.band .cta{margin:0}main.wide{max-width:76rem;padding-top:2.5rem}@media(prefers-reduced-motion:reduce){main a.svc,.svc .go{transition:none}main a.svc:hover{transform:none}}
 .cities{list-style:none;padding:0;display:grid;gap:.4rem .9rem;grid-template-columns:repeat(auto-fill,minmax(10.5rem,1fr))}.cities li{margin:0}
 `
 
-function page({ title, description, path, robots, body, jsonld }) {
+function page({ title, description, path, robots, body, jsonld, wide = false }) {
   const url = `${SITE}${path}`
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -132,7 +133,7 @@ ${FONT_PRELOAD}
 <style>${FONT_FACE}${css}</style>
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script></head>
 <body><nav aria-label="Main"><div class="w"><a href="/" class="logo" aria-label="${esc(BRAND)} home"><i aria-hidden="true">${LOGO}</i>${esc(BRAND)}</a><a class="l" href="/services/">Services</a><a class="l" href="/how-it-works">How it works</a><a class="l" href="/blog">Blog</a><a class="l" href="/login">Sign in</a><a class="cta y sm" href="/signup?role=worker">Join as a worker</a><button id=\"tg\" type=\"button\" aria-label=\"Switch between day and night mode\">◐</button></div></nav>
-<main>${body}</main>
+<main${wide ? ' class="wide"' : ''}>${body}</main>
 <footer><p class="f fb">${esc(BRAND)}</p><p>${esc(DISCLAIMER)} Electrical, plumbing and HVAC aren’t offered because they require a license.</p><p><a href="/locations/">Cities</a> · <a href="/blog">Blog</a> · <a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/guidelines">Community Guidelines</a> · <a href="/legal/disclaimer">Disclaimer</a></p></footer>
 <script>document.getElementById('tg').addEventListener('click',function(){var n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('hn-theme',n)}catch(e){}})</script></body></html>`
 }
@@ -184,12 +185,31 @@ await write('/how-it-works', page({
 }))
 
 // Hub
+const ICONS = {
+  'house-cleaning': '🧹', 'move-out-cleaning': '🧽', 'window-cleaning': '🪟', 'carpet-upholstery-cleaning': '🛋️', 'pressure-washing': '💦', 'trash-bin-cleaning': '🗑️', 'car-detailing': '🚗',
+  handyman: '🔧', 'furniture-assembly': '🪑', 'tv-shelf-mounting': '📺', 'drywall-repair': '🧱', 'flooring-installation': '🪵', painting: '🎨', 'furniture-refinishing': '🖌️', 'blinds-curtains': '🏠', 'fence-work': '🚧', 'deck-work': '🏡',
+  'lawn-care': '🌱', 'yard-cleanup': '🍃', 'gardening-planting': '🌷', 'landscaping-mulching': '🌳', 'gutter-cleaning': '🍂', 'snow-removal': '❄️', 'holiday-lights': '💡',
+  'garage-cleanout': '📦', 'home-organizing': '🗂️', 'home-tech-help': '💻', 'laundry-help': '🧺', 'sewing-alterations': '🧵', 'event-setup-help': '🎉',
+  'errand-running': '🛍️', 'pet-sitting': '🐾', 'dog-walking': '🐕', 'house-sitting': '🔑', photography: '📷', 'bike-help': '🚲',
+}
+const HUB_GROUPS = [
+  ['Cleaning', ['house-cleaning', 'move-out-cleaning', 'window-cleaning', 'carpet-upholstery-cleaning', 'pressure-washing', 'trash-bin-cleaning', 'car-detailing']],
+  ['Repairs and installation', ['handyman', 'furniture-assembly', 'tv-shelf-mounting', 'drywall-repair', 'flooring-installation', 'painting', 'furniture-refinishing', 'blinds-curtains', 'fence-work', 'deck-work']],
+  ['Yard and outdoors', ['lawn-care', 'yard-cleanup', 'gardening-planting', 'landscaping-mulching', 'gutter-cleaning', 'snow-removal', 'holiday-lights']],
+  ['Home help and organizing', ['garage-cleanout', 'home-organizing', 'home-tech-help', 'laundry-help', 'sewing-alterations', 'event-setup-help']],
+  ['Errands, pets and more', ['errand-running', 'pet-sitting', 'dog-walking', 'house-sitting', 'photography', 'bike-help']],
+]
+const hubCard = (c) => `<li><a class="svc" href="/services/${c.id}/"><i class="ic" aria-hidden="true">${ICONS[c.id] ?? '🛠️'}</i><span class="tx"><b>${esc(c.name)}</b><small>${esc((GUIDE[c.id] ?? [`Post a request and local workers can send you a price.`])[0])}</small></span><i class="go" aria-hidden="true">→</i></a></li>`
+const grouped = new Set(HUB_GROUPS.flatMap(([, ids]) => ids))
+const hubSections = [...HUB_GROUPS.map(([name, ids]) => [name, ids.map((id) => enabledCats.find((c) => c.id === id)).filter(Boolean)]), ['More services', enabledCats.filter((c) => !grouped.has(c.id))]]
+  .filter(([, list]) => list.length)
+  .map(([name, list]) => `<div class="grp"><h2>${esc(name)}</h2><span>${list.length} ${list.length === 1 ? 'service' : 'services'}</span></div><ul class="svc-grid">${list.map(hubCard).join('')}</ul>`).join('')
 await write('/services', page({
   title: `Home services across the United States | ${BRAND}`,
   description: `Post a request for cleaning, handyman work, pressure washing, painting, lawn care and more. Local workers near you can reach out. Free to use.`,
-  path: '/services/', robots: 'index,follow',
+  path: '/services/', robots: 'index,follow', wide: true,
   jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/']])] },
-  body: `<h1>Home services across the United States</h1><p>Choose a service to learn what to include in your request and how ${esc(BRAND)} works.</p><ul>${enabledCats.map((c) => `<li><a href="/services/${c.id}/">${esc(c.name)}</a></li>`).join('')}</ul><p><a class="cta" href="/signup">Post a request</a></p>`,
+  body: `<header class="svc-hero"><span class="eyebrow">${enabledCats.length} services</span><h1>Home services across the United States</h1><p class="lead">Choose a service to learn what to include in your request and how ${esc(BRAND)} works.</p><ul class="chips"><li>Free to use</li><li>No platform fee on jobs</li><li>Workers near you send a price</li></ul><ol class="steps"><li><span><b>Post the job</b>Describe it in a minute and pick your city.</span></li><li><span><b>Workers reply</b>Workers who cover your area send you a price.</span></li><li><span><b>Pick one</b>Choose a worker, deal with them directly and leave a review.</span></li></ol></header>${hubSections}<div class="band"><div><h2>Ready when you are</h2><p>Post your request and local workers can reach out.</p></div><a class="cta y" href="/signup">Post a request</a></div>`,
 }))
 
 for (const cat of enabledCats) {

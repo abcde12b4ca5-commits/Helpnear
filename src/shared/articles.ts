@@ -76,16 +76,29 @@ function safeLinkUrl(url: string): string | null {
   if (/^\/(?!\/)[^\s"<>]*$/.test(u)) return u
   try { const p = new URL(u); return p.protocol === 'https:' ? p.toString() : null } catch { return null }
 }
+/** Trailing punctuation that belongs to the sentence, not to the address: "see https://x.com/a." */
+const TRAIL = /[.,;:!?)\]]+$/
 function inline(raw: string): string {
   let s = escapeHtml(raw)
-  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_m, alt: string, url: string) => { const u = safeImageUrl(url.replace(/&amp;/g, '&')); return u ? `<img src="${escapeHtml(u)}" alt="${alt}" loading="lazy">` : '' })
+  // Finished tags are parked here while the rest of the text is processed, so a link is never wrapped twice.
+  const parked: string[] = []
+  const park = (html: string): string => `\u0000${parked.push(html) - 1}\u0000`
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_m, alt: string, url: string) => { const u = safeImageUrl(url.replace(/&amp;/g, '&')); return u ? park(`<img src="${escapeHtml(u)}" alt="${alt}" loading="lazy">`) : '' })
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text: string, url: string) => {
     const u = safeLinkUrl(url.replace(/&amp;/g, '&'))
     if (!u) return text
-    return u.startsWith('/') ? `<a href="${escapeHtml(u)}">${text}</a>` : `<a href="${escapeHtml(u)}" rel="noopener nofollow ugc" target="_blank">${text}</a>`
+    return park(u.startsWith('/') ? `<a href="${escapeHtml(u)}">${text}</a>` : `<a href="${escapeHtml(u)}" rel="noopener nofollow ugc" target="_blank">${text}</a>`)
+  })
+  // A full address typed in the text (https://...) becomes a clickable link too. Only https, same safety check as above. A bare domain such as www.example.com stays plain text on purpose (the site's own name is written that way).
+  s = s.replace(/(^|[\s(])((?:https:\/\/)(?:(?!&quot;|&#39;|&lt;|&gt;)[^\s\u0000])+)/g, (m, lead: string, found: string) => {
+    const shown = found.replace(TRAIL, '')
+    const tail = found.slice(shown.length)
+    const u = safeLinkUrl(shown.replace(/&amp;/g, '&'))
+    if (!u) return m
+    return `${lead}${park(`<a href="${escapeHtml(u)}" rel="noopener nofollow ugc" target="_blank">${shown}</a>`)}${tail}`
   })
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
-  return s
+  return s.replace(/\u0000(\d+)\u0000/g, (_m, i: string) => parked[Number(i)])
 }
 const plainText = (raw: string): string => raw.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').trim()
 const HEADING = /^(#{1,4})\s+(.+)$/
@@ -181,11 +194,11 @@ export interface ServiceLink { id: string; name: string }
 const BANNED = ['in today\'s fast-paced', 'in today\'s world', 'in the world of', 'delve', 'tapestry', 'landscape of', 'navigate the', 'ensure that', 'crucial', 'game-changer', 'game changer', 'unlock', 'elevate', 'seamless', 'in conclusion', 'it\'s important to note', 'it is important to note', 'look no further', 'whether you\'re a', 'dive into', 'a testament to', 'rest assured', 'peace of mind', 'stand the test of time']
 export const bannedPhrasesIn = (text: string): string[] => { const l = text.toLowerCase(); return BANNED.filter((b) => l.includes(b)) }
 
-const FACTS = 'Facts you may state about {site}: it is free to post a job; workers who cover that city see the request and send a price; up to 5 workers can answer; the neighbor chooses; the neighbor pays the worker directly; both leave a review after the job. Never say {site} checks, vets, insures or guarantees anyone.'
+const FACTS = 'Facts you may state about {site}: it is free to post a job; workers who cover that city see the request and send a price; up to 5 workers can answer; the client chooses; the client pays the worker directly; both leave a review after the job. Never say {site} checks, vets, insures or guarantees anyone.'
 
 export function buildAnglesPrompt({ topic, count, existingTitles, site }: { topic: string; count: number; existingTitles: string[]; site: string }): { system: string; user: string } {
   return {
-    system: `You plan blog articles for ${site}, a free U.S. marketplace where neighbors post home jobs and local workers send prices. You think like an SEO editor who knows what real people type into Google.`,
+    system: `You plan blog articles for ${site}, a free U.S. marketplace where clients post home jobs and local workers send prices. You think like an SEO editor who knows what real people type into Google.`,
     user: `Topic: ${topic}\n\nPropose ${count} DIFFERENT articles on this topic. Each must answer a different question a person would search (a different search intent: what it costs and what changes the price, how to prepare, mistakes to avoid, how to choose, DIY vs hiring, seasonal timing, a checklist, etc). Never propose two titles that are the same idea reworded.\nEach title: natural, specific, under 62 characters, makes someone want to click, no clickbait, no year. Each keyword: the exact phrase a person would type, 2 to 5 words, lowercase.\n${existingTitles.length ? `Do not repeat or closely copy these existing titles:\n${existingTitles.slice(0, 80).map((t) => `- ${t}`).join('\n')}\n` : ''}\nAnswer with exactly ${count} lines and nothing else, each in this form:\nANGLE: <title> | <keyword> | <one short sentence on what the reader wants>`,
   }
 }
@@ -312,7 +325,7 @@ export function parseQueue(text: string): { items: QueueItem[]; skipped: number 
 export const fallbackKeyword = (title: string): string => title.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(Boolean).slice(0, 5).join(' ')
 export function buildKeywordPrompt({ title, site }: { title: string; site: string }): { system: string; user: string } {
   return {
-    system: `You are an SEO editor for ${site}, a free U.S. marketplace where neighbors post home jobs and local workers send prices.`,
+    system: `You are an SEO editor for ${site}, a free U.S. marketplace where clients post home jobs and local workers send prices.`,
     user: `Blog title: ${title}\nWhat exact phrase would a person type into Google to find an article like this? 2 to 5 words, lowercase, natural, no year.\nAnswer with exactly one line:\nKEYWORD: <phrase>`,
   }
 }
