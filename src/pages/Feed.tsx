@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import PageHeader from '../components/PageHeader'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { acceptRequest, declineRequest, getDeclined, getWorkerClaims, loadFeed, newFeedState, type FeedState } from '../lib/requests'
@@ -101,10 +102,9 @@ export default function Feed() {
       <ErrorBox message={error} />
       <div className="grid items-start gap-6 lg:grid-cols-[26rem_1fr]">
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-3xl">Requests for you</h1>
+          <PageHeader title="Requests for you" sub="Open requests that match your services and area.">
             <button className={btnGhost} onClick={start}>Refresh</button>
-          </div>
+          </PageHeader>
           {visible.length === 0 && !loading && <Empty>No open requests match your services and area right now. Check back soon.</Empty>}
           <ul className="space-y-2">
             {visible.map((r, i) => (

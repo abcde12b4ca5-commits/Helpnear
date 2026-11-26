@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import PageHeader from '../components/PageHeader'
 import { Link, useNavigate } from 'react-router-dom'
 import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { brand } from '../config/brand'
@@ -82,7 +83,7 @@ export default function Onboarding() {
   const visible = cats.filter((c) => !c.disabledStates?.includes(regionState ?? '')).filter((c) => !q.trim() || c.name.toLowerCase().includes(q.trim().toLowerCase()) || c.allowedServices.some((x) => x.toLowerCase().includes(q.trim().toLowerCase())))
   return (
     <form onSubmit={submit} className="max-w-4xl space-y-6">
-      <div><h1 className="text-4xl">{worker ? 'Edit your profile' : 'Your worker profile'}</h1><p className="mt-2 text-mu">Pick the services you offer. When a request near you matches, you get notified and can accept or decline.</p></div>
+      <PageHeader title={worker ? 'Edit your profile' : 'Your worker profile'} sub="Pick the services you offer. When a request near you matches, you get notified and can accept or decline." />
       <Field label="Your name" htmlFor="wname" hint="Shown to clients on your profile."><input id="wname" required maxLength={60} className={input} value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <section aria-labelledby="svc">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

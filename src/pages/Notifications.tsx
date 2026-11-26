@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import PageHeader from '../components/PageHeader'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { listNotifications, markRead } from '../lib/notifications'
@@ -27,7 +28,7 @@ export default function Notifications() {
   if (!items) return <Spinner />
   return (
     <div className="max-w-2xl space-y-4">
-      <h1 className="text-4xl">Notifications</h1>
+      <PageHeader title="Notifications" sub="Updates about your requests, jobs and messages." />
       <ErrorBox message={error} />
       {canPush && (
         <p className="text-sm">

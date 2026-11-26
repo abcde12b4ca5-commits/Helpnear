@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import PageHeader from '../components/PageHeader'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { getAppConfig } from '../lib/catalog'
@@ -103,10 +104,9 @@ export default function MyRequests() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-4xl">My requests</h1>
-        <div className="flex gap-2"><button className={btnGhost} onClick={() => { void load(null, true); reloadStats() }}>Refresh</button><Link to="/post" className={btn}>New request</Link></div>
-      </div>
+      <PageHeader title="My requests" sub="Compare offers from workers, agree on the price and confirm finished work.">
+        <button className={btnGhost} onClick={() => { void load(null, true); reloadStats() }}>Refresh</button><Link to="/post" className={btn}>New request</Link>
+      </PageHeader>
       <StatsGrid items={[
         ['Requests posted', stats?.requests ?? dots], ['Work in progress', stats ? stats.active + stats.waitingConfirmation : dots],
         ['Services completed', stats?.completed ?? dots], ['Total confirmed', stats ? formatCents(stats.totalCents) : dots],

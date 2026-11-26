@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import PageHeader from '../components/PageHeader'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { getAppConfig, getCategories } from '../lib/catalog'
@@ -123,7 +124,7 @@ export default function WorkerDashboard() {
   }
   return (
     <div className="space-y-4">
-      <h1 className="text-4xl">My jobs</h1>
+      <PageHeader title="My jobs" sub="Requests you accepted, from agreement to finished work." />
       {user && worker && <WorkerSummary uid={user.uid} worker={worker} names={names} compact />}
       <p className="rounded-xl border border-ln p-3 text-sm" role="note"><strong>Better reviews, more jobs.</strong> Clients see the best-rated workers first, so great work gets you chosen more often.</p>
       <StatsGrid items={[

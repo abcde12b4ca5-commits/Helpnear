@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import PageHeader from '../components/PageHeader'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { getCategories } from '../lib/catalog'
@@ -16,7 +17,7 @@ export default function MyProfile() {
   if (!user || !worker) return <Navigate to="/onboarding" replace />
   return (
     <div className="max-w-3xl space-y-6">
-      <div><h1 className="text-4xl">My profile</h1><p className="mt-2 text-mu">This is what clients see when you answer a request. You can change it any time.</p></div>
+      <PageHeader title="My profile" sub="This is what clients see when you answer a request. You can change it any time." />
       <ErrorBox message={error} />
       {names ? <WorkerSummary uid={user.uid} worker={worker} names={names} /> : !error && <Spinner />}
     </div>

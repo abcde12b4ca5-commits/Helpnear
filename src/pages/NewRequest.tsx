@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import PageHeader from '../components/PageHeader'
 import { useNavigate } from 'react-router-dom'
 import { brand } from '../config/brand'
 import { useAuth } from '../lib/auth'
@@ -83,7 +84,7 @@ export default function NewRequest() {
   return (
     <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1fr_20rem]">
     <form onSubmit={submit} className="space-y-5">
-      <div className="hn-in"><h1 className="text-4xl">Post a request</h1><p className="mt-2 text-mu">Takes about a minute. Workers who cover your city are notified.</p></div>
+      <PageHeader eyebrow="New request" title="Post a request" sub="Takes about a minute. Workers who cover your city are notified." />
       <div className="hn-in max-w-xl" style={{ ['--i' as string]: 1 }}>
         <PlacePicker id="place" label="Where is the work?" hint="Pick the city, or let us find it from your location. We never show your exact address: you share it with the worker you choose." onPick={setPlace} />
         {place && <p className="mt-1 text-sm text-ok" style={{ color: 'var(--ok)' }} role="status">✓ {place.city}, {place.state}</p>}
