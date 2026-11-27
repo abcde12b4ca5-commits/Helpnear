@@ -1,0 +1,9 @@
+/* Install banner, shown by /install.js on every page. Colors come from the page's own variables, with the logo palette as fallback. */
+.hn-ib{position:fixed;left:.75rem;right:.75rem;bottom:calc(.75rem + env(safe-area-inset-bottom,0px));z-index:70;margin:0 auto;max-width:28rem;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.7rem .85rem;padding:.9rem;border-radius:1.2rem;background:var(--sf,#fff);color:var(--tx,#22324d);border:1px solid var(--ln,#dde5f1);box-shadow:0 14px 40px rgba(34,50,77,.22);font:500 .9rem/1.4 Inter,system-ui,sans-serif;animation:hn-ib-in .35s ease both}
+.hn-ib img{width:3rem;height:3rem;border-radius:.9rem;flex:none;background:#fff;border:1px solid var(--ln,#dde5f1)}
+.hn-ib .t{min-width:0}.hn-ib b{display:block;font:800 1rem 'Plus Jakarta Sans',Inter,system-ui,sans-serif;letter-spacing:-.01em}.hn-ib span{color:var(--mu,#566782);font-size:.82rem}
+.hn-ib button{font:700 .85rem Inter,system-ui,sans-serif;border-radius:.8rem;padding:.6rem .95rem;cursor:pointer;min-height:2.75rem;border:1px solid var(--ye,#2a5eab);background:var(--ye,#2a5eab);color:var(--ink,#fff)}
+.hn-ib button.x{background:transparent;color:var(--mu,#566782);border-color:transparent;padding:.6rem .55rem}
+@keyframes hn-ib-in{from{opacity:0;transform:translateY(14px)}}
+@media (prefers-reduced-motion:reduce){.hn-ib{animation:none}}
+.hn-ib .b{grid-column:1/-1;display:flex;gap:.5rem;justify-content:flex-end}.hn-ib .b button:first-child:not(.x){flex:1}

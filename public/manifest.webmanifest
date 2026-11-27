@@ -1,0 +1,23 @@
+{
+  "name": "Helpnear: local help for your home",
+  "short_name": "Helpnear",
+  "description": "Post a home job or find local work. Free to use, no platform fee on jobs.",
+  "id": "/",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "en",
+  "background_color": "#f5f8fc",
+  "theme_color": "#2a5eab",
+  "categories": ["lifestyle", "business"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Post a request", "short_name": "Post", "url": "/post", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My requests", "short_name": "Requests", "url": "/my-requests", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

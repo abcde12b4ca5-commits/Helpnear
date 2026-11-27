@@ -63,3 +63,17 @@
 /notifications
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+
+# Installable app: manifest and icons are small and rarely change
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=86400
+
+/icon-*
+  Cache-Control: public, max-age=604800
+
+/install.js
+  Cache-Control: public, max-age=86400
+
+/install.css
+  Cache-Control: public, max-age=86400
