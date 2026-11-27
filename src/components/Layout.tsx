@@ -1,5 +1,7 @@
 import LogoMark from './LogoMark'
 import ThemeToggle from './ThemeToggle'
+import InstallButton from './InstallButton'
+import { splitBrand } from '../lib/brandName'
 import { useScrollFx } from '../lib/useScrollFx'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
@@ -86,12 +88,13 @@ export default function Layout({ children }: { children: ReactNode }) {
       <header className={`hn-nav${solid ? ' solid' : ''}`}>
         {!solid && <p className="hn-trust">Free to use · No platform fee on jobs · Workers and clients across the U.S.</p>}
         <nav className="hn-w flex h-16 items-center gap-2" aria-label="Main">
-          <Link to="/" className="hn-logo" aria-label={`${brand.name} home`}><i aria-hidden="true"><LogoMark /></i>{brand.name}</Link>
+          <Link to="/" className="hn-logo" aria-label={`${brand.name} home`}><i aria-hidden="true"><LogoMark /></i>{splitBrand(brand.name)[0]}<em>{splitBrand(brand.name)[1]}</em></Link>
           <div className="hidden items-center gap-1 md:flex">
             <a href="/services/" className="hn-link">Services</a>
             <NavLink to="/how-it-works" className={link}>How it works</NavLink>
             <a href="/blog" className="hn-link">Blog</a>
             {links(link)}
+            <InstallButton />
             <ThemeToggle />
             {user
               ? <><span className="hn-av mx-2" aria-hidden="true">{(profile?.displayName ?? user.email ?? '?').charAt(0).toUpperCase()}</span><button className={btnGhost} onClick={() => signOut()}>Sign out</button></>
@@ -101,6 +104,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <Link to="/signup?role=worker" className="hn-btn hn-y ml-2">Join as a worker</Link>
               </>)}
           </div>
+          <span className="md:hidden"><InstallButton /></span>
           <span className="md:hidden"><ThemeToggle /></span>
           <button
             type="button"

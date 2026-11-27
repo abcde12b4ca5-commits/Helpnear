@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type * as React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -26,6 +26,20 @@ const GROUPS: { title: string; tabs: [string, string, string, unknown][] }[] = [
 ]
 const ALL = GROUPS.flatMap((g) => g.tabs)
 
+// Two looks for the same panel: the side menu ("classic") and the floating pill header with soft cards ("bento"). The choice is kept in this browser.
+type Layout = 'classic' | 'bento'
+const LAYOUT_KEY = 'hn-admin-layout'
+const readLayout = (): Layout => { try { return localStorage.getItem(LAYOUT_KEY) === 'bento' ? 'bento' : 'classic' } catch { return 'classic' } }
+
+function LayoutSwitch({ layout, onChange }: { layout: Layout; onChange: (l: Layout) => void }) {
+  return (
+    <div className="ad-seg" role="group" aria-label="تصميم لوحة التحكم">
+      <button type="button" aria-pressed={layout === 'classic'} onClick={() => onChange('classic')}>كلاسيكي</button>
+      <button type="button" aria-pressed={layout === 'bento'} onClick={() => onChange('bento')}>Bento</button>
+    </div>
+  )
+}
+
 /** The small status pill next to the page title: is the automatic article writing on, and did its last run work. */
 function chipOf(s: ArticleSettings | null): { cls: string; text: string } | null {
   if (!s) return null
@@ -38,6 +52,8 @@ export default function Admin() {
   const { user, isAdmin, loading } = useAuth()
   const [tab, setTab] = useState<string>('Dashboard')
   const [auto, setAuto] = useState<ArticleSettings | null>(null)
+  const [layout, setLayout] = useState<Layout>(readLayout)
+  const changeLayout = (l: Layout) => { setLayout(l); try { localStorage.setItem(LAYOUT_KEY, l) } catch { /* storage blocked: the choice lasts until the page closes */ } }
   // One small read each time the panel opens a tab, so the status pill and the dashboard card are never stale.
   useEffect(() => { if (isAdmin) getArticleSettings().then(setAuto).catch(() => setAuto(null)) }, [tab, isAdmin])
   if (loading) return <Spinner label="جارٍ التحميل..." />
@@ -46,11 +62,42 @@ export default function Admin() {
   const group = GROUPS.find((g) => g.tabs.some(([id]) => id === current[0]))?.title ?? ''
   const Active = current[3] as () => React.ReactElement
   const chip = chipOf(auto)
+  const chipEl = chip && <span className={`ad-chip ${chip.cls}`} role="status">{chip.text}</span>
+  if (layout === 'bento') {
+    return (
+      <div className="ad ad-bento" dir="rtl" lang="ar" translate="no">
+        <header className="bn-head">
+          <div className="bn-brand">
+            <i aria-hidden="true"><img src="/img/logo-mark.png" alt="" width="40" height="40" /></i>
+            <span><b>{brand.name}</b><small>لوحة التحكم</small></span>
+          </div>
+          <nav role="tablist" aria-label="أقسام لوحة التحكم" className="bn-nav">
+            {GROUPS.map((g, gi) => (
+              <Fragment key={g.title}>
+                {gi > 0 && <span className="bn-sep" aria-hidden="true" />}
+                {g.tabs.map(([id, label, icon]) => (
+                  <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className="bn-pill"><Icon n={icon} />{label}</button>
+                ))}
+              </Fragment>
+            ))}
+          </nav>
+          <span className="ad-av" aria-hidden="true" title={user.email ?? ''}>{(user.email ?? 'A').charAt(0).toUpperCase()}</span>
+        </header>
+        <main className="bn-main">
+          <div className="ad-top">
+            <div><p className="ad-crumb">لوحة التحكم / {group}</p><h1>{current[1]}</h1></div>
+            <div className="ad-tools">{chipEl}<LayoutSwitch layout={layout} onChange={changeLayout} /></div>
+          </div>
+          {tab === 'Dashboard' ? <Dashboard onGo={setTab} auto={auto} /> : <Active />}
+        </main>
+      </div>
+    )
+  }
   return (
     <div className="ad" dir="rtl" lang="ar" translate="no">
       <nav role="tablist" aria-label="أقسام لوحة التحكم" aria-orientation="vertical" className="ad-side">
         <div className="ad-brand">
-          <i aria-hidden="true"><svg viewBox="0 0 40 40" width="22" height="22" fill="none"><path d="M6 18.5L20 7L34 18.5" stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /><path d="M10.5 17.5V26.5C10.5 31.2 20 35.5 20 35.5C20 35.5 29.5 31.2 29.5 26.5V17.5" fill="#10B981" fillOpacity=".18" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M15.5 23.5L18.7 26.7L25 20" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg></i>
+          <i aria-hidden="true"><img src="/img/logo-mark.png" alt="" width="40" height="40" /></i>
           <span><b>{brand.name}</b><small>لوحة التحكم</small></span>
         </div>
         {GROUPS.map((g) => (
@@ -66,7 +113,7 @@ export default function Admin() {
       <div className="min-w-0 space-y-5">
         <div className="ad-top">
           <div><p className="ad-crumb">لوحة التحكم / {group}</p><h1>{current[1]}</h1></div>
-          {chip && <span className={`ad-chip ${chip.cls}`} role="status">{chip.text}</span>}
+          <div className="ad-tools">{chipEl}<LayoutSwitch layout={layout} onChange={changeLayout} /></div>
         </div>
         {tab === 'Dashboard' ? <Dashboard onGo={setTab} auto={auto} /> : <Active />}
       </div>
