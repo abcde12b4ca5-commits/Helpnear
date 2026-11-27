@@ -78,7 +78,9 @@ describe('POST /appcheck', () => {
       if (url.includes('oauth2.googleapis.com')) return Response.json({ access_token: 'at', expires_in: 3600 })
       if (url.includes('exchangeCustomToken')) {
         expect(url).toContain('/projects/proj/apps/1:123:web:abc:exchangeCustomToken')
-        customToken = (JSON.parse(String(init?.body)) as { customToken: string }).customToken
+        const sent = JSON.parse(String(init?.body)) as Record<string, unknown>
+        expect(Object.keys(sent)).toEqual(['customToken']) // the REST request has no ttl field: Google would reject it
+        customToken = sent.customToken as string
         return Response.json({ token: 'appcheck-token', ttl: '3600s' })
       }
       throw new Error(`unexpected fetch ${url}`)
@@ -90,6 +92,7 @@ describe('POST /appcheck', () => {
     expect(claims.app_id).toBe('1:123:web:abc')
     expect(claims.aud).toBe('https://firebaseappcheck.googleapis.com/google.firebase.appcheck.v1.TokenExchangeService')
     expect(claims.iss).toBe('sa@proj.iam.gserviceaccount.com')
+    expect(claims.ttl).toBe('86400s') // lifetime requested inside the signed token, like the Admin SDK: 24 hours
   })
   it('rejects a missing token', async () => {
     expect((await worker.fetch(post('/appcheck', {}), env())).status).toBe(400)

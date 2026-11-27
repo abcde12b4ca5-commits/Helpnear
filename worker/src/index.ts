@@ -37,18 +37,20 @@ async function verifyTurnstile(token: string, secret: string, ip: string | null)
 /** Mints an App Check token for the web app using a custom token signed by the service account. */
 export async function mintAppCheckToken(env: Env, sa: ServiceAccount): Promise<{ token: string; expireTimeMillis: number }> {
   const now = Math.floor(Date.now() / 1000)
+  // The token's lifetime is requested with the `ttl` claim inside the signed custom token (this is how the Admin SDK does it; the REST body has no ttl field).
+  // 24 hours (allowed range: 30 minutes to 7 days) means the browser asks this Worker about once a day instead of once an hour.
   const customToken = await signJwt(
-    { iss: sa.client_email, sub: sa.client_email, aud: APPCHECK_AUDIENCE, app_id: env.FIREBASE_APP_ID, iat: now, exp: now + 300 },
+    { iss: sa.client_email, sub: sa.client_email, aud: APPCHECK_AUDIENCE, app_id: env.FIREBASE_APP_ID, ttl: '86400s', iat: now, exp: now + 300 },
     sa.private_key,
   )
   const res = await fetch(`https://firebaseappcheck.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/apps/${env.FIREBASE_APP_ID}:exchangeCustomToken`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${await getAccessToken(sa)}` },
-    body: JSON.stringify({ customToken, ttl: '86400s' }), // 24 h (allowed range 30 min to 7 days): the browser asks the Worker about once a day instead of once an hour
+    body: JSON.stringify({ customToken }),
   })
   if (!res.ok) throw new Error(`exchangeCustomToken HTTP ${res.status}`)
   const out = (await res.json()) as { token: string; ttl?: string }
-  const ttl = Number.parseInt(out.ttl ?? '86400', 10) || 86400
+  const ttl = Number.parseInt(out.ttl ?? '3600', 10) || 3600 // the answer says how long the token really lives
   return { token: out.token, expireTimeMillis: Date.now() + ttl * 1000 }
 }
 
@@ -78,12 +80,13 @@ async function pushToUser(sa: ServiceAccount, env: Env, userId: string, title: s
   if (!tokensRes.ok) return 0
   const docs = ((await tokensRes.json()) as { documents?: { name: string; fields?: FsFields }[] }).documents ?? []
   let sent = 0
+  const icon = /^https?:\/\//.test(link) ? new URL('/icon-192.png', link).href : undefined
   for (const d of docs) {
     const token = fsString(d.fields, 'token')
     if (!token) continue
     const res = await fsFetch(sa, `https://fcm.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/messages:send`, {
       method: 'POST',
-      body: JSON.stringify({ message: { token, notification: { title, body }, webpush: { fcm_options: { link } } } }),
+      body: JSON.stringify({ message: { token, notification: { title, body }, webpush: { notification: { icon }, fcm_options: { link } } } }), // the logo shows next to the notification
     })
     if (res.ok) sent++
     else if (res.status === 404 || res.status === 400) await fsFetch(sa, `https://firestore.googleapis.com/v1/${d.name}`, { method: 'DELETE' }) // stale token
