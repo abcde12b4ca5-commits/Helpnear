@@ -104,7 +104,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <Link to="/signup?role=worker" className="hn-btn hn-y ml-2">Join as a worker</Link>
               </>)}
           </div>
-          <span className="md:hidden"><InstallButton /></span>
+          <span className="md:hidden"><InstallButton variant="icon" /></span>
           <span className="md:hidden"><ThemeToggle /></span>
           <button
             type="button"
@@ -121,6 +121,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <NavLink to="/how-it-works" className={mobileLink}>How it works</NavLink>
                 <a href="/blog" className="block rounded-xl px-3 py-2 text-base font-semibold text-tx hover:bg-sf">Blog</a>
             {links(mobileLink)}
+            <InstallButton variant="menu" />
             {user
               ? <button className={`${btnGhost} mt-2 w-full`} onClick={() => signOut()}>Sign out</button>
               : (<>
@@ -146,7 +147,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <p className="hn-fname font-display text-xl font-extrabold">{brand.name}</p>
           <p>{brand.disclaimer} Licenses and insurance shown by workers are self-reported and not verified. Electrical, plumbing and HVAC aren’t offered because they require a license.</p>
           <p>
-            {!user && <><Link to="/signup">Need a worker? Post a job</Link> · </>}<Link to="/legal/terms">Terms</Link> · <Link to="/legal/privacy">Privacy</Link> · <Link to="/legal/guidelines">Community Guidelines</Link> · <Link to="/legal/disclaimer">Disclaimer</Link>
+            {!user && <><Link to="/signup">Need a worker? Post a job</Link> · </>}<Link to="/legal/terms">Terms</Link> · <Link to="/legal/privacy">Privacy</Link> · <Link to="/legal/guidelines">Community Guidelines</Link> · <Link to="/legal/disclaimer">Disclaimer</Link> <InstallButton variant="footer" />
           </p>
         </div>
       </footer>

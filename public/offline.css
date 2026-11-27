@@ -1,0 +1,12 @@
+/* Shown by the service worker when a page cannot be loaded because the device has no connection. Self-contained: it must work with no network. */
+:root{--bg:#f5f8fc;--sf:#fff;--tx:#22324d;--mu:#566782;--ln:#dde5f1;--ye:#2a5eab;--ink:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1527;--sf:#121e36;--tx:#eef3fb;--mu:#a8b6cf;--ln:#223152;--ye:#7fa8ea;--ink:#0b1426}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:grid;place-items:center;padding:1.25rem;background:var(--bg);color:var(--tx);font:500 1rem/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.card{width:100%;max-width:26rem;text-align:center;padding:2rem 1.5rem;border-radius:1.4rem;background:var(--sf);border:1px solid var(--ln);box-shadow:0 14px 40px rgba(34,50,77,.12)}
+.card img{border-radius:1.2rem;border:1px solid var(--ln)}
+h1{margin:1rem 0 .4rem;font:800 1.5rem/1.2 "Plus Jakarta Sans",Inter,system-ui,sans-serif;letter-spacing:-.01em}
+p{margin:0 0 1.4rem;color:var(--mu);font-size:.95rem}
+button{min-height:2.9rem;padding:.65rem 1.4rem;border-radius:.9rem;border:1px solid var(--ye);background:var(--ye);color:var(--ink);font:700 .95rem Inter,system-ui,sans-serif;cursor:pointer}
+button:focus-visible{outline:3px solid var(--ye);outline-offset:3px}

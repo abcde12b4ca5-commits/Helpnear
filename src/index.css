@@ -139,7 +139,7 @@
   .hn-logo:hover i { transform: scale(1.06) rotate(-3deg); }
   .hn-logo i img, .hn-logo i svg { width: 2.2rem; height: 2.2rem; object-fit: contain; }
   .hn-logo em { font-style: normal; color: var(--ye); margin-left: -.6rem; }
-  .hn-install { white-space: nowrap; font: 700 .8rem Inter, system-ui, sans-serif; padding: .5rem .85rem; border-radius: 99px; border: 1px solid var(--ye); color: var(--ye); background: transparent; cursor: pointer; transition: background .2s, color .2s; }
+  .hn-install { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; font: 700 .8rem Inter, system-ui, sans-serif; padding: .5rem .85rem; border-radius: 99px; border: 1px solid var(--ye); color: var(--ye); background: transparent; cursor: pointer; transition: background .2s, color .2s; }
   .hn-install:hover { background: var(--ye); color: var(--ink); }
   .hn-link { font-size: .875rem; font-weight: 600; color: var(--mu); white-space: nowrap; padding: .4rem .85rem; border-radius: 99px; transition: .2s; }
   .hn-link:hover { color: var(--tx); }

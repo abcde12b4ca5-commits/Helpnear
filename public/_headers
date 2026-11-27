@@ -73,7 +73,21 @@
   Cache-Control: public, max-age=604800
 
 /install.js
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=3600
 
 /install.css
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=3600
+
+# The service worker and the offline page must always be re-checked, so a fix reaches every visitor quickly
+/firebase-messaging-sw.js
+  Cache-Control: no-cache
+
+/offline.html
+  Cache-Control: no-cache
+  X-Robots-Tag: noindex
+
+/offline.css
+  Cache-Control: no-cache
+
+/offline.js
+  Cache-Control: no-cache
