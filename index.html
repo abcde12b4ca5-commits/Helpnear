@@ -7,21 +7,30 @@
     <meta name="description" content="Post a home-service request (cleaning, handyman, pressure washing, painting, lawn care) and local workers can reach out. Free to use." />
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
     <link rel="canonical" href="%SITE_URL%/" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#2a5eab" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="%BRAND_NAME%" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script src="/install.js" defer></script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="%BRAND_NAME%" />
     <meta property="og:title" content="%BRAND_NAME% | Find work. Find help. Next door." />
     <meta property="og:description" content="Clients post a job in a minute and workers who cover that city send a price. Workers find jobs near them. Free to use, across the U.S." />
     <meta property="og:url" content="%SITE_URL%/" />
-    <meta property="og:image" content="%SITE_URL%/img/handy.jpg" />
-    <meta property="og:image:width" content="900" />
-    <meta property="og:image:height" content="735" />
+    <meta property="og:image" content="%SITE_URL%/img/og-logo.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="%BRAND_NAME%: local help for your home" />
     <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="%BRAND_NAME% | Find work. Find help. Next door." />
     <meta name="twitter:description" content="Clients post a job in a minute and workers who cover that city send a price. Free to use, across the U.S." />
-    <meta name="twitter:image" content="%SITE_URL%/img/handy.jpg" />
+    <meta name="twitter:image" content="%SITE_URL%/img/og-logo.png" />
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","name":"%BRAND_NAME%","url":"%SITE_URL%/"},{"@type":"WebSite","name":"%BRAND_NAME%","url":"%SITE_URL%/"}]}</script>
     <meta name="color-scheme" content="light dark" />
     <script>try{var t=localStorage.getItem('hn-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -31,7 +40,7 @@
     <div id="root"><div class="flex min-h-screen flex-col bg-bg text-tx">
       <header class="hn-nav">
         <nav class="hn-w flex h-16 items-center gap-5" aria-label="Main">
-          <a href="/" class="hn-logo" aria-label="%BRAND_NAME% home"><i aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 18.5L20 7L34 18.5" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.5 17.5V26.5C10.5 31.2 20 35.5 20 35.5C20 35.5 29.5 31.2 29.5 26.5V17.5" fill="#10B981" fill-opacity="0.18" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 23.5L18.7 26.7L25 20" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></i>%BRAND_NAME%</a>
+          <a href="/" class="hn-logo" aria-label="%BRAND_NAME% home"><i aria-hidden="true"><img src="/img/logo-mark.png" alt="" width="40" height="40" decoding="async"></i>%BRAND_HEAD%<em>%BRAND_TAIL%</em></a>
           <div class="hidden items-center gap-5 md:flex">
             <a href="/services/" class="hn-link">Services</a>
             <a href="/how-it-works" class="hn-link">How it works</a>
