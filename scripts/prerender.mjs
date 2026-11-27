@@ -76,7 +76,9 @@ async function loadData() {
 }
 
 // Static pages share the site's editorial design tokens (kept in sync with src/index.css).
-const LOGO = '<img src="/img/logo-mark.png" alt="" width="40" height="40" decoding="async">'
+// The logo is embedded in the page (about 3 KB), so it can never show as a broken picture if the image file fails to load.
+const LOGO_DATA = JSON.parse(await readFile(new URL('../src/shared/logo-data.json', import.meta.url), 'utf8')).mark
+const LOGO = `<img src="${LOGO_DATA}" alt="" width="40" height="40" decoding="async">`
 const [BRAND_HEAD, BRAND_TAIL] = BRAND.length > 4 && BRAND.startsWith('Help') ? [BRAND.slice(0, 4), BRAND.slice(4)] : [BRAND, '']
 const css = `:root{--bg:#f5f8fc;--sf:#fff;--tx:#22324d;--mu:#566782;--ln:#dde5f1;--ye:#2a5eab;--ac:#1f4a8c;--am:#ce7742;color-scheme:light}
 :root[data-theme=dark]{--bg:#0c1527;--sf:#121e36;--tx:#eef3fb;--mu:#a8b6cf;--ln:#223152;--ye:#7fa8ea;--ac:#a9c6f5;--am:#e8975f;color-scheme:dark}
@@ -85,7 +87,7 @@ body{font:400 1rem/1.6 Inter,system-ui,sans-serif;background:var(--bg);color:var
 h1,h2,h3,.f{font-family:'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-.035em;line-height:1.05;font-weight:800}
 a{color:inherit}
 .w{max-width:76rem;margin:0 auto;padding:0 1.25rem}
-nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--ln);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+body>nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--ln);box-shadow:0 1px 2px rgba(15,23,42,.06)}
 nav .w{display:flex;align-items:center;gap:1.4rem;height:4rem}
 .logo{display:flex;align-items:center;gap:.6rem;font:800 1.3rem 'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em;margin-right:auto;text-decoration:none}
 .logo i{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:.9rem;background:#fff;border:1px solid var(--ln);box-shadow:0 1px 2px rgba(34,50,77,.1)}.logo i img{width:2.15rem;height:2.15rem;object-fit:contain}.logo em{font-style:normal;color:var(--ye);margin-left:-.6rem}.logo i svg{width:1.5rem;height:1.5rem}
@@ -123,11 +125,11 @@ footer{padding:3rem 1.25rem 2.5rem;margin-top:3rem;background:#0f172a;border-top
 .note{margin-top:1.4rem}.cta{white-space:nowrap}@media(max-width:30rem){nav .cta{padding:.55rem .85rem;font-size:.82rem}nav .w{gap:.6rem}}.cities{list-style:none;padding:0;display:grid;gap:.4rem .9rem;grid-template-columns:repeat(auto-fill,minmax(10.5rem,1fr))}.cities li{margin:0}
 `
 
-function page({ title, description, path, robots, body, jsonld, wide = false }) {
+function page({ title, description, path, robots, body, jsonld, wide = false, keywords = '' }) {
   const url = `${SITE}${path}`
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title><meta name="description" content="${esc(description)}">
+<title>${esc(title)}</title><meta name="description" content="${esc(description)}">${keywords ? `<meta name="keywords" content="${esc(keywords)}">` : ''}
 <meta name="robots" content="${robots},max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${url}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${url}"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:image" content="${SITE}/img/og-logo.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(BRAND)}: local help for your home"><meta property="og:locale" content="en_US"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${SITE}/img/handy.jpg"><meta name="theme-color" content="#1f4bff">
 ${FONT_PRELOAD}
@@ -167,7 +169,8 @@ async function write(path, html) {
 // How it works (static copy of the SPA page so crawlers see real content)
 await write('/how-it-works', page({
   title: `How ${BRAND} works | Post a job, get prices, pay directly`,
-  description: `See how ${BRAND} works: post a request, local workers send prices, you pay the worker directly. ${BRAND} never handles job payments. Free to use.`,
+  description: `See how ${BRAND} works: post a request, local workers send prices, you pay the worker directly with no platform fee. ${BRAND} never handles job payments.`,
+  keywords: 'how it works, post a job online, get quotes from local workers, pay the worker directly, no platform fee, free home service requests',
   path: '/how-it-works', robots: 'index,follow',
   jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['How it works', '/how-it-works']]), {
     '@type': 'HowTo', name: `How ${BRAND} works`,
@@ -205,7 +208,8 @@ const hubSections = [...HUB_GROUPS.map(([name, ids]) => [name, ids.map((id) => e
   .map(([name, list]) => `<div class="grp"><h2>${esc(name)}</h2><span>${list.length} ${list.length === 1 ? 'service' : 'services'}</span></div><ul class="svc-grid">${list.map(hubCard).join('')}</ul>`).join('')
 await write('/services', page({
   title: `Home services across the United States | ${BRAND}`,
-  description: `Post a request for cleaning, handyman work, pressure washing, painting, lawn care and more. Local workers near you can reach out. Free to use.`,
+  description: `Post a home job for cleaning, handyman work, pressure washing, painting, lawn care and more. Local workers send you a price. Free, no platform fee.`,
+  keywords: 'home services near me, free home service requests, house cleaning, handyman, pressure washing, painting, lawn care, local workers, no platform fee',
   path: '/services/', robots: 'index,follow', wide: true,
   jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/']])] },
   body: `<header class="svc-hero"><span class="eyebrow">${enabledCats.length} services</span><h1>Home services across the United States</h1><p class="lead">Choose a service to learn what to include in your request and how ${esc(BRAND)} works.</p><ul class="chips"><li>Free to use</li><li>No platform fee on jobs</li><li>Workers near you send a price</li></ul><ol class="steps"><li><span><b>Post the job</b>Describe it in a minute and pick your city.</span></li><li><span><b>Workers reply</b>Workers who cover your area send you a price.</span></li><li><span><b>Pick one</b>Choose a worker, deal with them directly and leave a review.</span></li></ol></header>${hubSections}<div class="band"><div><h2>Ready when you are</h2><p>Post your request and local workers can reach out.</p></div><a class="cta y" href="/signup">Post a request</a></div>`,
@@ -216,7 +220,8 @@ for (const cat of enabledCats) {
   urls.push({ path: `/services/${cat.id}/`, pri: '0.8' })
   await write(`/services/${cat.id}`, page({
     title: `${cat.name} near you | ${BRAND}`,
-    description: `Post a ${cat.name.toLowerCase()} request and local workers near you can reach out with a price. See what to include and what to ask. Free to use.`,
+    description: `Post a ${cat.name.toLowerCase()} request and local workers near you send a price. See what to include and what to ask. Free, no platform fee.`,
+    keywords: ((n) => (n.length > 22 ? `${n} near me, ${n} jobs near me, free home service requests, no platform fee` : `${n} near me, hire a ${n}, free ${n} quotes, local ${n} workers, ${n} jobs near me, no platform fee`))(cat.name.replace(/\s*\(.*?\)\s*/g, ' ').trim().toLowerCase()),
     path: `/services/${cat.id}/`, robots: 'index,follow',
     jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Services', '/services/'], [cat.name, `/services/${cat.id}/`]]), faqLd(faq), { '@type': 'Service', name: cat.name, serviceType: cat.name, description: `Post a ${cat.name.toLowerCase()} request and local workers near you can accept it and send a price.`, url: `${SITE}/services/${cat.id}/`, areaServed: { '@type': 'Country', name: 'United States' }, provider: { '@type': 'Organization', name: BRAND, url: `${SITE}/` } }] },
     body: `<h1>${esc(cat.name)} near you</h1>
@@ -236,7 +241,8 @@ const cityBySlug = new Map(CITIES.map((c) => [c.slug, c]))
 urls.push({ path: '/locations/', pri: '0.7' })
 await write('/locations', page({
   title: `Home services by city | ${BRAND}`,
-  description: `Pick your city to see what homes there need through the year and post a home or yard job. ${BRAND} works nationwide and is free to use.`,
+  description: `Pick your city to see what homes there need through the year and post a home or yard job. ${BRAND} works in all 50 states and is free, with no platform fee.`,
+  keywords: 'home services by city, local handyman near me, house cleaning near me, lawn care near me, free home service requests, all 50 states',
   path: '/locations/', robots: 'index,follow',
   jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Cities', '/locations/']]), { '@type': 'CollectionPage', name: `Home services by city | ${BRAND}`, url: `${SITE}/locations/` }] },
   body: `<h1>Home services by city</h1><p>${esc(BRAND)} works across the United States. Choose a city to see what homes there need through the year, which jobs come up most, and how to post yours.</p><ul class="cities">${[...CITIES].sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<li><a href="/locations/${c.slug}/">${esc(c.name)}, ${c.state}</a></li>`).join('')}</ul><p>Not on the list? Post your job anyway: workers who cover your ZIP code can see it.</p><p><a class="cta" href="/signup">Post a job</a></p>`,
@@ -254,7 +260,8 @@ for (const c of CITIES) {
   urls.push({ path, pri: '0.6' })
   await write(path.replace(/\/$/, ''), page({
     title: `Home services in ${where} | ${BRAND}`,
-    description: `Post a home or yard job in ${where} and local workers send prices. See what ${c.name} homes need each season and how ${BRAND} works. Free to use.`,
+    description: `Post a home or yard job in ${where} and local workers send prices. See what ${c.name} homes need each season. Free, no platform fee.`,
+    keywords: `home services in ${where}, handyman ${c.name}, house cleaning ${c.name}, lawn care ${c.name}, pressure washing ${c.name}, free home service requests`,
     path, robots: 'index,follow',
     jsonld: { '@context': 'https://schema.org', '@graph': [crumbs([['Home', '/'], ['Cities', '/locations/'], [where, path]]), faqLd(faq), { '@type': 'Service', name: `Home services in ${where}`, serviceType: 'Home and yard services marketplace', areaServed: { '@type': 'City', name: c.name, containedInPlace: { '@type': 'State', name: c.stateName } }, provider: { '@type': 'Organization', name: BRAND, url: SITE } }] },
     body: `<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/locations/">Cities</a> / ${esc(c.name)}</nav>

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { brand } from '../config/brand'
 
 // Imported (not hard-coded paths) so Vite gives each file a content hash: they are cached for a year and never go stale.
 import handyS from '../assets/img/handy-s.webp'
@@ -17,6 +18,14 @@ const MARQUEE = TRADES.map(([, n]) => n)
 const SIDES = [
   { k: 'For workers', title: 'Want more work?', cls: 'w', points: ['Choose your trades, then your area: around your location, or the cities you pick.', 'See new requests near you and send your price.', 'No platform fee on jobs, and every review builds your name.'] },
   { k: 'For clients', title: 'Need a hand?', cls: 'c', points: ['Post the job in a minute and pick your city.', 'Workers who cover your area send you a price.', 'Pick one, pay them directly, and leave a review.'] },
+]
+const FEATURES: [string, string][] = [
+  ['Free home service requests', 'Free to use for clients and workers.'],
+  ['Quotes from local workers', 'Workers who cover your city send you a price.'],
+  ['No platform fee', '$0 platform fee on jobs. Pay the worker directly.'],
+  ['Find home service jobs near you', 'Pick your trades and areas, then send your price.'],
+  ['Reviews after every job', 'Clients and workers both leave a review.'],
+  ['Available in all 50 states', 'Handyman, cleaning, painting, lawn care and more.'],
 ]
 const STEPS = [
   { n: '1', title: 'Post it or join', text: 'Clients describe the job. Workers pick their trades and the areas they cover.' },
@@ -117,6 +126,10 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <ul className="hn-w hn-feat" aria-label={`Why ${brand.name}`}>
+        {FEATURES.map(([t, d]) => <li key={t}><b>{t}</b><span>{d}</span></li>)}
+      </ul>
 
       <div className="hn-mq" aria-hidden="true">
         <div className="hn-mt">
