@@ -1,4 +1,6 @@
-// The Helpnear emblem (house, hands and shield), cut from the official logo. The image sits on a light tile so it reads in day and night mode.
+import logo from '../shared/logo-data.json'
+
+/** The logo is embedded in the page itself (an 80px copy, about 3 KB), so it can never show up as a broken picture when a file request fails. */
 export default function LogoMark() {
-  return <img src="/img/logo-mark.png" alt="" width="40" height="40" decoding="async" />
+  return <img src={logo.mark} alt="" width="40" height="40" decoding="async" />
 }

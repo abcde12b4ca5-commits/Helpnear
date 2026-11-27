@@ -77,7 +77,7 @@ async function loadData() {
 
 // Static pages share the site's editorial design tokens (kept in sync with src/index.css).
 // The logo is embedded in the page (about 3 KB), so it can never show as a broken picture if the image file fails to load.
-const LOGO_DATA = JSON.parse(await readFile(new URL('../src/shared/logo-data.json', import.meta.url), 'utf8')).mark
+const LOGO_DATA = await readFile(new URL('../src/shared/logo-data.json', import.meta.url), 'utf8').then((t) => JSON.parse(t).mark).catch(() => '/img/logo-mark.png')
 const LOGO = `<img src="${LOGO_DATA}" alt="" width="40" height="40" decoding="async">`
 const [BRAND_HEAD, BRAND_TAIL] = BRAND.length > 4 && BRAND.startsWith('Help') ? [BRAND.slice(0, 4), BRAND.slice(4)] : [BRAND, '']
 const css = `:root{--bg:#f5f8fc;--sf:#fff;--tx:#22324d;--mu:#566782;--ln:#dde5f1;--ye:#2a5eab;--ac:#1f4a8c;--am:#ce7742;color-scheme:light}

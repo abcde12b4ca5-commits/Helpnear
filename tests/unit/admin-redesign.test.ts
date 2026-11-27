@@ -28,13 +28,12 @@ describe('nextRunIn', () => {
 })
 
 describe('admin redesign renders (server side)', () => {
-  it('shows the dark sidebar with the brand, groups and the owner card', async () => {
+  it('shows the section rail with every group and tab', async () => {
     const { default: Admin } = await import('../../src/pages/Admin')
     const html = renderToString(createElement(MemoryRouter, null, createElement(Admin)))
-    expect(html).toContain('ad-brand')
-    expect(html).toContain('ad-me')
-    expect(html).toContain('owner@site.test')
-    for (const t of ['نظرة عامة', 'العمليات', 'المحتوى', 'المنصة', 'لوحة المعلومات', 'المقالات']) expect(html, t).toContain(t)
+    expect(html).toContain('ax-rail')
+    expect(html).toContain('ax-banner')
+    for (const t of ['لوحة المعلومات', 'المراجعة', 'النزاعات', 'المستخدمون', 'الخدمات', 'المقالات', 'الصفحات القانونية', 'الإعدادات', 'التغطية', 'سجل الإجراءات']) expect(html, t).toContain(t)
     expect(html).toContain('aria-selected="true"')
   })
   it('renders the dashboard automation card from the settings it is given', async () => {
