@@ -161,6 +161,11 @@
   .hn-pc { display: flex; flex-direction: column; gap: .8rem; will-change: transform; }
   .hn-pc.b2 { margin-top: -6rem; }
   .hn-pi { flex: none; height: 15rem; border-radius: 1.2rem; background: center/cover; border: 1px solid var(--ln); box-shadow: var(--shadow); }
+  .hn-pi.i-handy { background-image: url('./assets/img/handy-s.webp'); }
+  .hn-pi.i-lawn { background-image: url('./assets/img/lawn-s.webp'); }
+  .hn-pi.i-pressure { background-image: url('./assets/img/pressure-s.webp'); }
+  .hn-pi.i-tv { background-image: url('./assets/img/tv-s.webp'); }
+  .hn-pi.i-furn { background-image: url('./assets/img/furn-s.webp'); }
   .hn-stk { position: absolute; z-index: 3; background: var(--sf); color: var(--tx); font: 600 .85rem Inter, sans-serif; padding: .6rem 1rem; border-radius: .9rem; border: 1px solid var(--bd); box-shadow: var(--shadow-lg); animation: hn-fl 4s ease-in-out infinite; }
   .hn-stk.a { left: -.3rem; top: 2.5rem; }
   .hn-stk.b { right: -.2rem; bottom: 3rem; background: var(--am); color: #0f172a; border-color: var(--am); animation-delay: 1.5s; }

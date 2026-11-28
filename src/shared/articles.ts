@@ -90,6 +90,7 @@ function inline(raw: string): string {
     return park(u.startsWith('/') ? `<a href="${escapeHtml(u)}">${text}</a>` : `<a href="${escapeHtml(u)}" rel="noopener nofollow ugc" target="_blank">${text}</a>`)
   })
   // A full address typed in the text (https://...) becomes a clickable link too. Only https, same safety check as above. A bare domain such as www.example.com stays plain text on purpose (the site's own name is written that way).
+  // eslint-disable-next-line no-control-regex -- \u0000 is the private placeholder marker used by park(); it never appears in real text
   s = s.replace(/(^|[\s(])((?:https:\/\/)(?:(?!&quot;|&#39;|&lt;|&gt;)[^\s\u0000])+)/g, (m, lead: string, found: string) => {
     const shown = found.replace(TRAIL, '')
     const tail = found.slice(shown.length)
@@ -98,6 +99,7 @@ function inline(raw: string): string {
     return `${lead}${park(`<a href="${escapeHtml(u)}" rel="noopener nofollow ugc" target="_blank">${shown}</a>`)}${tail}`
   })
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+  // eslint-disable-next-line no-control-regex -- \u0000 is the private placeholder marker used by park(); it never appears in real text
   return s.replace(/\u0000(\d+)\u0000/g, (_m, i: string) => parked[Number(i)])
 }
 const plainText = (raw: string): string => raw.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').trim()

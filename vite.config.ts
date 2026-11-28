@@ -49,7 +49,24 @@ function preloadFonts(): Plugin {
   }
 }
 
+// The biggest picture on the first screen (the lawn tile) is requested right away with high priority (home page only), instead of waiting for the stylesheet and layout to reveal it.
+function preloadHeroImage(): Plugin {
+  return {
+    name: 'preload-hero-image',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        const f = Object.keys(ctx.bundle ?? {}).find((k) => /^assets\/lawn-s-[\w-]+\.webp$/.test(k))
+        // Only the home page shows that picture: a tiny script adds the preload there and nowhere else (login, sign-up and the other app pages share this same file).
+        const js = `if(location.pathname==="/"){var l=document.createElement("link");l.rel="preload";l.as="image";l.type="image/webp";l.setAttribute("fetchpriority","high");l.href="/${f}";document.head.appendChild(l)}`
+        return f ? html.replace('</head>', `    <script>${js}</script>\n  </head>`) : html
+      },
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), brandHtml(), inlineCss(), preloadFonts()],
+  plugins: [react(), brandHtml(), inlineCss(), preloadFonts(), preloadHeroImage()],
   build: { sourcemap: false }, // source maps would publish the original source to everyone
 })
